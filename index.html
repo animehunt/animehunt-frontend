@@ -1,0 +1,259 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AnimeHunt</title>
+
+  <!-- MAIN CSS -->
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+<!-- ===================================================
+HEADER START
+=================================================== -->
+<header class="main-header">
+  <div class="menu-btn">☰</div>
+
+  <div class="logo">
+    <span class="anime">anime</span><span class="hunt">hunt</span>
+  </div>
+
+  <input
+    type="text"
+    class="search-bar"
+    placeholder="Search movie"
+  />
+</header>
+<!-- HEADER END -->
+
+
+<!-- ===================================================
+SIDEBAR MENU START
+=================================================== -->
+<aside class="sidebar">
+  <div class="close-btn">✕</div>
+
+  <nav class="sidebar-menu">
+  <a href="dmca.html">DMCA</a>
+  <a href="privacy.html">Privacy Policy</a>
+  <a href="disclaimer.html">Disclaimer</a>
+  <a href="about.html">About AnimeHunt</a>
+  <a href="https://t.me/toons15" target="_blank">Telegram</a>
+  </nav>
+</aside>
+<div class="overlay"></div>
+<!-- SIDEBAR MENU END -->
+
+
+<!-- ===================================================
+HERO BANNER START
+=================================================== -->
+<section class="hero-banner">
+
+  <div class="hero-content">
+    <h1 class="hero-title">RAYA AND THE<br> LAST DRAGON</h1>
+
+    <div class="hero-meta">
+      <span>2021</span>
+      <span>⭐ 8.0</span>
+    </div>
+
+    <button class="play-btn">PLAY</button>
+  </div>
+
+</section>
+<!-- HERO BANNER END -->
+
+
+<!-- ===================================================
+CATEGORY FILTER BAR START
+=================================================== -->
+<section class="category-bar">
+  <button class="active">ALL</button>
+  <button>Action</button>
+  <button>Comedy</button>
+  <button>Series</button>
+  <button>Adventure</button>
+  <button>Other</button>
+</section>
+<!-- CATEGORY FILTER BAR END -->
+
+<!-- FILTER GRID (HIDDEN BY DEFAULT) -->
+<section class="home-grid"></section>
+  
+<!-- ===================================================
+MOVIE ROWS START (ADMIN DYNAMIC VERSION)
+=================================================== -->
+
+<!-- ROW: ONGOING -->
+<section class="movie-row">
+  <div class="row-header">
+    <h2>Ongoing</h2>
+    <a href="ongoing.html" class="see-more-btn">See more</a>
+  </div>
+  <div class="movie-scroll" data-row="ongoing"></div>
+</section>
+
+<!-- ROW: TRENDING NOW -->
+<section class="movie-row">
+  <div class="row-header">
+    <h2>Trending Now</h2>
+    <a href="trending.html" class="see-more-btn">See more</a>
+  </div>
+  <div class="movie-scroll" data-row="trending"></div>
+</section>
+
+<!-- ROW: LOVE & ROMANTIC -->
+<section class="movie-row">
+  <div class="row-header">
+    <h2>Love & Romantic</h2>
+    <a href="love-romantic.html" class="see-more-btn">See more</a>
+  </div>
+  <div class="movie-scroll" data-row="romance"></div>
+</section>
+
+<!-- ROW: HIGH-OCTANE ACTION -->
+<section class="movie-row">
+  <div class="row-header">
+    <h2>High-Octane Action</h2>
+    <a href="high-octane-action.html" class="see-more-btn">See more</a>
+  </div>
+  <div class="movie-scroll" data-row="action"></div>
+</section>
+
+<!-- ROW: DARK & PSYCHOLOGICAL -->
+<section class="movie-row">
+  <div class="row-header">
+    <h2>Dark & Psychological</h2>
+    <a href="dark-psychological.html" class="see-more-btn">See more</a>
+  </div>
+  <div class="movie-scroll" data-row="psychological"></div>
+</section>
+
+<!-- ROW: CINEMATIC MASTERPIECES -->
+<section class="movie-row">
+  <div class="row-header">
+    <h2>Cinematic Masterpieces</h2>
+    <a href="cinematic-masterpieces.html" class="see-more-btn">See more</a>
+  </div>
+  <div class="movie-scroll" data-row="classic"></div>
+</section>
+
+<!-- ROW: MODERN CLASSICS -->
+<section class="movie-row">
+  <div class="row-header">
+    <h2>Modern Classics</h2>
+    <a href="modern-classics.html" class="see-more-btn">See more</a>
+  </div>
+  <div class="movie-scroll" data-row="classic"></div>
+</section>
+
+<!-- ROW: DEEP-DIVE ADVENTURES -->
+<section class="movie-row">
+  <div class="row-header">
+    <h2>Deep-Dive Adventures</h2>
+    <a href="deep-dive-adventures.html" class="see-more-btn">See more</a>
+  </div>
+  <div class="movie-scroll" data-row="adventure"></div>
+</section>
+
+<!-- ROW: SLICE OF LIFE & DRAMA -->
+<section class="movie-row">
+  <div class="row-header">
+    <h2>Slice of Life & Drama</h2>
+    <a href="slice-of-life-drama.html" class="see-more-btn">See more</a>
+  </div>
+  <div class="movie-scroll" data-row="drama"></div>
+</section>
+
+<!-- ROW: BINGE-WORTHY SERIES -->
+<section class="movie-row">
+  <div class="row-header">
+    <h2>Binge-Worthy Series</h2>
+    <a href="binge-worthy-series.html" class="see-more-btn">See more</a>
+  </div>
+  <div class="movie-scroll" data-row="series"></div>
+</section>
+
+<!-- ROW: HIDDEN GEMS -->
+<section class="movie-row">
+  <div class="row-header">
+    <h2>Hidden Gems</h2>
+    <a href="hidden-gems.html" class="see-more-btn">See more</a>
+  </div>
+  <div class="movie-scroll" data-row="other"></div>
+</section>
+
+<!-- ROW: TOP RATED GLOBALLY -->
+<section class="movie-row">
+  <div class="row-header">
+    <h2>Top Rated Globally</h2>
+    <a href="top-rated-globally.html" class="see-more-btn">See more</a>
+  </div>
+  <div class="movie-scroll" data-row="top-rated"></div>
+</section>
+
+<!-- ROW: MOST VIEWED -->
+<section class="movie-row">
+  <div class="row-header">
+    <h2>Most Viewed</h2>
+    <a href="most-viewed.html" class="see-more-btn">See more</a>
+  </div>
+  <div class="movie-scroll" data-row="most-viewed"></div>
+</section>
+
+<!-- MOVIE ROWS END -->
+
+<!-- ===================================================
+A–Z QUICK NAVIGATION START
+=================================================== -->
+<section class="az-nav">
+  <span>A</span><span>B</span><span>C</span><span>D</span><span>E</span>
+  <span>F</span><span>G</span><span>H</span><span>I</span><span>J</span>
+  <span>K</span><span>L</span><span>M</span><span>N</span><span>O</span>
+  <span>P</span><span>Q</span><span>R</span><span>S</span><span>T</span>
+  <span>U</span><span>V</span><span>W</span><span>X</span><span>Y</span><span>Z</span>
+</section>
+<!-- A–Z QUICK NAVIGATION END -->
+
+
+<!-- ===================================================
+FOOTER START
+=================================================== -->
+<footer class="main-footer">
+  <div class="footer-links">
+    <a href="about.html">About AnimeHunt</a>
+    <a href="disclaimer.html">Disclaimer</a>
+    <a href="dmca.html">DMCA</a>
+    <a href="https://t.me/toons15" target="_blank">Telegram</a>
+  </div>
+
+  <div class="copyright">
+    © 2026 AnimeHunt. All Rights Reserved.
+  </div>
+</footer>
+<!-- FOOTER END -->
+
+
+<!-- ===================================================
+BOTTOM NAVIGATION START
+=================================================== -->
+<nav class="bottom-nav">
+  <a href="anime.html" class="nav-item">ANIME</a>
+  <a href="movies.html" class="nav-item">MOVIES</a>
+  <a href="index.html" class="nav-item active">HOME</a>
+  <a href="series.html" class="nav-item">SERIES</a>
+  <a href="cartoon.html" class="nav-item">CARTOON</a>
+</nav>
+<!-- BOTTOM NAVIGATION END -->
+
+
+<!-- MAIN SCRIPT -->
+<script src="js/api.js"></script>  
+<script src="script.js"></script>
+
+</body>
+</html>
