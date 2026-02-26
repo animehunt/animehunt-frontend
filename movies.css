@@ -1,0 +1,74 @@
+/* ================= PAGE BANNER ================= */
+
+.page-banner{
+  height:220px;
+  display:flex;
+  align-items:flex-end;
+  padding:20px 16px;
+  margin-bottom:16px;
+
+  background:
+    linear-gradient(to bottom, rgba(0,0,0,0.03), rgba(0,0,0,0.08)),
+    url("images/movies-banner.jpg") center/cover no-repeat;
+}
+
+/* ================= GRID WRAPPER ================= */
+
+.grid-wrap {
+  padding: 0 16px 20px;       /* 🔥 top spacing fixed */
+}
+
+/* ================= MOVIES GRID ================= */
+
+.movies-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+
+  animation: fadeUp .4s ease both;
+}
+
+/* ================= PAGINATION ================= */
+
+.pagination {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  padding: 20px 0 80px;       /* bottom space for bottom nav */
+}
+
+.pagination button {
+  min-width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  border: 1px solid #444;
+  background: transparent;
+  color: #fff;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all .2s ease;
+}
+
+.pagination button:hover {
+  border-color: #ffcc00;
+  color: #ffcc00;
+}
+
+.pagination .active {
+  background: #ffcc00;
+  color: #000;
+  border-color: #ffcc00;
+}
+
+/* ================= FADE ANIMATION ================= */
+
+@keyframes fadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
