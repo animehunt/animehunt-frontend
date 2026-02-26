@@ -1,0 +1,304 @@
+*{margin:0;padding:0;box-sizing:border-box}
+
+body{
+  background:#0b0f1a;
+  color:#fff;
+  font-family:Arial, Helvetica, sans-serif;
+  overflow-x:hidden;
+}
+
+/* HEADER */
+.main-header{
+  position:sticky;
+  top:0;
+  z-index:1000;
+  height:55px;
+  padding:10px 16px;
+  display:flex;
+  align-items:center;
+  gap:10px;
+  background:rgba(11,15,26,.95);
+}
+
+.menu-btn{font-size:22px}
+
+.logo{
+  font-size:18px;
+  font-weight:bold;
+}
+.logo .anime{color:#fff}
+.logo .hunt{color:#ffcc00}
+
+.search-bar{
+  margin-left:auto;
+  width:60%;
+  height:32px;
+  border-radius:25px;
+  border:none;
+  padding:0 14px;
+  font-size:12px;
+  background:#1a1f2e;
+  color:#ccc;
+}
+
+/* ===============================
+   PAGE BANNER – FINAL WORKING
+=============================== */
+
+.page-banner{
+  height:220px;
+  display:flex;
+  align-items:flex-end;
+  padding:20px 16px;
+  margin-bottom:16px;
+
+  background-image: url("images/deep-dive-adventures-banner.jpg");
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+.page-banner h1{
+  font-size:28px;
+  font-weight:bold;
+}
+
+/* GRID */
+.grid-wrap{padding:16px}
+
+.anime-grid{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:8px;
+}
+
+.movie-card{
+  aspect-ratio:2/3;
+  background:#1a1f2e;
+  border-radius:10px;
+  display:flex;
+  align-items:flex-end;
+  padding:8px;
+  font-size:12px;
+  cursor:pointer;
+  transition:.25s;
+}
+
+.movie-card:hover{
+  transform:translateY(-4px);
+  box-shadow:0 14px 32px rgba(0,0,0,.6);
+}
+
+/* PAGINATION */
+.pagination{
+  display:flex;
+  justify-content:center;
+  gap:8px;
+  padding:20px 0;
+}
+
+.pagination button{
+  min-width:32px;
+  height:32px;
+  border-radius:6px;
+  border:1px solid #444;
+  background:transparent;
+  color:#fff;
+}
+
+.pagination .active{
+  background:#ffcc00;
+  color:#000;
+}
+
+/* A–Z */
+.az-nav{
+  padding:10px 16px;
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+  justify-content:center;
+}
+
+.az-nav span{
+  font-size:12px;
+  color:#ccc;
+}
+
+/* FOOTER */
+.main-footer{
+  padding:20px 16px 80px;
+  text-align:center;
+}
+
+.footer-links{
+  display:flex;
+  justify-content:center;
+  gap:14px;
+  margin-bottom:10px;
+}
+
+.footer-links a{
+  font-size:12px;
+  color:#ccc;
+  text-decoration:none;
+}
+
+.footer-links a:hover{
+  text-decoration:none;
+  color:#ffcc00;
+}
+
+.copyright{
+  font-size:11px;
+  color:#777;
+  line-height:1.4;
+}
+
+/* BOTTOM NAV */
+.bottom-nav{
+  position:fixed;
+  bottom:0;
+  width:100%;
+  height:65px;
+  background:rgba(11,15,26,.95);
+  display:flex;
+  justify-content:space-around;
+  align-items:center;
+}
+
+.nav-item{
+  font-size:11px;
+  color:#ccc;
+}
+
+.nav-item.active{
+  color:#ffcc00;
+  transform:scale(1.15);
+}
+/* ===============================  
+SIDEBAR (ANIMEHUNT – FINAL PREMIUM)  
+=============================== */  
+.sidebar{  
+  position:fixed;  
+  top:0;  
+  left:-260px;  
+  width:260px;  
+  height:100%;  
+  background: linear-gradient(180deg, #0b0f1a, #0e1424);  
+  z-index:2000;  
+  padding:22px 20px;  
+  transition:left 0.35s cubic-bezier(0.2,0.8,0.2,1);  
+  box-shadow: 12px 0 50px rgba(0,0,0,0.85);  
+}  
+  
+.sidebar.active{  
+  left:0;  
+}  
+  
+/* Close button */  
+.close-btn{  
+  font-size:24px;  
+  cursor:pointer;  
+  margin-bottom:22px;  
+  color:#fff;  
+  font-weight:700;  
+}  
+  
+/* Menu */  
+.sidebar-menu a{  
+  display:block;  
+  padding:11px 0;            /* 🔥 perfect balanced gap */  
+  margin:0;  
+  color:#ffffff;  
+  text-decoration:none;  
+  font-size:15.5px;  
+  font-weight:650;  
+  letter-spacing:0.45px;  
+  line-height:1.25;  
+  transition:all .2s ease;  
+}  
+  
+/* Hover */  
+.sidebar-menu a:hover{  
+  transform:translateX(6px);  
+  color:#ffcc00;  
+  text-shadow:0 0 6px rgba(255,204,0,.4);  
+}  
+  
+/* ===============================  
+OVERLAY  
+=============================== */  
+.overlay{  
+  position:fixed;  
+  inset:0;  
+  background:rgba(0,0,0,0.65);  
+  backdrop-filter: blur(6px);  
+  opacity:0;  
+  pointer-events:none;  
+  transition:.3s;  
+  z-index:1500;  
+}  
+  
+.overlay.active{  
+  opacity:1;  
+  pointer-events:all;  
+}
+/* ===============================
+SEARCH DROPDOWN (ULTRA COMPACT)
+=============================== */
+.search-dropdown{
+  position:absolute;
+  top:50px;          
+  right:16px;
+  width:52%;         
+  background:#0f1324;
+  border-radius:6px;
+  overflow:hidden;
+  z-index:3000;
+  box-shadow:0 4px 14px rgba(0,0,0,.6);
+}
+
+.search-item{
+  display:flex;
+  align-items:center;
+  gap:4px;              /* 🔥 minimum gap */
+  padding:4px 6px;      /* 🔥 ultra tight */
+  font-size:10px;       /* 🔥 small text */
+  cursor:pointer;
+  color:#fff;
+  transition:.12s;
+}
+
+.search-item img{
+  width:22px;           /* 🔥 very small thumb */
+  height:32px;
+  border-radius:3px;
+  object-fit:cover;
+}
+
+.search-item:hover{
+  background:#ffcc00;
+  color:#000;
+}
+/* ===============================
+   BOTTOM NAV – REMOVE UNDERLINE
+=============================== */
+
+.bottom-nav a {
+  text-decoration: none !important;
+}
+
+.bottom-nav a:hover {
+  text-decoration: none !important;
+}
+
+.nav-item {
+  text-decoration: none !important;
+}
+
+/* Extra safety */
+.nav-item,
+.nav-item * {
+  text-decoration: none !important;
+}
