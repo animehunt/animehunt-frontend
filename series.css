@@ -1,0 +1,197 @@
+/* ===================================================
+GLOBAL RESET
+=================================================== */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  background: #0b0f1a;
+  color: #ffffff;
+  font-family: Arial, Helvetica, sans-serif;
+  overflow-x: hidden;
+}
+
+/* ===================================================
+HEADER (SAME AS HOME)
+=================================================== */
+.main-header {
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  height: 55px;
+  padding: 10px 16px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(11, 15, 26, 0.95);
+}
+
+.menu-btn {
+  font-size: 22px;
+  cursor: pointer;
+}
+
+.logo {
+  font-size: 18px;
+  font-weight: bold;
+}
+
+.logo .anime { color: #fff; }
+.logo .hunt { color: #ffcc00; }
+
+.search-bar {
+  margin-left: auto;
+  width: 60%;
+  height: 32px;
+  border-radius: 25px;
+  border: none;
+  padding: 0 14px;
+  font-size: 12px;
+  background: #1a1f2e;
+  color: #ccc;
+}
+
+/* ===================================================
+PAGE BANNER (SAME AS MOVIES / ANIME)
+=================================================== */
+/* ===================================================
+PAGE BANNER (FIXED)
+=================================================== */
+.page-banner {
+  height: 220px;
+  display: flex;
+  align-items: flex-end;
+  padding: 20px 16px;
+  margin-bottom: 16px;
+
+  background:
+    linear-gradient(to bottom, rgba(0,0,0,0.03), rgba(0,0,0,0.08)),
+    url("images/series-banner.jpg") center/cover no-repeat;
+}
+
+/* ===================================================
+GRID (HOME MOVIE-CARD SIZE)
+=================================================== */
+.grid-wrap {
+  padding: 16px;
+}
+
+.series-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+}
+
+/* EXACT SAME AS HOME movie-card */
+.movie-card {
+  aspect-ratio: 2 / 3;
+  background: #1a1f2e;
+  border-radius: 10px;
+  display: flex;
+  align-items: flex-end;
+  padding: 8px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+.movie-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 14px 32px rgba(0,0,0,0.6);
+}
+
+/* ===================================================
+PAGINATION
+=================================================== */
+.pagination {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  padding: 20px 0;
+}
+
+.pagination button {
+  min-width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  border: 1px solid #444;
+  background: transparent;
+  color: #fff;
+  font-size: 12px;
+}
+
+.pagination .active {
+  background: #ffcc00;
+  color: #000;
+  border-color: #ffcc00;
+}
+
+/* ===================================================
+A–Z NAV
+=================================================== */
+.az-nav {
+  padding: 10px 16px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+}
+
+.az-nav span {
+  font-size: 12px;
+  color: #ccc;
+  cursor: pointer;
+}
+
+/* ===================================================
+FOOTER
+=================================================== */
+.main-footer {
+  padding: 20px 16px 80px;
+  text-align: center;
+}
+
+.footer-links {
+  display: flex;
+  justify-content: center;
+  gap: 14px;
+  margin-bottom: 10px;
+}
+
+.footer-links a {
+  font-size: 12px;
+  color: #ccc;
+  text-decoration: none;
+}
+
+.copyright {
+  font-size: 11px;
+  color: #777;
+}
+
+/* ===================================================
+BOTTOM NAV
+=================================================== */
+.bottom-nav {
+  position: fixed;
+  bottom: 0;
+  width: 100%;
+  height: 65px;
+  background: rgba(11,15,26,0.95);
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+}
+
+.nav-item {
+  font-size: 11px;
+  color: #ccc;
+}
+
+.nav-item.active {
+  color: #ffcc00;
+  transform: scale(1.15);
+}
