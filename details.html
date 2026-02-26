@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Details – AnimeHunt</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <link rel="stylesheet" href="style.css">
+<style>
+/* ================= GLOBAL ================= */
+*{
+  margin:0;
+  padding:0;
+  box-sizing:border-box;
+  font-family:system-ui,sans-serif;
+}
+body{
+  background:#0b0f1a;
+  color:#fff;
+}
+
+/* ================= HEADER ================= */
+.main-header{
+  height:56px;
+  padding:0 16px;
+  display:flex;
+  align-items:center;
+  background:rgba(0,0,0,.85);
+}
+.menu-btn{font-size:22px}
+.logo{
+  margin-left:16px;
+  font-size:20px;
+  font-weight:700;
+}
+.logo .anime{color:#fff}
+.logo .hunt{color:#ffcc00}
+.search-bar{
+  margin-left:auto;
+  width:150px;
+  height:32px;
+  border-radius:16px;
+  border:none;
+  background:#1b2030;
+  color:#ccc;
+  padding:0 12px;
+}
+
+/* ================= HERO ================= */
+.hero{
+  position:relative;
+  height:300px;
+}
+.hero-bg{
+  position:absolute;
+  inset:0;
+  background-size:cover;
+  background-position:center;
+}
+.poster{
+  position:absolute;
+  left:16px;
+  bottom:16px;
+  width:110px;
+  height:165px;
+  border-radius:6px;
+}
+.hero-info{
+  position:absolute;
+  left:140px;
+  right:16px;
+  bottom:16px;
+}
+.hero-info h1{
+  font-size:18px;
+}
+.hero-info h1 span{
+  font-size:13px;
+  color:#aaa;
+}
+.meta{
+  display:flex;
+  gap:10px;
+  font-size:11px;
+  color:#ccc;
+  margin:6px 0;
+}
+.imdb{
+  background:#ffcc00;
+  color:#000;
+  padding:2px 6px;
+  border-radius:4px;
+}
+.desc{
+  font-size:11px;
+  color:#bbb;
+  margin-bottom:10px;
+}
+
+/* ================= ACTION ROW ================= */
+.actions{
+  display:flex;
+  gap:6px;
+  justify-content:flex-end;
+}
+.actions button{
+  height:28px;
+  padding:0 10px;
+  font-size:11px;
+  border-radius:5px;
+  display:flex;
+  align-items:center;
+  gap:5px;
+}
+.watch{
+  background:#ffcc00;
+  border:none;
+  color:#000;
+}
+.download{
+  background:transparent;
+  border:1px solid #ffcc00;
+  color:#ffcc00;
+}
+.subscribe{
+  background:transparent;
+  border:1px solid #229ED9;
+  color:#229ED9;
+}
+.subscribe img{
+  width:13px;
+}
+
+/* ================= ABOUT ================= */
+.about{
+  padding:20px 16px;
+}
+.about h2{font-size:18px}
+.line{
+  height:1px;
+  background:#222;
+  margin:12px 0;
+}
+.about ul{
+  list-style:none;
+  font-size:13px;
+}
+.about li{
+  margin-bottom:8px;
+}
+.about p{
+  font-size:12px;
+  color:#bbb;
+  line-height:1.6;
+}
+
+/* ================= EPISODES ================= */
+.episodes{
+  padding:16px;
+}
+
+/* tabs */
+.ep-tabs{
+  display:flex;
+  gap:8px;
+  margin-bottom:12px;
+}
+.ep-tabs button{
+  height:24px;
+  padding:0 10px;
+  font-size:10px;
+  border-radius:5px;
+  border:none;
+  background:#ffcc00;
+  color:#000;
+}
+.ep-tabs .active{
+  position:relative;
+  padding-right:22px;
+}
+.ep-tabs .active::after{
+  content:"▼";
+  position:absolute;
+  right:6px;
+  top:50%;
+  transform:translateY(-50%);
+  font-size:9px;
+}
+
+/* grid */
+.ep-grid{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:10px;
+}
+
+/* card */
+.ep-card{width:100%}
+.ep-thumb{
+  position:relative;
+  width:100%;
+  aspect-ratio:16/9;
+  background:#000;
+  border-radius:6px;
+  overflow:hidden;
+}
+.ep-thumb img{
+  width:100%;
+  height:100%;
+  object-fit:cover;
+}
+.ep-no{
+  position:absolute;
+  top:5px;
+  left:5px;
+  background:rgba(0,0,0,.85);
+  color:#fff;
+  font-size:10px;
+  padding:2px 6px;
+  border-radius:4px;
+}
+.ep-card p{
+  margin-top:5px;
+  font-size:11px;
+  color:#ccc;
+}
+
+/* ================= RELATED ================= */
+.related{
+  padding:16px;
+}
+.related h3{
+  font-size:16px;
+  margin-bottom:10px;
+}
+.related-grid{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:12px;
+}
+.rel-card{
+  aspect-ratio:2/3;
+  background:#1a1f2e;
+  border-radius:10px;
+  padding:8px;
+  display:flex;
+  align-items:flex-end;
+  font-size:12px;
+}
+
+/* ================= FOOTER ================= */
+.main-footer{
+  padding:20px 16px 80px;
+  text-align:center;
+}
+.footer-links{
+  display:flex;
+  gap:14px;
+  justify-content:center;
+  margin-bottom:10px;
+  font-size:12px;
+  color:#ccc;
+}
+.copyright{
+  font-size:11px;
+  color:#777;
+}
+
+/* ================= BOTTOM NAV ================= */
+.bottom-nav{
+  position:fixed;
+  bottom:0;
+  width:100%;
+  height:55px;
+  background:rgba(11,15,26,.95);
+  display:flex;
+  justify-content:space-around;
+  align-items:center;
+}
+.nav-item{
+  font-size:11px;
+  color:#aaa;
+}
+.nav-item.active{
+  color:#ffcc00;
+}
+  /* ===============================
+   SEASON DROPDOWN
+=============================== */
+.season-list{
+  background:#1a1f2e;
+  margin-bottom:12px;
+  border-radius:8px;
+}
+.season-list div{
+  padding:10px;
+  font-size:12px;
+  border-bottom:1px solid #222;
+  cursor:pointer;
+}
+.season-list div:last-child{
+  border-bottom:none;
+}
+  
+</style>
+</head>
+
+<body>
+
+<header class="main-header">
+  <div class="menu-btn">☰</div>
+  <div class="logo"><span class="anime">anime</span><span class="hunt">hunt</span></div>
+  <input class="search-bar" placeholder="Search movie">
+</header>
+  
+  <!-- SIDEBAR (SAME AS HOME) -->
+<aside class="sidebar">
+  <div class="close-btn">✕</div>
+  <nav class="sidebar-menu">
+    <a href="about.html">About AnimeHunt</a>
+    <a href="privacy.html">Privacy Policy</a>
+    <a href="disclaimer.html">Disclaimer</a>
+    <a href="dmca.html">DMCA</a>
+    <a href="https://t.me/toons15" target="_blank">Telegram</a>
+  </nav>
+</aside>
+
+<div class="overlay"></div>
+
+<section class="hero">
+  <div class="hero-bg" id="heroBg"></div>
+  <img id="posterImg" class="poster">
+  <div class="hero-info">
+    <h1 id="animeTitle"></h1>
+    <div class="meta" id="animeMeta"></div>
+    <p class="desc" id="animeDesc"></p>
+    <div class="actions">
+      <button class="watch">▶ Watch</button>
+      <button class="download">⬇ Download</button>
+      <button class="subscribe">
+        <img src="telegram.svg"> Subscribe
+      </button>
+    </div>
+  </div>
+</section>
+
+<section class="about">
+  <h2>About</h2>
+  <div class="line"></div>
+
+  <ul id="aboutList"></ul>
+  <p id="aboutDesc"></p>
+</section>
+
+<section class="episodes">
+  <div class="ep-tabs">
+    <button id="seasonBtn" class="active">SEASON 1</button>
+    <button id="allBtn">ALL EPISODES</button>
+  </div>
+
+  <!-- Season Dropdown (Dynamic) -->
+  <div class="season-list" id="seasonList" style="display:none"></div>
+
+  <!-- Episode Grid (Dynamic) -->
+  <div class="ep-grid" id="episodeGrid"></div>
+</section>
+
+<section class="related">
+  <h3>Related Anime</h3>
+  <div class="related-grid" id="relatedGrid"></div>
+</section>
+
+<footer class="main-footer">
+  <div class="footer-links">
+  <a href="about.html">About AnimeHunt</a>
+  <a href="disclaimer.html">Disclaimer</a>
+  <a href="dmca.html">DMCA</a>
+  <a href="https://t.me/toons15" target="_blank">Telegram</a>
+</div>
+  <div class="copyright">
+    © 2026 AnimeHunt. All Rights Reserved.
+  </div>
+</footer>
+
+<nav class="bottom-nav">
+  <div class="nav-item">ANIME</div>
+  <div class="nav-item">MOVIES</div>
+  <div class="nav-item active">HOME</div>
+  <div class="nav-item">SERIES</div>
+  <div class="nav-item">CARTOON</div>
+</nav>
+  
+<script src="js/api.js"></script>  
+<script src="script.js"></script>
+</body>
+</html>
