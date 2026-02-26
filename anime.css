@@ -1,0 +1,65 @@
+/* PAGE BANNER */
+.page-banner {
+  height: 28vh;
+  display: flex;
+  align-items: flex-end;
+  padding: 16px;
+
+  background:
+    linear-gradient(to bottom, rgba(0,0,0,0.03), rgba(0,0,0,0.08)),
+    url("images/banner-anime.jpg") center/cover no-repeat;
+}
+
+/* TYPE FILTER (Anime & Cartoon only) */
+.type-filter {
+  display: flex;
+  gap: 10px;
+  padding: 14px 16px;
+}
+.type-filter button {
+  height: 30px;
+  padding: 0 14px;
+  border-radius: 20px;
+  border: 1px solid #555;
+  background: transparent;
+  color: #fff;
+  font-size: 12px;
+}
+.type-filter .active {
+  background: #ffcc00;
+  color: #000;
+  border-color: #ffcc00;
+}
+
+/* GRID – 4 PER ROW (SIZE SAME AS HOME CARD) */
+.grid-wrap {
+  padding: 0 16px;
+}
+.anime-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  animation: fadeUp .4s ease both;
+}
+
+/* PAGINATION */
+.pagination {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  padding: 20px 0 80px;
+}
+.pagination button {
+  min-width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  border: 1px solid #444;
+  background: transparent;
+  color: #fff;
+  font-size: 12px;
+}
+.pagination .active {
+  background: #ffcc00;
+  color: #000;
+  border-color: #ffcc00;
+}
