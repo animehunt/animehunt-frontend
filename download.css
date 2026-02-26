@@ -1,0 +1,53 @@
+.download-title {
+  padding: 20px 16px;
+}
+.download-title h1 {
+  font-size: 22px;
+}
+
+.season-block {
+  padding: 0 16px 20px;
+}
+.season-block h2 {
+  font-size: 18px;
+  margin: 16px 0;
+}
+
+.episode-block {
+  background: #11162a;
+  border-radius: 10px;
+  padding: 12px;
+  margin-bottom: 16px;
+}
+
+.episode-block h3 {
+  font-size: 14px;
+  margin-bottom: 10px;
+}
+
+.host-block {
+  margin-bottom: 10px;
+}
+
+.host-block h4 {
+  font-size: 12px;
+  color: #ffcc00;
+  margin-bottom: 6px;
+}
+
+.quality-links {
+  display: flex;
+  gap: 10px;
+}
+.quality-links a {
+  font-size: 12px;
+  padding: 6px 10px;
+  border-radius: 6px;
+  border: 1px solid #555;
+  color: #fff;
+  text-decoration: none;
+}
+.quality-links a:hover {
+  background: #ffcc00;
+  color: #000;
+}
