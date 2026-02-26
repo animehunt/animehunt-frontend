@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Anime – AnimeHunt</title>
+
+  <!-- SEO -->
+  <meta name="description" content="Watch official Hindi dubbed anime on AnimeHunt. Browse anime movies and series with fast streaming and downloads."/>
+  <link rel="canonical" href="https://animehunt/anime"/>
+
+  <!-- CSS -->
+  <link rel="stylesheet" href="style.css"/>
+  <link rel="stylesheet" href="anime.css"/>
+</head>
+<body>
+
+<!-- HEADER (UNCHANGED – same as home) -->
+<header class="main-header">
+  <div class="menu-btn">☰</div>
+  <div class="logo">
+    <span class="anime">anime</span><span class="hunt">hunt</span>
+  </div>
+  <input type="text" class="search-bar" placeholder="Search movie"/>
+</header>
+
+<!-- SIDEBAR (UNCHANGED) -->
+<aside class="sidebar">
+  <div class="close-btn">✕</div>
+  <nav class="sidebar-menu">
+    <a href="about.html">About AnimeHunt</a>
+    <a href="privacy.html">Privacy Policy</a>
+    <a href="disclaimer.html">Disclaimer</a>
+    <a href="dmca.html">DMCA</a>
+
+    <a href="https://t.me/toons15" target="_blank">Telegram</a>
+  </nav>
+</aside>
+<div class="overlay"></div>
+
+<!-- BANNER (ANIME SPECIFIC) -->
+<section class="page-banner anime-banner">
+  <h1>Anime</h1>
+</section>
+
+<!-- FILTER (ONLY FOR ANIME PAGE) -->
+<section class="type-filter">
+  <button class="active">ALL</button>
+  <button>MOVIES</button>
+  <button>SERIES</button>
+</section>
+
+<!-- GRID (20 ITEMS PER PAGE) -->
+<section class="grid-wrap">
+  <div class="anime-grid" data-type-page="anime"></div>
+</section>
+  
+<!-- PAGINATION (BOTTOM ONLY) -->
+<nav class="pagination">
+  <button disabled>Prev</button>
+  <button class="active">1</button>
+  <button>2</button>
+  <button>3</button>
+  <button>Next</button>
+</nav>
+
+<!-- A–Z NAV (ALLOWED HERE) -->
+<section class="az-nav">
+  <span>A</span><span>B</span><span>C</span><span>D</span><span>E</span>
+  <span>F</span><span>G</span><span>H</span><span>I</span><span>J</span>
+  <span>K</span><span>L</span><span>M</span><span>N</span><span>O</span>
+  <span>P</span><span>Q</span><span>R</span><span>S</span><span>T</span>
+  <span>U</span><span>V</span><span>W</span><span>X</span><span>Y</span><span>Z</span>
+</section>
+
+<!-- FOOTER (GLOBAL – SCROLL BOTTOM) -->
+<footer class="main-footer">
+  <div class="footer-links">
+    <a href="about.html">About AnimeHunt</a>
+    <a href="disclaimer.html">Disclaimer</a>
+    <a href="dmca.html">DMCA</a>
+    <a href="#">Telegram</a>
+  </div>
+  <div class="copyright">
+    © 2026 AnimeHunt. All Rights Reserved.
+  </div>
+</footer>
+
+<!-- BOTTOM NAV (UNCHANGED) -->
+<nav class="bottom-nav">
+  <a href="anime.html" class="nav-item active">ANIME</a>
+  <a href="movies.html" class="nav-item">MOVIES</a>
+  <a href="index.html" class="nav-item">HOME</a>
+  <a href="series.html" class="nav-item">SERIES</a>
+  <a href="cartoon.html" class="nav-item">CARTOON</a>
+</nav>
+
+  <script src="js/api.js"></script>
+<script src="script.js"></script>
+</body>
+</html>
