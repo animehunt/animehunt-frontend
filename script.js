@@ -1,3 +1,5 @@
+console.log("SCRIPT LOADED SUCCESSFULLY");
+alert("JS FILE RUNNING");
 /* =====================================================
    UNIVERSAL SIDEBAR ENGINE (SAFE + STABLE)
 ===================================================== */
