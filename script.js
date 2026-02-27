@@ -1,6 +1,3 @@
-console.log("SCRIPT STARTED");
-document.body.style.background = "red";
-alert("JS RUNNING");
 /* =====================================================
    UNIVERSAL SIDEBAR ENGINE (SAFE + STABLE)
 ===================================================== */
