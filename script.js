@@ -773,3 +773,21 @@ document.addEventListener("DOMContentLoaded", function () {
   });
 
   // Close wh
+/* ================= HOME HERO PLAY BUTTON ================= */
+
+(function () {
+
+  if (!location.pathname.endsWith("index.html") &&
+      location.pathname !== "/" ) return;
+
+  const playBtn = document.querySelector(".play-btn");
+  if (!playBtn) return;
+
+  playBtn.addEventListener("click", function () {
+
+    // Agar banner fixed hai
+    window.location.href = "details.html?anime=raya-and-the-last-dragon";
+
+  });
+
+})();
