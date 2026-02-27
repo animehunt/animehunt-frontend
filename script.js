@@ -775,3 +775,11 @@ document.addEventListener("DOMContentLoaded", function () {
   });
 
   // Close wh
+   // Close dropdown when clicking outside
+  document.addEventListener("click", function (e) {
+    if (!searchInput.contains(e.target) && !dropdown.contains(e.target)) {
+      dropdown.style.display = "none";
+    }
+  });
+
+})();  // <-- THIS WAS MISSING
