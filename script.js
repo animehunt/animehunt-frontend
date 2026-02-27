@@ -1,24 +1,38 @@
-/* =====================================================
-   UNIVERSAL SIDEBAR ENGINE (SAFE + STABLE)
-===================================================== */
+/* =========================================
+   ANIMEHUNT FRONTEND ENGINE (CLEAN BUILD)
+========================================= */
 
-document.addEventListener("DOMContentLoaded", function () {
+const API_BASE = "https://animehunt-backend-rhg6.onrender.com";
+
+/* =========================================
+   DOM READY
+========================================= */
+document.addEventListener("DOMContentLoaded", () => {
+
+  initSidebar();
+  initHome();
+  initSearch();
+
+});
+
+
+/* =========================================
+   SIDEBAR ENGINE
+========================================= */
+function initSidebar() {
 
   const menuBtn = document.querySelector(".menu-btn");
   const sidebar = document.querySelector(".sidebar");
-  const closeBtn = document.querySelector(".close-btn");
   const overlay = document.querySelector(".overlay");
+  const closeBtn = document.querySelector(".close-btn");
 
-  if (!menuBtn || !sidebar || !overlay) {
-    console.warn("Sidebar elements missing on this page");
-    return;
-  }
+  if (!menuBtn || !sidebar || !overlay) return;
 
-  function openSidebar() {
+  menuBtn.addEventListener("click", () => {
     sidebar.classList.add("active");
     overlay.classList.add("active");
     document.body.style.overflow = "hidden";
-  }
+  });
 
   function closeSidebar() {
     sidebar.classList.remove("active");
@@ -26,681 +40,93 @@ document.addEventListener("DOMContentLoaded", function () {
     document.body.style.overflow = "";
   }
 
-  menuBtn.addEventListener("click", openSidebar);
-
-  if (closeBtn) {
-    closeBtn.addEventListener("click", closeSidebar);
-  }
-
+  closeBtn?.addEventListener("click", closeSidebar);
   overlay.addEventListener("click", closeSidebar);
 
-});
+}
 
-/* =====================================================
-   DETAILS PAGE COMPLETE ENGINE (STABLE)
-===================================================== */
 
-(function () {
+/* =========================================
+   HOME PAGE LOADER
+========================================= */
+async function initHome() {
 
-  if (!location.pathname.includes("details")) return;
+  const rows = document.querySelectorAll(".movie-scroll");
+  if (!rows.length) return;
 
-  const API_BASE = "https://animehunt-backend-rhg6.onrender.com";
-  const TELEGRAM_LINK = "https://t.me/toons15";
+  try {
 
-  const slug = new URLSearchParams(location.search).get("anime");
-  if (!slug) return;
+    const res = await fetch(API_BASE + "/api/anime");
+    const json = await res.json();
+    if (!json.success || !json.data) return;
 
-  async function loadDetails() {
+    const allAnime = json.data;
 
-    try {
+    rows.forEach(row => {
 
-      const res = await fetch(API_BASE + "/api/anime");
-      const json = await res.json();
-      if (!json.success || !json.data) return;
+      const category = row.dataset.row;
+      row.innerHTML = "";
 
-      const anime = json.data.find(a => a.slug === slug);
-      if (!anime) return;
+      let filtered = allAnime;
 
-      /* ================= HERO ================= */
-
-      document.title = anime.title + " – AnimeHunt";
-
-      const heroBg = document.getElementById("heroBg");
-      if (heroBg && anime.banner) {
-        heroBg.style.background =
-          `linear-gradient(to bottom,rgba(0,0,0,.4),#0b0f1a),
-           url("${anime.banner}") center/cover no-repeat`;
+      if (category === "ongoing") {
+        filtered = allAnime.filter(a => a.status === "ongoing");
       }
 
-      document.getElementById("posterImg")?.setAttribute("src", anime.thumbnail);
-      document.getElementById("animeTitle").innerText = anime.title;
-
-      document.getElementById("animeMeta").innerHTML = `
-        <span>${anime.year || "-"}</span>
-        <span class="imdb">⭐ ${anime.rating || "-"}</span>
-        <span>${anime.type || "Anime"}</span>
-      `;
-
-      document.getElementById("animeDesc").innerText =
-        anime.shortDescription || "";
-
-      /* ================= ABOUT ================= */
-
-      document.getElementById("aboutList").innerHTML = `
-        <li><b>Genre:</b> ${anime.genre || "-"}</li>
-        <li><b>Status:</b> ${anime.status || "-"}</li>
-        <li><b>Total Episodes:</b> ${
-          anime.type === "movie"
-            ? 1
-            : anime.episodes?.length || "-"
-        }</li>
-      `;
-
-      document.getElementById("aboutDesc").innerText =
-        anime.description || "";
-
-      /* ================= BUTTONS ================= */
-
-      // Subscribe
-      document.querySelector(".subscribe")?.addEventListener("click", () => {
-        window.open(TELEGRAM_LINK, "_blank");
-      });
-
-      // Watch
-      document.querySelector(".watch")?.addEventListener("click", () => {
-        if (anime.type === "movie") {
-          window.location.href = `watch.html?anime=${anime.slug}`;
-        } else {
-          window.location.href = `watch.html?anime=${anime.slug}&ep=1`;
-        }
-      });
-
-      // Download
-      document.querySelector(".download")?.addEventListener("click", () => {
-        window.location.href = `download.html?anime=${anime.slug}`;
-      });
-
-      /* ================= MOVIE CASE ================= */
-
-      if (anime.type === "movie") {
-        document.querySelector(".ep-tabs")?.remove();
-        document.getElementById("seasonList")?.remove();
+      else if (category === "action") {
+        filtered = allAnime.filter(a => a.genre?.toLowerCase().includes("action"));
       }
 
-      /* ================= EPISODES ================= */
-
-      if (anime.type !== "movie" && anime.episodes?.length) {
-
-        const episodeGrid = document.getElementById("episodeGrid");
-        const seasonBtn = document.getElementById("seasonBtn");
-        const allBtn = document.getElementById("allBtn");
-        const seasonList = document.getElementById("seasonList");
-
-        const seasons = {};
-
-        anime.episodes.forEach(ep => {
-          const seasonNo = ep.season || 1;
-          if (!seasons[seasonNo]) seasons[seasonNo] = [];
-          seasons[seasonNo].push(ep);
-        });
-
-        function renderEpisodes(list) {
-          episodeGrid.innerHTML = "";
-
-          list.forEach(ep => {
-
-            const card = document.createElement("div");
-            card.className = "ep-card";
-
-            card.innerHTML = `
-              <div class="ep-thumb">
-                <img src="${ep.thumbnail || anime.thumbnail}">
-                <div class="ep-no">EP ${ep.number}</div>
-              </div>
-              <p>${ep.title || "Episode " + ep.number}</p>
-            `;
-
-            card.onclick = () => {
-              window.location.href =
-                `watch.html?anime=${anime.slug}&ep=${ep.number}`;
-            };
-
-            episodeGrid.appendChild(card);
-
-          });
-        }
-
-        // Default render first season
-        const firstSeason = Object.keys(seasons)[0];
-        renderEpisodes(seasons[firstSeason]);
-
-        // Season dropdown toggle
-        seasonBtn?.addEventListener("click", () => {
-          seasonList.style.display =
-            seasonList.style.display === "block"
-              ? "none"
-              : "block";
-        });
-
-        // Build dropdown
-        seasonList.innerHTML = "";
-        Object.keys(seasons).forEach(seasonNo => {
-
-          const div = document.createElement("div");
-          div.innerText = "Season " + seasonNo;
-
-          div.onclick = () => {
-            seasonBtn.innerText = "SEASON " + seasonNo;
-            seasonList.style.display = "none";
-            renderEpisodes(seasons[seasonNo]);
-          };
-
-          seasonList.appendChild(div);
-        });
-
-        // All episodes
-        allBtn?.addEventListener("click", () => {
-          renderEpisodes(anime.episodes);
-        });
-
+      else if (category === "romance") {
+        filtered = allAnime.filter(a => a.genre?.toLowerCase().includes("romance"));
       }
 
-      /* ================= RELATED ================= */
-
-      const relatedGrid = document.getElementById("relatedGrid");
-      if (relatedGrid) {
-
-        relatedGrid.innerHTML = "";
-
-        const related = json.data
-          .filter(a =>
-            a.genre === anime.genre &&
-            a.slug !== anime.slug
-          )
-          .slice(0, 8);
-
-        related.forEach(a => {
-
-          const card = document.createElement("div");
-          card.className = "rel-card";
-          card.innerText = a.title;
-
-          card.onclick = () => {
-            window.location.href =
-              `details.html?anime=${a.slug}`;
-          };
-
-          relatedGrid.appendChild(card);
-
-        });
-
+      else if (category === "series") {
+        filtered = allAnime.filter(a => a.type === "series");
       }
 
-    } catch (err) {
-      console.error("Details error:", err);
-    }
-
-  }
-
-  loadDetails();
-
-})();
-/* =====================================================
-   WATCH PAGE COMPLETE ENGINE
-===================================================== */
-
-(function () {
-
-  if (!location.pathname.includes("watch")) return;
-
-  const API_BASE = "https://animehunt-backend-rhg6.onrender.com";
-  const TELEGRAM_LINK = "https://t.me/toons15";
-
-  const params = new URLSearchParams(location.search);
-  const slug = params.get("anime");
-  let currentEpNumber = Number(params.get("ep")) || 1;
-
-  if (!slug) return;
-
-  async function loadWatch() {
-
-    try {
-
-      const res = await fetch(API_BASE + "/api/anime");
-      const json = await res.json();
-      if (!json.success || !json.data) return;
-
-      const anime = json.data.find(a => a.slug === slug);
-      if (!anime) return;
-
-      document.title = anime.title + " – Watch – AnimeHunt";
-
-      /* ================= PLAYER ================= */
-
-      const player = document.getElementById("videoPlayer");
-      const serverContainer = document.getElementById("serverButtons");
-      const episodeGrid = document.getElementById("episodeGrid");
-      const seasonBtn = document.getElementById("seasonBtn");
-      const allBtn = document.getElementById("allBtn");
-      const seasonList = document.getElementById("seasonList");
-
-      function getCurrentEpisode() {
-        return anime.episodes?.find(ep => ep.number === currentEpNumber);
+      else if (category === "top-rated") {
+        filtered = [...allAnime].sort((a,b)=> b.rating - a.rating);
       }
 
-      function loadServers(ep) {
-
-        if (!ep || !ep.servers || !ep.servers.length) return;
-
-        serverContainer.innerHTML = "";
-
-        ep.servers.forEach((server, index) => {
-
-          const btn = document.createElement("button");
-          btn.innerText = server.name;
-          if (index === 0) btn.classList.add("active");
-
-          btn.onclick = () => {
-
-            serverContainer.querySelectorAll("button")
-              .forEach(b => b.classList.remove("active"));
-
-            btn.classList.add("active");
-
-            player.src = server.url;
-          };
-
-          serverContainer.appendChild(btn);
-
-        });
-
-        // default load first server
-        player.src = ep.servers[0].url;
+      else if (category === "most-viewed") {
+        filtered = [...allAnime].sort((a,b)=> b.views - a.views);
       }
 
-      function renderEpisodes(list) {
+      filtered.slice(0,10).forEach(anime => {
 
-        episodeGrid.innerHTML = "";
+        const card = document.createElement("div");
+        card.className = "movie-card";
+        card.innerHTML = `
+          <img src="${anime.thumbnail}" alt="">
+          <span>${anime.title}</span>
+        `;
 
-        list.forEach(ep => {
-
-          const card = document.createElement("div");
-          card.className = "ep-card";
-
-          if (ep.number === currentEpNumber) {
-            card.classList.add("active");
-          }
-
-          card.innerHTML = `
-            <div class="ep-thumb">
-              <img src="${ep.thumbnail || anime.thumbnail}">
-              <div class="ep-no">EP ${ep.number}</div>
-            </div>
-            <p>${ep.title || "Episode " + ep.number}</p>
-          `;
-
-          card.onclick = () => {
-            currentEpNumber = ep.number;
-            loadServers(ep);
-            renderEpisodes(list);
-          };
-
-          episodeGrid.appendChild(card);
-
-        });
-      }
-
-      /* ================= MOVIE CASE ================= */
-
-      if (anime.type === "movie") {
-
-        document.querySelector(".ep-tabs")?.remove();
-        document.getElementById("seasonList")?.remove();
-
-        if (anime.episodes?.length) {
-          loadServers(anime.episodes[0]);
-        }
-
-        return;
-      }
-
-      /* ================= SERIES CASE ================= */
-
-      if (!anime.episodes?.length) return;
-
-      const seasons = {};
-
-      anime.episodes.forEach(ep => {
-        const seasonNo = ep.season || 1;
-        if (!seasons[seasonNo]) seasons[seasonNo] = [];
-        seasons[seasonNo].push(ep);
-      });
-
-      const currentEpisode = getCurrentEpisode();
-      loadServers(currentEpisode);
-
-      const firstSeason = Object.keys(seasons)[0];
-      renderEpisodes(seasons[firstSeason]);
-
-      /* Season dropdown */
-
-      seasonBtn?.addEventListener("click", () => {
-        seasonList.style.display =
-          seasonList.style.display === "block"
-            ? "none"
-            : "block";
-      });
-
-      seasonList.innerHTML = "";
-
-      Object.keys(seasons).forEach(seasonNo => {
-
-        const div = document.createElement("div");
-        div.innerText = "Season " + seasonNo;
-
-        div.onclick = () => {
-          seasonBtn.innerText = "SEASON " + seasonNo;
-          seasonList.style.display = "none";
-          renderEpisodes(seasons[seasonNo]);
+        card.onclick = () => {
+          window.location.href = `details.html?anime=${anime.slug}`;
         };
 
-        seasonList.appendChild(div);
+        row.appendChild(card);
 
       });
 
-      /* All episodes */
-
-      allBtn?.addEventListener("click", () => {
-        renderEpisodes(anime.episodes);
-      });
-
-      /* Subscribe */
-
-      document.querySelector(".subscribe")?.addEventListener("click", () => {
-        window.open(TELEGRAM_LINK, "_blank");
-      });
-
-    } catch (err) {
-      console.error("Watch page error:", err);
-    }
-
-  }
-
-  loadWatch();
-
-})();
-/* =====================================================
-   ANIME & CARTOON FILTER + PAGINATION ENGINE
-===================================================== */
-
-(function () {
-
-  const API_BASE = "https://animehunt-backend-rhg6.onrender.com";
-
-  const grid =
-    document.querySelector(".anime-grid") ||
-    document.querySelector(".cartoon-grid");
-
-  const filterBar = document.querySelector(".type-filter");
-  const pagination = document.querySelector(".pagination");
-
-  if (!grid || !pagination) return;
-
-  const perPage = 20;
-  let currentPage = 1;
-  let allData = [];
-  let filteredData = [];
-
-  async function loadData() {
-
-    try {
-
-      const res = await fetch(API_BASE + "/api/anime");
-      const json = await res.json();
-      if (!json.success || !json.data) return;
-
-      allData = json.data;
-
-      // Page type filter (anime/cartoon)
-      if (grid.dataset.typePage) {
-        allData = allData.filter(a =>
-          a.type &&
-          a.type.toLowerCase() === grid.dataset.typePage.toLowerCase()
-        );
-      }
-
-      filteredData = [...allData];
-
-      renderPage(1);
-
-    } catch (err) {
-      console.error("Filter engine error:", err);
-    }
-
-  }
-
-  function renderPage(page) {
-
-    currentPage = page;
-
-    const totalPages = Math.ceil(filteredData.length / perPage);
-    if (page < 1 || page > totalPages) return;
-
-    grid.innerHTML = "";
-
-    const start = (page - 1) * perPage;
-    const end = start + perPage;
-
-    filteredData.slice(start, end).forEach(anime => {
-
-      const card = document.createElement("div");
-      card.className = "movie-card";
-      card.dataset.slug = anime.slug;
-      card.dataset.type = anime.type;
-
-      card.innerHTML = `
-        <img src="${anime.thumbnail}" alt="${anime.title}">
-        <span>${anime.title}</span>
-      `;
-
-      grid.appendChild(card);
-
     });
 
-    renderPagination(totalPages);
-
+  } catch (err) {
+    console.error("Home load error:", err);
   }
 
-  function renderPagination(totalPages) {
-
-    pagination.innerHTML = "";
-
-    if (totalPages <= 1) return;
-
-    const prev = document.createElement("button");
-    prev.textContent = "Prev";
-    prev.disabled = currentPage === 1;
-    prev.onclick = () => renderPage(currentPage - 1);
-    pagination.appendChild(prev);
-
-    for (let i = 1; i <= totalPages; i++) {
-      const btn = document.createElement("button");
-      btn.textContent = i;
-      if (i === currentPage) btn.classList.add("active");
-      btn.onclick = () => renderPage(i);
-      pagination.appendChild(btn);
-    }
-
-    const next = document.createElement("button");
-    next.textContent = "Next";
-    next.disabled = currentPage === totalPages;
-    next.onclick = () => renderPage(currentPage + 1);
-    pagination.appendChild(next);
-
-  }
+}
 
 
-  /* ================= FILTER ================= */
-
-  if (filterBar) {
-
-    filterBar.addEventListener("click", function (e) {
-
-      if (e.target.tagName !== "BUTTON") return;
-
-      const filter = e.target.innerText.toLowerCase();
-
-      filterBar.querySelectorAll("button")
-        .forEach(btn => btn.classList.remove("active"));
-
-      e.target.classList.add("active");
-
-      if (filter === "all") {
-        filteredData = [...allData];
-      }
-      else if (filter === "movies") {
-        filteredData = allData.filter(a =>
-          a.type && a.type.toLowerCase() === "movie"
-        );
-      }
-      else if (filter === "series") {
-        filteredData = allData.filter(a =>
-          a.type && a.type.toLowerCase() === "series"
-        );
-      }
-
-      renderPage(1);
-
-    });
-
-  }
-
-  loadData();
-
-})();
-/* =====================================================
-   UNIVERSAL A–Z ENGINE (ALL LISTING PAGES)
-===================================================== */
-
-(function () {
-
-  const grid =
-    document.querySelector(".anime-grid") ||
-    document.querySelector(".movies-grid") ||
-    document.querySelector(".series-grid") ||
-    document.querySelector(".cartoon-grid");
-
-  const azNav = document.querySelector(".az-nav");
-  const pagination = document.querySelector(".pagination");
-
-  if (!grid || !azNav) return;
-
-  const perPage = 20;
-  let currentPage = 1;
-
-  function getAllCards() {
-    return Array.from(grid.querySelectorAll(".movie-card"));
-  }
-
-  function filterByLetter(letter) {
-
-    const allCards = getAllCards();
-
-    if (letter === "#") {
-      return allCards.filter(card => {
-        const title = card.innerText.trim();
-        return !/^[a-zA-Z]/.test(title);
-      });
-    }
-
-    return allCards.filter(card => {
-      const title = card.innerText.trim().toLowerCase();
-      return title.startsWith(letter.toLowerCase());
-    });
-
-  }
-
-  function renderPage(cards, page) {
-
-    currentPage = page;
-
-    const totalPages = Math.ceil(cards.length / perPage);
-
-    getAllCards().forEach(card => {
-      card.style.display = "none";
-    });
-
-    const start = (page - 1) * perPage;
-    const end = start + perPage;
-
-    cards.slice(start, end).forEach(card => {
-      card.style.display = "block";
-    });
-
-    renderPagination(cards, totalPages);
-
-  }
-
-  function renderPagination(cards, totalPages) {
-
-    if (!pagination) return;
-
-    pagination.innerHTML = "";
-
-    if (totalPages <= 1) return;
-
-    const prev = document.createElement("button");
-    prev.textContent = "Prev";
-    prev.disabled = currentPage === 1;
-    prev.onclick = () => renderPage(cards, currentPage - 1);
-    pagination.appendChild(prev);
-
-    for (let i = 1; i <= totalPages; i++) {
-      const btn = document.createElement("button");
-      btn.textContent = i;
-      if (i === currentPage) btn.classList.add("active");
-      btn.onclick = () => renderPage(cards, i);
-      pagination.appendChild(btn);
-    }
-
-    const next = document.createElement("button");
-    next.textContent = "Next";
-    next.disabled = currentPage === totalPages;
-    next.onclick = () => renderPage(cards, currentPage + 1);
-    pagination.appendChild(next);
-
-  }
-
-  azNav.addEventListener("click", function (e) {
-
-    if (e.target.tagName !== "SPAN") return;
-
-    const letter = e.target.innerText.trim();
-
-    azNav.querySelectorAll("span")
-      .forEach(l => l.classList.remove("active"));
-
-    e.target.classList.add("active");
-
-    const filtered = filterByLetter(letter);
-
-    renderPage(filtered, 1);
-
-  });
-
-})();
-/* =====================================================
-   LIVE DROPDOWN SEARCH ENGINE (ADMIN DATA)
-===================================================== */
-
-(function () {
-
-  const API_BASE = "https://animehunt-backend-rhg6.onrender.com";
+/* =========================================
+   LIVE SEARCH ENGINE
+========================================= */
+function initSearch() {
 
   const searchInput = document.querySelector(".search-bar");
   if (!searchInput) return;
 
-  // Create dropdown container
   const dropdown = document.createElement("div");
   dropdown.className = "search-dropdown";
   dropdown.style.display = "none";
@@ -708,19 +134,13 @@ document.addEventListener("DOMContentLoaded", function () {
 
   let allData = [];
 
-  async function loadData() {
-    try {
-      const res = await fetch(API_BASE + "/api/anime");
-      const json = await res.json();
+  fetch(API_BASE + "/api/anime")
+    .then(res => res.json())
+    .then(json => {
       if (json.success && json.data) {
         allData = json.data;
       }
-    } catch (err) {
-      console.error("Search load error:", err);
-    }
-  }
-
-  loadData();
+    });
 
   function positionDropdown() {
     const rect = searchInput.getBoundingClientRect();
@@ -742,7 +162,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
     const results = allData
       .filter(a => a.title.toLowerCase().includes(query))
-      .slice(0, 8);
+      .slice(0,8);
 
     if (!results.length) {
       dropdown.style.display = "none";
@@ -771,14 +191,11 @@ document.addEventListener("DOMContentLoaded", function () {
     dropdown.style.display = "block";
 
   });
-   
- fetch("https://animehunt-backend-rhg6.onrender.com/api/anime")
-  .then(res => res.json())
-  .then(data => {
-    console.log("DATA:", data);
-    alert("Anime Count: " + (data.data?.length || 0));
-  })
-  .catch(err => {
-    alert("Fetch error");
-    console.error(err);
+
+  document.addEventListener("click", function (e) {
+    if (!searchInput.contains(e.target) && !dropdown.contains(e.target)) {
+      dropdown.style.display = "none";
+    }
   });
+
+}
