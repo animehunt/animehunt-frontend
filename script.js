@@ -1,5 +1,3 @@
-console.log("SCRIPT LOADED SUCCESSFULLY");
-alert("JS FILE RUNNING");
 /* =====================================================
    UNIVERSAL SIDEBAR ENGINE (SAFE + STABLE)
 ===================================================== */
@@ -773,13 +771,14 @@ document.addEventListener("DOMContentLoaded", function () {
     dropdown.style.display = "block";
 
   });
-
-  // Close wh
-   // Close dropdown when clicking outside
-  document.addEventListener("click", function (e) {
-    if (!searchInput.contains(e.target) && !dropdown.contains(e.target)) {
-      dropdown.style.display = "none";
-    }
+   
+ fetch("https://animehunt-backend-rhg6.onrender.com/api/anime")
+  .then(res => res.json())
+  .then(data => {
+    console.log("DATA:", data);
+    alert("Anime Count: " + (data.data?.length || 0));
+  })
+  .catch(err => {
+    alert("Fetch error");
+    console.error(err);
   });
-
-})();  // <-- THIS WAS MISSING
