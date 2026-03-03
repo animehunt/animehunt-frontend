@@ -15,36 +15,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
 /* =========================================
-   SIDEBAR ENGINE
-========================================= */
-function initSidebar() {
-
-  const menuBtn = document.querySelector(".menu-btn");
-  const sidebar = document.querySelector(".sidebar");
-  const overlay = document.querySelector(".overlay");
-  const closeBtn = document.querySelector(".close-btn");
-
-  if (!menuBtn || !sidebar || !overlay) return;
-
-  menuBtn.addEventListener("click", () => {
-    sidebar.classList.add("active");
-    overlay.classList.add("active");
-    document.body.style.overflow = "hidden";
-  });
-
-  function closeSidebar() {
-    sidebar.classList.remove("active");
-    overlay.classList.remove("active");
-    document.body.style.overflow = "";
-  }
-
-  closeBtn?.addEventListener("click", closeSidebar);
-  overlay.addEventListener("click", closeSidebar);
-
-}
-
-
-/* =========================================
    HOME PAGE LOADER
 ========================================= */
 async function initHome() {
@@ -56,7 +26,8 @@ async function initHome() {
 
     const res = await fetch(API_BASE + "/api/anime");
     const json = await res.json();
-    if (!json.success || !json.data) return;
+
+    if (!json.success) return;
 
     const allAnime = json.data;
 
@@ -65,43 +36,36 @@ async function initHome() {
       const category = row.dataset.row;
       row.innerHTML = "";
 
-      let filtered = allAnime;
+      let filtered = [...allAnime];
 
       if (category === "ongoing") {
         filtered = allAnime.filter(a => a.status === "ongoing");
       }
 
-      else if (category === "action") {
-        filtered = allAnime.filter(a => a.genre?.toLowerCase().includes("action"));
-      }
-
-      else if (category === "romance") {
-        filtered = allAnime.filter(a => a.genre?.toLowerCase().includes("romance"));
-      }
-
-      else if (category === "series") {
+      if (category === "series") {
         filtered = allAnime.filter(a => a.type === "series");
       }
 
-      else if (category === "top-rated") {
-        filtered = [...allAnime].sort((a,b)=> b.rating - a.rating);
+      if (category === "top-rated") {
+        filtered = [...allAnime].sort((a,b)=> (b.rating || 0) - (a.rating || 0));
       }
 
-      else if (category === "most-viewed") {
-        filtered = [...allAnime].sort((a,b)=> b.views - a.views);
+      if (category === "most-viewed") {
+        filtered = [...allAnime].sort((a,b)=> (b.views || 0) - (a.views || 0));
       }
 
       filtered.slice(0,10).forEach(anime => {
 
         const card = document.createElement("div");
         card.className = "movie-card";
+
         card.innerHTML = `
-          <img src="${anime.thumbnail}" alt="">
+          <img src="${anime.poster || 'https://via.placeholder.com/300x450'}">
           <span>${anime.title}</span>
         `;
 
         card.onclick = () => {
-          window.location.href = `details.html?anime=${anime.slug}`;
+          window.location.href = `details.html?slug=${anime.slug}`;
         };
 
         row.appendChild(card);
@@ -113,7 +77,6 @@ async function initHome() {
   } catch (err) {
     console.error("Home load error:", err);
   }
-
 }
 
 
@@ -135,18 +98,10 @@ function initSearch() {
   fetch(API_BASE + "/api/anime")
     .then(res => res.json())
     .then(json => {
-      if (json.success && json.data) {
+      if (json.success) {
         allData = json.data;
       }
     });
-
-  function positionDropdown() {
-    const rect = searchInput.getBoundingClientRect();
-    dropdown.style.position = "absolute";
-    dropdown.style.top = rect.bottom + window.scrollY + "px";
-    dropdown.style.left = rect.left + window.scrollX + "px";
-    dropdown.style.width = rect.width + "px";
-  }
 
   searchInput.addEventListener("input", function () {
 
@@ -162,31 +117,24 @@ function initSearch() {
       .filter(a => a.title.toLowerCase().includes(query))
       .slice(0,8);
 
-    if (!results.length) {
-      dropdown.style.display = "none";
-      return;
-    }
-
     results.forEach(anime => {
 
       const item = document.createElement("div");
       item.className = "search-item";
 
       item.innerHTML = `
-        <img src="${anime.thumbnail}" alt="">
+        <img src="${anime.poster || ''}">
         <span>${anime.title}</span>
       `;
 
       item.onclick = () => {
-        window.location.href = `details.html?anime=${anime.slug}`;
+        window.location.href = `details.html?slug=${anime.slug}`;
       };
 
       dropdown.appendChild(item);
-
     });
 
-    positionDropdown();
-    dropdown.style.display = "block";
+    dropdown.style.display = results.length ? "block" : "none";
 
   });
 
