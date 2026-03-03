@@ -1,97 +1,38 @@
 /* ===============================
-   GLOBAL API CONFIG
+   BASE CONFIG
 ================================ */
-const API_TIMEOUT = 8000; // 8s
-const API_RETRY = 1;
+const BASE_URL = "https://animehunt-backend.animehunt715.workers.dev";
 
 /* ===============================
-   CORE FETCH WRAPPER
+   GENERIC FETCH
 ================================ */
-async function apiRequest(path, options = {}, retryCount = API_RETRY) {
-
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), API_TIMEOUT);
-
+async function apiFetch(endpoint) {
   try {
-
-    const res = await fetch(path, {
-      credentials: "same-origin",
-      signal: controller.signal,
-      headers: {
-        "Accept": "application/json",
-        ...options.headers
-      },
-      ...options
-    });
-
-    clearTimeout(timeoutId);
+    const res = await fetch(BASE_URL + endpoint);
 
     if (!res.ok) {
-
-      // Retry once if network/server error
-      if (retryCount > 0 && res.status >= 500) {
-        return apiRequest(path, options, retryCount - 1);
-      }
-
-      return {
-        success: false,
-        status: res.status,
-        data: null,
-        error: "API error"
-      };
+      throw new Error("API Error");
     }
 
-    let data = null;
-
-    try {
-      data = await res.json();
-    } catch {
-      data = null;
-    }
-
-    return {
-      success: true,
-      status: res.status,
-      data,
-      error: null
-    };
-
+    return await res.json();
   } catch (err) {
-
-    clearTimeout(timeoutId);
-
-    if (err.name === "AbortError") {
-      return {
-        success: false,
-        status: 408,
-        data: null,
-        error: "Request timeout"
-      };
-    }
-
-    return {
-      success: false,
-      status: 0,
-      data: null,
-      error: "Network error"
-    };
+    console.error("API Failed:", err);
+    return [];
   }
 }
 
 /* ===============================
-   SIMPLE GET HELPER
+   ANIME FUNCTIONS
 ================================ */
-async function apiGet(path) {
-  return apiRequest(path, { method: "GET" });
+async function getAllAnime() {
+  return await apiFetch("/api/admin/anime");
 }
 
-/* ===============================
-   SIMPLE POST HELPER
-================================ */
-async function apiPost(path, body) {
-  return apiRequest(path, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body)
-  });
+async function getTrendingAnime() {
+  return await apiFetch("/api/admin/anime?status=ongoing&home=yes");
+}
+
+async function getAnimeBySlug(slug) {
+  const list = await apiFetch("/api/admin/anime?search=" + slug);
+  return list.find(a => a.slug === slug);
 }
