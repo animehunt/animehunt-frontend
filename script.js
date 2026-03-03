@@ -13,135 +13,184 @@ document.addEventListener("DOMContentLoaded", () => {
   initSearch();
 });
 
+/* =========================================
+SIDEBAR ENGINE
+========================================= */
+function initSidebar() {
+
+const menuBtn = document.querySelector(".menu-btn");
+const sidebar = document.querySelector(".sidebar");
+const overlay = document.querySelector(".overlay");
+const closeBtn = document.querySelector(".close-btn");
+
+if (!menuBtn || !sidebar || !overlay) return;
+
+menuBtn.addEventListener("click", () => {
+sidebar.classList.add("active");
+overlay.classList.add("active");
+document.body.style.overflow = "hidden";
+});
+
+function closeSidebar() {
+sidebar.classList.remove("active");
+overlay.classList.remove("active");
+document.body.style.overflow = "";
+}
+
+closeBtn?.addEventListener("click", closeSidebar);
+overlay.addEventListener("click", closeSidebar);
+
+}
 
 /* =========================================
-   HOME PAGE LOADER
+HOME PAGE LOADER
 ========================================= */
 async function initHome() {
 
-  const rows = document.querySelectorAll(".movie-scroll");
-  if (!rows.length) return;
+const rows = document.querySelectorAll(".movie-scroll");
+if (!rows.length) return;
 
-  try {
+try {
 
-    const res = await fetch(API_BASE + "/api/anime");
-    const json = await res.json();
+const res = await fetch(API_BASE + "/api/anime");  
+const json = await res.json();  
+if (!json.success || !json.data) return;  
 
-    if (!json.success) return;
+const allAnime = json.data;  
 
-    const allAnime = json.data;
+rows.forEach(row => {  
 
-    rows.forEach(row => {
+  const category = row.dataset.row;  
+  row.innerHTML = "";  
 
-      const category = row.dataset.row;
-      row.innerHTML = "";
+  let filtered = allAnime;  
 
-      let filtered = [...allAnime];
+  if (category === "ongoing") {  
+    filtered = allAnime.filter(a => a.status === "ongoing");  
+  }  
 
-      if (category === "ongoing") {
-        filtered = allAnime.filter(a => a.status === "ongoing");
-      }
+  else if (category === "action") {  
+    filtered = allAnime.filter(a => a.genre?.toLowerCase().includes("action"));  
+  }  
 
-      if (category === "series") {
-        filtered = allAnime.filter(a => a.type === "series");
-      }
+  else if (category === "romance") {  
+    filtered = allAnime.filter(a => a.genre?.toLowerCase().includes("romance"));  
+  }  
 
-      if (category === "top-rated") {
-        filtered = [...allAnime].sort((a,b)=> (b.rating || 0) - (a.rating || 0));
-      }
+  else if (category === "series") {  
+    filtered = allAnime.filter(a => a.type === "series");  
+  }  
 
-      if (category === "most-viewed") {
-        filtered = [...allAnime].sort((a,b)=> (b.views || 0) - (a.views || 0));
-      }
+  else if (category === "top-rated") {  
+    filtered = [...allAnime].sort((a,b)=> b.rating - a.rating);  
+  }  
 
-      filtered.slice(0,10).forEach(anime => {
+  else if (category === "most-viewed") {  
+    filtered = [...allAnime].sort((a,b)=> b.views - a.views);  
+  }  
 
-        const card = document.createElement("div");
-        card.className = "movie-card";
+  filtered.slice(0,10).forEach(anime => {  
 
-        card.innerHTML = `
-          <img src="${anime.poster || 'https://via.placeholder.com/300x450'}">
-          <span>${anime.title}</span>
-        `;
+    const card = document.createElement("div");  
+    card.className = "movie-card";  
+    card.innerHTML = `  
+      <img src="${anime.thumbnail}" alt="">  
+      <span>${anime.title}</span>  
+    `;  
 
-        card.onclick = () => {
-          window.location.href = `details.html?slug=${anime.slug}`;
-        };
+    card.onclick = () => {  
+      window.location.href = `details.html?anime=${anime.slug}`;  
+    };  
 
-        row.appendChild(card);
+    row.appendChild(card);  
 
-      });
+  });  
 
-    });
+});
 
-  } catch (err) {
-    console.error("Home load error:", err);
-  }
+} catch (err) {
+console.error("Home load error:", err);
 }
 
+}
 
 /* =========================================
-   LIVE SEARCH ENGINE
+LIVE SEARCH ENGINE
 ========================================= */
 function initSearch() {
 
-  const searchInput = document.querySelector(".search-bar");
-  if (!searchInput) return;
+const searchInput = document.querySelector(".search-bar");
+if (!searchInput) return;
 
-  const dropdown = document.createElement("div");
-  dropdown.className = "search-dropdown";
-  dropdown.style.display = "none";
-  document.body.appendChild(dropdown);
+const dropdown = document.createElement("div");
+dropdown.className = "search-dropdown";
+dropdown.style.display = "none";
+document.body.appendChild(dropdown);
 
-  let allData = [];
+let allData = [];
 
-  fetch(API_BASE + "/api/anime")
-    .then(res => res.json())
-    .then(json => {
-      if (json.success) {
-        allData = json.data;
-      }
-    });
+fetch(API_BASE + "/api/anime")
+.then(res => res.json())
+.then(json => {
+if (json.success && json.data) {
+allData = json.data;
+}
+});
 
-  searchInput.addEventListener("input", function () {
+function positionDropdown() {
+const rect = searchInput.getBoundingClientRect();
+dropdown.style.position = "absolute";
+dropdown.style.top = rect.bottom + window.scrollY + "px";
+dropdown.style.left = rect.left + window.scrollX + "px";
+dropdown.style.width = rect.width + "px";
+}
 
-    const query = this.value.trim().toLowerCase();
-    dropdown.innerHTML = "";
+searchInput.addEventListener("input", function () {
 
-    if (!query) {
-      dropdown.style.display = "none";
-      return;
-    }
+const query = this.value.trim().toLowerCase();  
+dropdown.innerHTML = "";  
 
-    const results = allData
-      .filter(a => a.title.toLowerCase().includes(query))
-      .slice(0,8);
+if (!query) {  
+  dropdown.style.display = "none";  
+  return;  
+}  
 
-    results.forEach(anime => {
+const results = allData  
+  .filter(a => a.title.toLowerCase().includes(query))  
+  .slice(0,8);  
 
-      const item = document.createElement("div");
-      item.className = "search-item";
+if (!results.length) {  
+  dropdown.style.display = "none";  
+  return;  
+}  
 
-      item.innerHTML = `
-        <img src="${anime.poster || ''}">
-        <span>${anime.title}</span>
-      `;
+results.forEach(anime => {  
 
-      item.onclick = () => {
-        window.location.href = `details.html?slug=${anime.slug}`;
-      };
+  const item = document.createElement("div");  
+  item.className = "search-item";  
 
-      dropdown.appendChild(item);
-    });
+  item.innerHTML = `  
+    <img src="${anime.thumbnail}" alt="">  
+    <span>${anime.title}</span>  
+  `;  
 
-    dropdown.style.display = results.length ? "block" : "none";
+  item.onclick = () => {  
+    window.location.href = `details.html?anime=${anime.slug}`;  
+  };  
 
-  });
+  dropdown.appendChild(item);  
 
-  document.addEventListener("click", function (e) {
-    if (!searchInput.contains(e.target) && !dropdown.contains(e.target)) {
-      dropdown.style.display = "none";
-    }
-  });
+});  
+
+positionDropdown();  
+dropdown.style.display = "block";
+
+});
+
+document.addEventListener("click", function (e) {
+if (!searchInput.contains(e.target) && !dropdown.contains(e.target)) {
+dropdown.style.display = "none";
+}
+});
 
 }
