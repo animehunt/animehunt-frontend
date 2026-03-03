@@ -1,18 +1,16 @@
 /* =========================================
-   ANIMEHUNT FRONTEND ENGINE (CLEAN BUILD)
+   ANIMEHUNT FRONTEND ENGINE (FINAL CF BUILD)
 ========================================= */
 
-const API_BASE = "https://animehunt-backend-rhg6.onrender.com";
+const API_BASE = "https://animehunt-backend.animehunt715.workers.dev";
 
 /* =========================================
    DOM READY
 ========================================= */
 document.addEventListener("DOMContentLoaded", () => {
-
   initSidebar();
   initHome();
   initSearch();
-
 });
 
 
