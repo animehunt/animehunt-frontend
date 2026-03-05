@@ -489,3 +489,47 @@ if(page==="series") loadType("series")
 if(page==="cartoon") loadType("cartoon")
 
 })
+function setSEO(data){
+
+const title = data.title + " Hindi Dubbed Anime | AnimeHunt"
+
+const desc = data.description || "Watch Hindi dubbed anime online"
+
+document.title = title
+
+setMeta("description",desc)
+setMeta("og:title",title)
+setMeta("og:description",desc)
+
+}
+
+function setMeta(name,content){
+
+let tag = document.querySelector(`meta[name="${name}"]`)
+
+if(!tag){
+
+tag = document.createElement("meta")
+
+tag.setAttribute("name",name)
+
+document.head.appendChild(tag)
+
+}
+
+tag.setAttribute("content",content)
+
+}
+function setCanonical(){
+
+const link = document.createElement("link")
+
+link.rel="canonical"
+
+link.href = location.origin + location.pathname + location.search
+
+document.head.appendChild(link)
+
+}
+
+setCanonical()
