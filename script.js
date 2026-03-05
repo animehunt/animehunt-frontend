@@ -194,3 +194,298 @@ dropdown.style.display = "none";
 });
 
 }
+
+/* ===============================
+   CONFIG
+================================ */
+
+const API_BASE = "/api"
+
+/* ===============================
+   CATEGORY LIST (13)
+================================ */
+
+const CATEGORIES = {
+
+ongoing: "Ongoing",
+trending: "Trending Now",
+romance: "Love & Romantic",
+action: "High-Octane Action",
+psychological: "Dark & Psychological",
+
+cinematic: "Cinematic Masterpieces",
+classics: "Modern Classics",
+adventure: "Deep-Dive Adventures",
+slice: "Slice of Life & Drama",
+
+binge: "Binge-Worthy Series",
+hidden: "Hidden Gems",
+top: "Top Rated Globally",
+popular: "Most Viewed"
+
+}
+
+
+/* ===============================
+   UTIL
+================================ */
+
+function qs(name){
+
+return new URLSearchParams(location.search).get(name)
+
+}
+
+function escapeHTML(str){
+
+return String(str||"")
+.replace(/&/g,"&amp;")
+.replace(/</g,"&lt;")
+.replace(/>/g,"&gt;")
+
+}
+
+/* ===============================
+   RENDER ANIME CARD
+================================ */
+
+function renderAnimeCard(a){
+
+return `
+<a href="/anime.html?slug=${a.slug}" class="anime-card">
+
+<img src="${a.poster || ""}" loading="lazy">
+
+<div class="title">
+${escapeHTML(a.title)}
+</div>
+
+</a>
+`
+
+}
+
+/* ===============================
+   LOAD HOMEPAGE
+================================ */
+
+async function loadHome(){
+
+try{
+
+const res = await fetch(API_BASE+"/home")
+
+const data = await res.json()
+
+Object.keys(CATEGORIES).forEach(cat=>{
+
+const grid = document.getElementById(cat+"Grid")
+
+if(!grid) return
+
+const list = data[cat] || []
+
+grid.innerHTML=""
+
+list.forEach(a=>{
+grid.innerHTML+=renderAnimeCard(a)
+})
+
+})
+
+}catch(e){
+
+console.error("Home load failed",e)
+
+}
+
+}
+
+/* ===============================
+   LOAD CATEGORY PAGE
+================================ */
+
+async function loadCategory(){
+
+const slug = qs("slug")
+
+if(!slug) return
+
+try{
+
+const res = await fetch(API_BASE+"/anime/category/"+slug)
+
+const data = await res.json()
+
+const grid = document.getElementById("categoryGrid")
+
+if(!grid) return
+
+grid.innerHTML=""
+
+data.forEach(a=>{
+grid.innerHTML+=renderAnimeCard(a)
+})
+
+}catch(e){
+
+console.error("Category load failed")
+
+}
+
+}
+
+/* ===============================
+   LOAD TYPE PAGE
+   anime / movie / series / cartoon
+================================ */
+
+async function loadType(type){
+
+try{
+
+const res = await fetch(API_BASE+"/anime/type/"+type)
+
+const data = await res.json()
+
+const grid = document.getElementById("typeGrid")
+
+if(!grid) return
+
+grid.innerHTML=""
+
+data.forEach(a=>{
+grid.innerHTML+=renderAnimeCard(a)
+})
+
+}catch(e){
+
+console.error("Type load failed")
+
+}
+
+}
+
+/* ===============================
+   LOAD ANIME DETAILS
+================================ */
+
+async function loadAnime(){
+
+const slug = qs("slug")
+
+if(!slug) return
+
+try{
+
+const res = await fetch(API_BASE+"/anime/"+slug)
+
+const anime = await res.json()
+
+document.getElementById("animeTitle").innerText = anime.title
+document.getElementById("animePoster").src = anime.poster
+document.getElementById("animeDesc").innerText = anime.description
+
+loadEpisodes(slug)
+
+}catch(e){
+
+console.error("Anime load failed")
+
+}
+
+}
+
+/* ===============================
+   LOAD EPISODES
+================================ */
+
+async function loadEpisodes(slug){
+
+try{
+
+const res = await fetch(API_BASE+"/episodes/"+slug)
+
+const data = await res.json()
+
+const box = document.getElementById("episodes")
+
+if(!box) return
+
+box.innerHTML=""
+
+data.forEach(ep=>{
+
+box.innerHTML+=`
+<a href="/watch.html?slug=${slug}&ep=${ep.episode_number}" class="episode">
+Episode ${ep.episode_number}
+</a>
+`
+
+})
+
+}catch(e){
+
+console.error("Episodes load failed")
+
+}
+
+}
+
+/* ===============================
+   PLAYER PAGE
+================================ */
+
+async function loadPlayer(){
+
+const slug = qs("slug")
+const ep = qs("ep")
+
+if(!slug || !ep) return
+
+try{
+
+const res = await fetch(API_BASE+"/episodes/"+slug)
+
+const data = await res.json()
+
+const episode = data.find(e=>e.episode_number==ep)
+
+if(!episode) return
+
+document.getElementById("player").src = episode.video_url
+
+}catch(e){
+
+console.error("Player load failed")
+
+}
+
+}
+
+
+/* ===============================
+   AUTO PAGE DETECT
+================================ */
+
+document.addEventListener("DOMContentLoaded",()=>{
+
+const page = document.body.dataset.page
+
+if(page==="home") loadHome()
+
+if(page==="category") loadCategory()
+
+if(page==="anime") loadAnime()
+
+if(page==="watch") loadPlayer()
+
+if(page==="anime-list") loadType("anime")
+
+if(page==="movies") loadType("movie")
+
+if(page==="series") loadType("series")
+
+if(page==="cartoon") loadType("cartoon")
+
+})
