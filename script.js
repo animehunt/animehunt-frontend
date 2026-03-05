@@ -533,3 +533,41 @@ document.head.appendChild(link)
 }
 
 setCanonical()
+/* =========================
+HOME HERO BANNER
+========================= */
+
+async function loadHomeBanner(){
+
+try{
+
+const res = await fetch("/api/banners")
+
+const banners = await res.json()
+
+const banner = banners.find(b => 
+b.page === "home" && 
+b.position === "hero" && 
+b.active
+)
+
+if(!banner) return
+
+const hero = document.getElementById("homeHeroBanner")
+
+if(hero){
+
+hero.style.backgroundImage = `url(/r2/${banner.image})`
+hero.style.backgroundSize = "cover"
+hero.style.backgroundPosition = "center"
+
+}
+
+}catch(err){
+
+console.error("Hero banner load failed",err)
+
+}
+
+}
+loadHomeBanner()
