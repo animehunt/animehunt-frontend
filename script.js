@@ -571,3 +571,106 @@ console.error("Hero banner load failed",err)
 
 }
 loadHomeBanner()
+
+/* ================================
+UNIVERSAL BANNER SYSTEM
+AnimeHunt
+================================ */
+
+async function loadDynamicBanner(){
+
+try{
+
+const res = await fetch("/api/admin/banners")
+const banners = await res.json()
+
+/* =====================
+HOME BANNER
+===================== */
+
+const hero = document.querySelector("#homeHeroBanner")
+
+if(hero){
+
+const banner = banners.find(b =>
+b.page === "home" &&
+b.position === "hero" &&
+b.active
+)
+
+if(banner){
+
+hero.style.backgroundImage = `url(/r2/${banner.image})`
+hero.style.backgroundSize = "cover"
+hero.style.backgroundPosition = "center"
+
+}
+
+}
+
+/* =====================
+CATEGORY BANNER
+===================== */
+
+const grid = document.querySelector(".anime-grid[data-category]")
+
+if(grid){
+
+const category = grid.dataset.category
+
+const banner = banners.find(b =>
+b.page === "category" &&
+b.category === category &&
+b.active
+)
+
+const section = document.getElementById("categoryBanner")
+
+if(section && banner){
+
+section.style.backgroundImage = `url(/r2/${banner.image})`
+section.style.backgroundSize = "cover"
+section.style.backgroundPosition = "center"
+
+}
+
+}
+
+/* =====================
+TYPE PAGE BANNER
+(anime / movies / series / cartoon)
+===================== */
+
+const pageType = document.body.dataset.page
+
+if(pageType){
+
+const banner = banners.find(b =>
+b.page === "type" &&
+b.type === pageType &&
+b.active
+)
+
+const section = document.getElementById("categoryBanner")
+
+if(section && banner){
+
+section.style.backgroundImage = `url(/r2/${banner.image})`
+section.style.backgroundSize = "cover"
+section.style.backgroundPosition = "center"
+
+}
+
+}
+
+}catch(err){
+
+console.error("Banner load failed",err)
+
+}
+
+}
+
+/* AUTO RUN */
+
+document.addEventListener("DOMContentLoaded",loadDynamicBanner)
