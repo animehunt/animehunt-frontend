@@ -1,350 +1,160 @@
-/* =====================================================
-GLOBAL CONFIG
-===================================================== */
-
 const API_BASE = "https://animehunt-backend.animehunt715.workers.dev"
 
-let ANIME_CACHE = []
+/* ==============================
+LOAD ANIME
+============================== */
 
-async function fetchAnime(){
+async function loadAnime(){
 
-  try{
+try{
 
-    const res = await fetch(API_BASE + "/api/anime")
-    const json = await res.json()
+const res = await fetch(API_BASE + "/api/anime")
+const data = await res.json()
 
-    if(json.success && Array.isArray(json.data)){
-      ANIME_CACHE = json.data
-    }else{
-      ANIME_CACHE = []
-    }
+renderAnime(data)
 
-  }catch(err){
-    console.error("API ERROR:",err)
-  }
+}catch(err){
+
+console.error("Anime load error",err)
 
 }
 
+}
 
-/* =====================================================
-SIDEBAR ENGINE
-===================================================== */
+/* ==============================
+RENDER ANIME GRID
+============================== */
 
-document.addEventListener("DOMContentLoaded",()=>{
+function renderAnime(list){
 
-  const menuBtn=document.querySelector(".menu-btn")
-  const sidebar=document.querySelector(".sidebar")
-  const overlay=document.querySelector(".overlay")
-  const closeBtn=document.querySelector(".close-btn")
+const grid = document.querySelector(".anime-grid")
 
-  if(!menuBtn || !sidebar) return
+if(!grid) return
 
-  function openSidebar(){
+grid.innerHTML = ""
 
-    sidebar.classList.add("active")
-    overlay.classList.add("active")
+list.forEach(anime => {
 
-    document.body.style.overflow="hidden"
+const card = document.createElement("div")
 
-  }
+card.className = "movie-card"
 
-  function closeSidebar(){
+card.innerHTML = `
+  <img src="${anime.poster || 'placeholder.jpg'}">
+  <span>${anime.title}</span>
+`
 
-    sidebar.classList.remove("active")
-    overlay.classList.remove("active")
+card.onclick = () => {
 
-    document.body.style.overflow=""
+  location.href = "details.html?anime=" + anime.slug
 
-  }
+}
 
-  menuBtn.onclick=openSidebar
-  overlay.onclick=closeSidebar
-
-  if(closeBtn){
-    closeBtn.onclick=closeSidebar
-  }
+grid.appendChild(card)
 
 })
 
+}
 
+/* ==============================
+LOAD BANNERS
+============================== */
 
-/* =====================================================
-LISTING ENGINE
-===================================================== */
+async function loadBanners(){
 
-(async function(){
+try{
 
-  const grid=document.querySelector(".anime-grid")
-  const pagination=document.querySelector(".pagination")
+const res = await fetch(API_BASE + "/api/banners")
 
-  if(!grid) return
+const banners = await res.json()
 
-  await fetchAnime()
+renderBanners(banners)
 
-  const typePage=grid.dataset.typePage
+}catch(err){
 
-  let data=[...ANIME_CACHE]
+console.error("Banner load error",err)
 
-  if(typePage){
+}
 
-    data=data.filter(a=>
-      a.type &&
-      a.type.toLowerCase()===typePage.toLowerCase()
-    )
+}
 
-  }
+/* ==============================
+RENDER BANNER
+============================== */
 
-  const perPage=20
-  let currentPage=1
+function renderBanners(banners){
 
-  function renderPage(page){
+const hero = document.querySelector(".hero-banner")
 
-    currentPage=page
+if(!hero) return
 
-    grid.innerHTML=""
+const banner = banners.find(b => b.active)
 
-    const start=(page-1)*perPage
-    const end=start+perPage
+if(!banner) return
 
-    data.slice(start,end).forEach(anime=>{
+hero.style.backgroundImage = "url(${banner.image})"
 
-      const card=document.createElement("div")
-      card.className="movie-card"
+}
 
-      card.innerHTML=`
-      <img src="${anime.poster || ''}">
-      <span>${anime.title}</span>
-      `
+/* ==============================
+DETAILS PAGE
+============================== */
 
-      card.onclick=()=>{
-        window.location.href=`details.html?anime=${anime.slug}`
-      }
+async function loadDetails(){
 
-      grid.appendChild(card)
+if(!location.pathname.includes("details")) return
 
-    })
+const slug = new URLSearchParams(location.search).get("anime")
 
-    renderPagination()
+const res = await fetch(API_BASE + "/api/anime")
 
-  }
+const list = await res.json()
 
+const anime = list.find(a => a.slug === slug)
 
-  function renderPagination(){
+if(!anime) return
 
-    if(!pagination) return
+document.getElementById("animeTitle").innerText = anime.title
 
-    const totalPages=Math.ceil(data.length/perPage)
+document.getElementById("posterImg").src = anime.poster
 
-    pagination.innerHTML=""
+document.getElementById("animeDesc").innerText = anime.description || ""
 
-    if(totalPages<=1) return
+}
 
-    const prev=document.createElement("button")
-    prev.innerText="Prev"
-    prev.disabled=currentPage===1
-    prev.onclick=()=>renderPage(currentPage-1)
+/* ==============================
+SEARCH
+============================== */
 
-    pagination.appendChild(prev)
+async function initSearch(){
 
-    for(let i=1;i<=totalPages;i++){
+const input = document.querySelector(".search-bar")
 
-      const btn=document.createElement("button")
+if(!input) return
 
-      btn.innerText=i
+const res = await fetch(API_BASE + "/api/anime")
 
-      if(i===currentPage){
-        btn.classList.add("active")
-      }
+const data = await res.json()
 
-      btn.onclick=()=>renderPage(i)
+input.addEventListener("input",function(){
 
-      pagination.appendChild(btn)
+const q = this.value.toLowerCase()
 
-    }
+const results = data.filter(a =>
+  a.title.toLowerCase().includes(q)
+).slice(0,8)
 
-    const next=document.createElement("button")
-    next.innerText="Next"
-    next.disabled=currentPage===totalPages
-    next.onclick=()=>renderPage(currentPage+1)
+console.log(results)
 
-    pagination.appendChild(next)
+})
 
-  }
+}
 
-  renderPage(1)
+/* ==============================
+INIT
+============================== */
 
-})()
-
-
-
-/* =====================================================
-DETAILS PAGE ENGINE
-===================================================== */
-
-(async function(){
-
-  if(!location.pathname.includes("details")) return
-
-  const slug=new URLSearchParams(location.search).get("anime")
-
-  if(!slug) return
-
-  await fetchAnime()
-
-  const anime=ANIME_CACHE.find(a=>a.slug===slug)
-
-  if(!anime) return
-
-  document.title=anime.title+" – AnimeHunt"
-
-  const hero=document.getElementById("heroBg")
-
-  if(hero && anime.banner){
-
-    hero.style.background=
-    `linear-gradient(to bottom,rgba(0,0,0,.4),#0b0f1a),
-    url("${anime.banner}") center/cover`
-
-  }
-
-  document.getElementById("posterImg")?.setAttribute(
-    "src",anime.poster
-  )
-
-  document.getElementById("animeTitle").innerText=anime.title
-
-  document.getElementById("animeMeta").innerHTML=`
-  <span>${anime.year || "-"}</span>
-  <span class="imdb">⭐ ${anime.rating || "-"}</span>
-  <span>${anime.type || "Anime"}</span>
-  `
-
-  document.getElementById("animeDesc").innerText=
-  anime.description || ""
-
-  document.getElementById("aboutList").innerHTML=`
-  <li><b>Genre:</b> ${anime.categories || "-"}</li>
-  <li><b>Status:</b> ${anime.status || "-"}</li>
-  `
-
-})()
-
-
-
-/* =====================================================
-WATCH PAGE ENGINE
-===================================================== */
-
-(async function(){
-
-  if(!location.pathname.includes("watch")) return
-
-  const slug=new URLSearchParams(location.search).get("anime")
-
-  if(!slug) return
-
-  await fetchAnime()
-
-  const anime=ANIME_CACHE.find(a=>a.slug===slug)
-
-  if(!anime) return
-
-  document.title=anime.title+" – Watch – AnimeHunt"
-
-})()
-
-
-
-/* =====================================================
-A-Z FILTER ENGINE
-===================================================== */
-
-(function(){
-
-  const azNav=document.querySelector(".az-nav")
-  const grid=document.querySelector(".anime-grid")
-
-  if(!azNav || !grid) return
-
-  azNav.addEventListener("click",e=>{
-
-    if(e.target.tagName!=="SPAN") return
-
-    const letter=e.target.innerText.toLowerCase()
-
-    grid.querySelectorAll(".movie-card").forEach(card=>{
-
-      const title=card.innerText.toLowerCase()
-
-      if(title.startsWith(letter)){
-        card.style.display="block"
-      }else{
-        card.style.display="none"
-      }
-
-    })
-
-  })
-
-})()
-
-
-
-/* =====================================================
-LIVE SEARCH DROPDOWN
-===================================================== */
-
-(async function(){
-
-  const searchInput=document.querySelector(".search-bar")
-
-  if(!searchInput) return
-
-  await fetchAnime()
-
-  const dropdown=document.createElement("div")
-  dropdown.className="search-dropdown"
-  dropdown.style.display="none"
-
-  document.body.appendChild(dropdown)
-
-  searchInput.addEventListener("input",function(){
-
-    const query=this.value.toLowerCase()
-
-    dropdown.innerHTML=""
-
-    if(!query){
-
-      dropdown.style.display="none"
-      return
-
-    }
-
-    const results=ANIME_CACHE
-      .filter(a=>a.title.toLowerCase().includes(query))
-      .slice(0,8)
-
-    results.forEach(anime=>{
-
-      const item=document.createElement("div")
-      item.className="search-item"
-
-      item.innerHTML=`
-      <img src="${anime.poster || ''}">
-      <span>${anime.title}</span>
-      `
-
-      item.onclick=()=>{
-        window.location.href=`details.html?anime=${anime.slug}`
-      }
-
-      dropdown.appendChild(item)
-
-    })
-
-    dropdown.style.display="block"
-
-  })
-
-})()
+loadAnime()
+loadBanners()
+loadDetails()
+initSearch()
