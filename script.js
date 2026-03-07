@@ -1,4 +1,4 @@
-const API = "https://animehunt-backend.animehunt715.workers.dev/api/anime"
+const API = "https://animehunt-backend.animehunt715.workers.dev"
 
 async function loadAnime(){
 
