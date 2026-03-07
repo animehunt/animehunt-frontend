@@ -1,43 +1,79 @@
-const API = "https://animehunt-backend.animehunt715.workers.dev"
+const API = "https://animehunt-backend.animehunt715.workers.dev/api/anime";
 
-async function loadAnime(){
+async function loadHome() {
 
-  try{
+  try {
 
-    const res = await fetch(API)
-    const animeList = await res.json()
+    const res = await fetch(API);
+    const data = await res.json();
 
-    const grid = document.querySelector(".anime-grid")
+    if (!data || !data.length) return;
 
-    if(!grid) return
+    const rows = document.querySelectorAll(".movie-scroll");
 
-    grid.innerHTML = ""
+    rows.forEach(row => {
 
-    animeList.forEach(anime => {
+      const type = row.dataset.row;
 
-      const card = document.createElement("div")
+      let filtered = [];
 
-      card.className = "movie-card"
-
-      card.innerHTML = `
-        <img src="${anime.poster || 'https://via.placeholder.com/300x450'}">
-        <p>${anime.title}</p>
-      `
-
-      card.onclick = () => {
-        window.location.href = "details.html?anime=" + anime.slug
+      if (type === "ongoing") {
+        filtered = data.filter(a => a.status === "ongoing");
       }
 
-      grid.appendChild(card)
+      else if (type === "trending") {
+        filtered = data.filter(a => a.isTrending === 1);
+      }
 
-    })
+      else if (type === "most-viewed") {
+        filtered = data.filter(a => a.isMostViewed === 1);
+      }
 
-  }catch(err){
+      else if (type === "series") {
+        filtered = data.filter(a => a.type === "series");
+      }
 
-    console.error("Anime load error",err)
+      else {
+        filtered = data.filter(a =>
+          a.categories && a.categories.includes(type)
+        );
+      }
+
+      renderRow(row, filtered.slice(0, 12));
+
+    });
+
+  } catch (err) {
+
+    console.error("Home load error:", err);
 
   }
 
 }
 
-loadAnime()
+function renderRow(container, list) {
+
+  container.innerHTML = "";
+
+  list.forEach(anime => {
+
+    const card = document.createElement("div");
+
+    card.className = "movie-card";
+
+    card.innerHTML = `
+      <img src="${anime.poster || 'https://via.placeholder.com/300x450'}">
+      <span>${anime.title}</span>
+    `;
+
+    card.onclick = () => {
+      window.location.href = "details.html?anime=" + anime.slug;
+    };
+
+    container.appendChild(card);
+
+  });
+
+}
+
+document.addEventListener("DOMContentLoaded", loadHome);
