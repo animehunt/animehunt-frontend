@@ -83,3 +83,32 @@ function renderRow(container,list){
 }
 
 document.addEventListener("DOMContentLoaded",loadHome);
+function loadBanner(animeList){
+
+  const hero = document.getElementById("homeHeroBanner");
+
+  if(!hero) return;
+
+  const bannerAnime = animeList.find(a => a.isBanner == 1);
+
+  if(!bannerAnime) return;
+
+  hero.style.background =
+    `linear-gradient(to bottom,rgba(0,0,0,.4),#0b0f1a),
+     url("${bannerAnime.banner || bannerAnime.poster}") center/cover no-repeat`;
+
+  const title = hero.querySelector(".hero-title");
+  const meta = hero.querySelector(".hero-meta");
+
+  if(title){
+    title.innerHTML = bannerAnime.title;
+  }
+
+  if(meta){
+    meta.innerHTML = `
+      <span>${bannerAnime.year || "-"}</span>
+      <span>⭐ ${bannerAnime.rating || "-"}</span>
+    `;
+  }
+
+}
