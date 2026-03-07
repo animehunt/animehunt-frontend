@@ -1,5 +1,5 @@
 /* =====================================================
-   GLOBAL CONFIG
+GLOBAL CONFIG
 ===================================================== */
 
 const API_BASE = "https://animehunt-backend.animehunt715.workers.dev"
@@ -13,21 +13,21 @@ async function fetchAnime(){
     const res = await fetch(API_BASE + "/api/anime")
     const json = await res.json()
 
-    if(Array.isArray(json)){
-      ANIME_CACHE = json
-    }else if(json.data){
+    if(json.success && Array.isArray(json.data)){
       ANIME_CACHE = json.data
+    }else{
+      ANIME_CACHE = []
     }
 
   }catch(err){
-    console.error("Anime fetch error:",err)
+    console.error("API ERROR:",err)
   }
 
 }
 
 
 /* =====================================================
-   SIDEBAR ENGINE
+SIDEBAR ENGINE
 ===================================================== */
 
 document.addEventListener("DOMContentLoaded",()=>{
@@ -43,6 +43,7 @@ document.addEventListener("DOMContentLoaded",()=>{
 
     sidebar.classList.add("active")
     overlay.classList.add("active")
+
     document.body.style.overflow="hidden"
 
   }
@@ -51,6 +52,7 @@ document.addEventListener("DOMContentLoaded",()=>{
 
     sidebar.classList.remove("active")
     overlay.classList.remove("active")
+
     document.body.style.overflow=""
 
   }
@@ -65,27 +67,29 @@ document.addEventListener("DOMContentLoaded",()=>{
 })
 
 
+
 /* =====================================================
-   LISTING ENGINE (ANIME / MOVIES / SERIES / CARTOON)
+LISTING ENGINE
 ===================================================== */
 
 (async function(){
 
   const grid=document.querySelector(".anime-grid")
+  const pagination=document.querySelector(".pagination")
 
   if(!grid) return
 
   await fetchAnime()
 
-  const pageType=grid.dataset.typePage
+  const typePage=grid.dataset.typePage
 
   let data=[...ANIME_CACHE]
 
-  if(pageType){
+  if(typePage){
 
     data=data.filter(a=>
       a.type &&
-      a.type.toLowerCase()===pageType.toLowerCase()
+      a.type.toLowerCase()===typePage.toLowerCase()
     )
 
   }
@@ -93,9 +97,7 @@ document.addEventListener("DOMContentLoaded",()=>{
   const perPage=20
   let currentPage=1
 
-  const pagination=document.querySelector(".pagination")
-
-  function render(page){
+  function renderPage(page){
 
     currentPage=page
 
@@ -107,16 +109,15 @@ document.addEventListener("DOMContentLoaded",()=>{
     data.slice(start,end).forEach(anime=>{
 
       const card=document.createElement("div")
-
       card.className="movie-card"
 
       card.innerHTML=`
-        <img src="${anime.poster || ''}" alt="${anime.title}">
-        <span>${anime.title}</span>
+      <img src="${anime.poster || ''}">
+      <span>${anime.title}</span>
       `
 
       card.onclick=()=>{
-        location.href=`details.html?anime=${anime.slug}`
+        window.location.href=`details.html?anime=${anime.slug}`
       }
 
       grid.appendChild(card)
@@ -127,24 +128,25 @@ document.addEventListener("DOMContentLoaded",()=>{
 
   }
 
+
   function renderPagination(){
 
     if(!pagination) return
 
-    const total=Math.ceil(data.length/perPage)
+    const totalPages=Math.ceil(data.length/perPage)
 
     pagination.innerHTML=""
 
-    if(total<=1) return
+    if(totalPages<=1) return
 
     const prev=document.createElement("button")
     prev.innerText="Prev"
     prev.disabled=currentPage===1
-    prev.onclick=()=>render(currentPage-1)
+    prev.onclick=()=>renderPage(currentPage-1)
 
     pagination.appendChild(prev)
 
-    for(let i=1;i<=total;i++){
+    for(let i=1;i<=totalPages;i++){
 
       const btn=document.createElement("button")
 
@@ -154,7 +156,7 @@ document.addEventListener("DOMContentLoaded",()=>{
         btn.classList.add("active")
       }
 
-      btn.onclick=()=>render(i)
+      btn.onclick=()=>renderPage(i)
 
       pagination.appendChild(btn)
 
@@ -162,20 +164,21 @@ document.addEventListener("DOMContentLoaded",()=>{
 
     const next=document.createElement("button")
     next.innerText="Next"
-    next.disabled=currentPage===total
-    next.onclick=()=>render(currentPage+1)
+    next.disabled=currentPage===totalPages
+    next.onclick=()=>renderPage(currentPage+1)
 
     pagination.appendChild(next)
 
   }
 
-  render(1)
+  renderPage(1)
 
 })()
 
 
+
 /* =====================================================
-   DETAILS PAGE ENGINE
+DETAILS PAGE ENGINE
 ===================================================== */
 
 (async function(){
@@ -204,42 +207,32 @@ document.addEventListener("DOMContentLoaded",()=>{
 
   }
 
-  const poster=document.getElementById("posterImg")
-  if(poster) poster.src=anime.poster
+  document.getElementById("posterImg")?.setAttribute(
+    "src",anime.poster
+  )
 
-  const title=document.getElementById("animeTitle")
-  if(title) title.innerText=anime.title
+  document.getElementById("animeTitle").innerText=anime.title
 
-  const desc=document.getElementById("animeDesc")
-  if(desc) desc.innerText=anime.description || ""
+  document.getElementById("animeMeta").innerHTML=`
+  <span>${anime.year || "-"}</span>
+  <span class="imdb">⭐ ${anime.rating || "-"}</span>
+  <span>${anime.type || "Anime"}</span>
+  `
 
-  const meta=document.getElementById("animeMeta")
-  if(meta){
+  document.getElementById("animeDesc").innerText=
+  anime.description || ""
 
-    meta.innerHTML=`
-    <span>${anime.year || "-"}</span>
-    <span class="imdb">⭐ ${anime.rating || "-"}</span>
-    <span>${anime.type || "Anime"}</span>
-    `
-
-  }
-
-  const about=document.getElementById("aboutList")
-
-  if(about){
-
-    about.innerHTML=`
-    <li><b>Genre:</b> ${anime.categories || "-"}</li>
-    <li><b>Status:</b> ${anime.status || "-"}</li>
-    `
-
-  }
+  document.getElementById("aboutList").innerHTML=`
+  <li><b>Genre:</b> ${anime.categories || "-"}</li>
+  <li><b>Status:</b> ${anime.status || "-"}</li>
+  `
 
 })()
 
 
+
 /* =====================================================
-   WATCH PAGE ENGINE
+WATCH PAGE ENGINE
 ===================================================== */
 
 (async function(){
@@ -261,18 +254,19 @@ document.addEventListener("DOMContentLoaded",()=>{
 })()
 
 
+
 /* =====================================================
-   A-Z FILTER ENGINE
+A-Z FILTER ENGINE
 ===================================================== */
 
 (function(){
 
-  const az=document.querySelector(".az-nav")
+  const azNav=document.querySelector(".az-nav")
   const grid=document.querySelector(".anime-grid")
 
-  if(!az || !grid) return
+  if(!azNav || !grid) return
 
-  az.addEventListener("click",e=>{
+  azNav.addEventListener("click",e=>{
 
     if(e.target.tagName!=="SPAN") return
 
@@ -295,32 +289,32 @@ document.addEventListener("DOMContentLoaded",()=>{
 })()
 
 
+
 /* =====================================================
-   LIVE SEARCH ENGINE
+LIVE SEARCH DROPDOWN
 ===================================================== */
 
 (async function(){
 
-  const input=document.querySelector(".search-bar")
+  const searchInput=document.querySelector(".search-bar")
 
-  if(!input) return
+  if(!searchInput) return
 
   await fetchAnime()
 
   const dropdown=document.createElement("div")
-
   dropdown.className="search-dropdown"
   dropdown.style.display="none"
 
   document.body.appendChild(dropdown)
 
-  input.addEventListener("input",function(){
+  searchInput.addEventListener("input",function(){
 
-    const q=this.value.toLowerCase()
+    const query=this.value.toLowerCase()
 
     dropdown.innerHTML=""
 
-    if(!q){
+    if(!query){
 
       dropdown.style.display="none"
       return
@@ -328,22 +322,21 @@ document.addEventListener("DOMContentLoaded",()=>{
     }
 
     const results=ANIME_CACHE
-    .filter(a=>a.title.toLowerCase().includes(q))
-    .slice(0,8)
+      .filter(a=>a.title.toLowerCase().includes(query))
+      .slice(0,8)
 
     results.forEach(anime=>{
 
       const item=document.createElement("div")
-
       item.className="search-item"
 
       item.innerHTML=`
-        <img src="${anime.poster}">
-        <span>${anime.title}</span>
+      <img src="${anime.poster || ''}">
+      <span>${anime.title}</span>
       `
 
       item.onclick=()=>{
-        location.href=`details.html?anime=${anime.slug}`
+        window.location.href=`details.html?anime=${anime.slug}`
       }
 
       dropdown.appendChild(item)
