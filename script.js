@@ -164,3 +164,20 @@ WHERE anime=? AND season=? AND episode=?
 
 return new Response(JSON.stringify(results))
 }
+export async function getPublicBanners(req, env){
+
+const url=new URL(req.url)
+
+const page=url.searchParams.get("page")
+const position=url.searchParams.get("position")
+
+const {results}=await env.DB.prepare(`
+SELECT *
+FROM banners
+WHERE page=? AND position=? AND active=1
+ORDER BY banner_order ASC
+`).bind(page,position).all()
+
+return new Response(JSON.stringify(results))
+
+}
