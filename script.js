@@ -148,36 +148,3 @@ function setupGlobalListeners() {
 function openWatchPage(id) {
     window.location.href = `watch.html?id=${id}`;
 }
-export async function getEpisodeDownloads(req, env){
-
-const url=new URL(req.url)
-
-const anime=url.searchParams.get("anime")
-const season=url.searchParams.get("season")
-const episode=url.searchParams.get("episode")
-
-const {results}=await env.DB.prepare(`
-SELECT host,quality,link
-FROM downloads
-WHERE anime=? AND season=? AND episode=?
-`).bind(anime,season,episode).all()
-
-return new Response(JSON.stringify(results))
-}
-export async function getPublicBanners(req, env){
-
-const url=new URL(req.url)
-
-const page=url.searchParams.get("page")
-const position=url.searchParams.get("position")
-
-const {results}=await env.DB.prepare(`
-SELECT *
-FROM banners
-WHERE page=? AND position=? AND active=1
-ORDER BY banner_order ASC
-`).bind(page,position).all()
-
-return new Response(JSON.stringify(results))
-
-}
