@@ -1,64 +1,165 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Download – AnimeHunt</title>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Download – AnimeHunt</title>
 
-  <link rel="stylesheet" href="style.css"/>
-  <link rel="stylesheet" href="download.css"/>
+<link rel="stylesheet" href="style.css"/>
+
+<style>
+body{background:#0b0f1a;color:#fff;font-family:system-ui}
+
+.download-title{padding:20px}
+.season-block{padding:10px 20px}
+
+.season{margin-bottom:25px}
+.season h2{margin-bottom:10px}
+
+.episode{
+background:#11162a;
+padding:12px;
+border-radius:10px;
+margin-bottom:12px
+}
+
+.host{
+margin-top:10px
+}
+
+.host-title{
+color:#ffcc00;
+font-size:13px;
+margin-bottom:6px
+}
+
+.links{
+display:flex;
+gap:10px;
+flex-wrap:wrap
+}
+
+.links a{
+padding:6px 10px;
+border:1px solid #444;
+border-radius:6px;
+font-size:12px;
+color:#fff;
+text-decoration:none
+}
+
+.links a:hover{
+background:#ffcc00;
+color:#000
+}
+</style>
 </head>
+
 <body>
 
-<header class="main-header">
-  <div class="menu-btn">☰</div>
-  <div class="logo">
-    <span class="anime">anime</span><span class="hunt">hunt</span>
-  </div>
-  <input class="search-bar" placeholder="Search movie"/>
-</header>
-
-<aside class="sidebar">
-  <div class="close-btn">✕</div>
-  <nav class="sidebar-menu">
-    <a href="about.html">About AnimeHunt</a>
-    <a href="privacy.html">Privacy Policy</a>
-    <a href="disclaimer.html">Disclaimer</a>
-    <a href="dmca.html">DMCA</a>
-    <a href="https://t.me/toons15" target="_blank">Telegram</a>
-  </nav>
-</aside>
-
-<div class="overlay"></div>
-
 <section class="download-title">
-  <h1 id="downloadTitle">Download</h1>
+<h1 id="title">Loading...</h1>
 </section>
 
-<section id="downloadContainer" class="season-block"></section>
+<section id="container" class="season-block"></section>
 
-<footer class="main-footer">
-  <div class="footer-links">
-    <a href="about.html">About AnimeHunt</a>
-    <a href="disclaimer.html">Disclaimer</a>
-    <a href="dmca.html">DMCA</a>
-    <a href="#">Telegram</a>
-  </div>
-  <div class="copyright">
-    © 2026 AnimeHunt. All Rights Reserved.
-  </div>
-</footer>
+<script>
 
-<nav class="bottom-nav">
-  <a href="anime.html" class="nav-item">ANIME</a>
-  <a href="movies.html" class="nav-item">MOVIES</a>
-  <a href="index.html" class="nav-item active">HOME</a>
-  <a href="series.html" class="nav-item">SERIES</a>
-  <a href="cartoon.html" class="nav-item">CARTOON</a>
-</nav>
+const API = "https://animehunt-backend.animehunt715.workers.dev/api"
 
-<script src="js/api.js"></script>
-<script src="script.js"></script>
+const params = new URLSearchParams(location.search)
+const anime = params.get("anime")
+
+const container = document.getElementById("container")
+const title = document.getElementById("title")
+
+async function load(){
+
+if(!anime){
+container.innerHTML="Invalid anime"
+return
+}
+
+title.innerText = anime
+
+try{
+
+const res = await fetch(`${API}/downloads-full/${anime}`)
+const data = await res.json()
+
+const grouped = {}
+
+data.forEach(d=>{
+
+if(!grouped[d.season]) grouped[d.season] = {}
+if(!grouped[d.season][d.episode]) grouped[d.season][d.episode] = {}
+if(!grouped[d.season][d.episode][d.host]) grouped[d.season][d.episode][d.host] = []
+
+grouped[d.season][d.episode][d.host].push(d)
+
+})
+
+container.innerHTML=""
+
+Object.keys(grouped).forEach(season=>{
+
+const sDiv=document.createElement("div")
+sDiv.className="season"
+
+sDiv.innerHTML=`<h2>Season ${season}</h2>`
+
+Object.keys(grouped[season]).forEach(ep=>{
+
+const epDiv=document.createElement("div")
+epDiv.className="episode"
+
+epDiv.innerHTML=`<b>Episode ${ep}</b>`
+
+Object.keys(grouped[season][ep]).forEach(host=>{
+
+const hDiv=document.createElement("div")
+hDiv.className="host"
+
+hDiv.innerHTML=`<div class="host-title">${host}</div>`
+
+const links=document.createElement("div")
+links.className="links"
+
+grouped[season][ep][host].forEach(q=>{
+
+const a=document.createElement("a")
+
+a.innerText=q.quality
+
+// 🔥 ADS FLOW ENTRY
+a.href=`/go?anime=${anime}&season=${season}&episode=${ep}&host=${host}&quality=${q.quality}`
+
+links.appendChild(a)
+
+})
+
+hDiv.appendChild(links)
+epDiv.appendChild(hDiv)
+
+})
+
+sDiv.appendChild(epDiv)
+
+})
+
+container.appendChild(sDiv)
+
+})
+
+}catch{
+container.innerHTML="Failed to load"
+}
+
+}
+
+load()
+
+</script>
 
 </body>
 </html>
