@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Download</title>
+
+<style>
+body{background:#000;color:#fff;font-family:sans-serif;text-align:center;padding-top:60px}
+.btn{
+display:block;
+margin:15px auto;
+padding:14px;
+width:200px;
+background:#ff1e3c;
+color:#fff;
+text-decoration:none;
+border-radius:10px
+}
+</style>
+</head>
+
+<body>
+
+<h2 id="title"></h2>
+<p id="info"></p>
+
+<div id="links">Loading...</div>
+
+<script>
+
+const API="https://animehunt-backend.animehunt715.workers.dev/api"
+
+const p=new URLSearchParams(location.search)
+
+const anime=p.get("anime")
+const season=p.get("season")
+const episode=p.get("episode")
+const host=p.get("host")
+
+const box=document.getElementById("links")
+
+async function load(){
+
+document.getElementById("title").innerText=anime
+document.getElementById("info").innerText=`S${season} • E${episode}`
+
+const res=await fetch(`${API}/downloads/${anime}/${season}/${episode}`)
+const data=await res.json()
+
+const filtered=data.filter(d=>d.host.toLowerCase()==host.toLowerCase())
+
+box.innerHTML=""
+
+filtered.forEach(d=>{
+
+const a=document.createElement("a")
+a.className="btn"
+
+// 🔥 FINAL STEP
+a.href=`/go?anime=${anime}&season=${season}&episode=${episode}&host=${host}&quality=${d.quality}&step=99`
+
+a.innerText=`${d.quality} Download`
+
+box.appendChild(a)
+
+})
+
+}
+
+load()
+
+</script>
+
+</body>
+</html>
