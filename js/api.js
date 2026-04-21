@@ -36,3 +36,30 @@ async function getAnimeBySlug(slug) {
   const list = await apiFetch("/api/admin/anime?search=" + slug);
   return list.find(a => a.slug === slug);
 }
+
+const API = import.meta.env.VITE_API_URL;
+
+fetch(`${API}/`)
+  .then(res => res.text())
+  .then(data => console.log(data));
+
+export default {
+  async fetch(request) {
+
+    if (request.method === "OPTIONS") {
+      return new Response(null, {
+        headers: {
+          "Access-Control-Allow-Origin": "*",
+          "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+          "Access-Control-Allow-Headers": "*"
+        }
+      });
+    }
+
+    return new Response("Backend working", {
+      headers: {
+        "Access-Control-Allow-Origin": "*"
+      }
+    });
+  }
+};
