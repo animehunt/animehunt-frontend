@@ -1,10 +1,18 @@
 const BASE = "https://animehunt-backend.animehunt715.workers.dev/api";
 
+const cache = new Map();
+
 export async function api(url) {
+  if (cache.has(url)) return cache.get(url);
+
   try {
     const res = await fetch(BASE + url);
     const json = await res.json();
-    return json.data || json;
+
+    const data = json.data || json;
+    cache.set(url, data);
+
+    return data;
   } catch (err) {
     console.error("API ERROR:", err);
     return null;
