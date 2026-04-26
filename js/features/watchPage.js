@@ -8,43 +8,63 @@ function getParams() {
   };
 }
 
+let animeId = null;
 let episodes = [];
 let currentIndex = 0;
 let servers = [];
 let currentServer = 0;
 let failCount = 0;
 
+let watchTimer = null;
+let watchedSeconds = 0;
+
 // ================= INIT =================
 export async function initWatchPage() {
-  const { id, ep } = getParams();
-  if (!id) return;
+  const params = getParams();
+  animeId = params.id;
 
-  episodes = await getEpisodes(id);
+  if (!animeId) return;
+
+  episodes = await getEpisodes(animeId);
   if (!episodes?.length) return;
 
-  currentIndex = ep
-    ? episodes.findIndex(e => e.id == ep)
-    : 0;
+  // 👉 RESUME CHECK
+  const resume = getResume();
+
+  if (params.ep) {
+    currentIndex = episodes.findIndex(e => e.id == params.ep);
+  } else if (resume && resume.animeId === animeId) {
+    currentIndex = episodes.findIndex(e => e.id == resume.episodeId);
+  } else {
+    currentIndex = 0;
+  }
 
   if (currentIndex < 0) currentIndex = 0;
 
-  renderEpisodes(id);
+  renderEpisodes();
   loadEpisode();
+
+  renderResumeButton();
 }
 
-// ================= LOAD EPISODE =================
+// ================= LOAD EP =================
 async function loadEpisode() {
   const ep = episodes[currentIndex];
   if (!ep) return;
 
   servers = await getServers(ep.id);
+
   currentServer = 0;
   failCount = 0;
+
+  watchedSeconds = 0;
+
+  startWatchTimer();
 
   loadServer();
 }
 
-// ================= LOAD SERVER =================
+// ================= SERVER =================
 function loadServer() {
   const iframe = document.getElementById("iframe-embed");
   const server = servers[currentServer];
@@ -57,9 +77,11 @@ function loadServer() {
 
   startFailDetection();
   startAutoNextTimer();
+
+  saveHistory();
 }
 
-// ================= SERVER SWITCH =================
+// ================= SERVERS =================
 function renderServers() {
   const list = document.getElementById("serverList");
 
@@ -129,20 +151,88 @@ function startAutoNextTimer() {
   }, 1000);
 }
 
-// ================= NEXT EP =================
+// ================= NEXT =================
 function nextEpisode() {
   currentIndex++;
 
-  if (currentIndex >= episodes.length) {
-    console.log("No more episodes");
-    return;
-  }
+  if (currentIndex >= episodes.length) return;
 
   loadEpisode();
 }
 
-// ================= EPISODES GRID =================
-function renderEpisodes(animeId) {
+// ================= WATCH TIMER =================
+function startWatchTimer() {
+  if (watchTimer) clearInterval(watchTimer);
+
+  watchTimer = setInterval(() => {
+    watchedSeconds++;
+
+    saveResume();
+  }, 5000); // हर 5 sec save
+}
+
+// ================= HISTORY =================
+function saveHistory() {
+  const ep = episodes[currentIndex];
+
+  let history = JSON.parse(localStorage.getItem("WATCH_HISTORY") || "[]");
+
+  history = history.filter(h => h.animeId !== animeId);
+
+  history.unshift({
+    animeId,
+    episodeId: ep.id,
+    episodeNo: currentIndex + 1,
+    updatedAt: Date.now()
+  });
+
+  localStorage.setItem("WATCH_HISTORY", JSON.stringify(history.slice(0, 20)));
+}
+
+// ================= RESUME =================
+function saveResume() {
+  const ep = episodes[currentIndex];
+
+  const data = {
+    animeId,
+    episodeId: ep.id,
+    episodeNo: currentIndex + 1,
+    time: watchedSeconds
+  };
+
+  localStorage.setItem("RESUME_DATA", JSON.stringify(data));
+}
+
+function getResume() {
+  try {
+    return JSON.parse(localStorage.getItem("RESUME_DATA"));
+  } catch {
+    return null;
+  }
+}
+
+// ================= RESUME BUTTON =================
+function renderResumeButton() {
+  const resume = getResume();
+  if (!resume || resume.animeId !== animeId) return;
+
+  const container = document.getElementById("extraActions");
+  if (!container) return;
+
+  const btn = document.createElement("button");
+  btn.innerText = `▶ Resume EP ${resume.episodeNo}`;
+  btn.className = "server";
+
+  btn.onclick = () => {
+    currentIndex = episodes.findIndex(e => e.id == resume.episodeId);
+    loadEpisode();
+  };
+
+  container.prepend(btn);
+}
+
+// ================= EPISODES =================
+function renderEpisodes() {
   const grid = document.getElementById("episodeGrid");
 
   grid.innerHTML = episodes.map((ep, i) => `
