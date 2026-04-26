@@ -26,3 +26,11 @@ document.addEventListener("DOMContentLoaded", () => {
     initCategoryPage(grid.dataset.category);
   }
 });
+
+import { initHistoryPage } from "./js/features/historyPage.js";
+
+const page = document.body.dataset.page;
+
+if (page === "history") {
+  initHistoryPage?.();
+}
