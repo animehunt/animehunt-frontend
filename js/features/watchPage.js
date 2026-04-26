@@ -8,67 +8,155 @@ function getParams() {
   };
 }
 
+let episodes = [];
+let currentIndex = 0;
+let servers = [];
+let currentServer = 0;
+let failCount = 0;
+
+// ================= INIT =================
 export async function initWatchPage() {
   const { id, ep } = getParams();
   if (!id) return;
 
-  const anime = await getAnimeById(id);
-  const episodes = await getEpisodes(id);
-
+  episodes = await getEpisodes(id);
   if (!episodes?.length) return;
 
-  let currentEp = ep || episodes[0].id;
+  currentIndex = ep
+    ? episodes.findIndex(e => e.id == ep)
+    : 0;
 
-  renderEpisodes(episodes, id);
-  loadPlayer(currentEp);
+  if (currentIndex < 0) currentIndex = 0;
+
+  renderEpisodes(id);
+  loadEpisode();
 }
 
-// ===== PLAYER =====
-async function loadPlayer(epId) {
+// ================= LOAD EPISODE =================
+async function loadEpisode() {
+  const ep = episodes[currentIndex];
+  if (!ep) return;
+
+  servers = await getServers(ep.id);
+  currentServer = 0;
+  failCount = 0;
+
+  loadServer();
+}
+
+// ================= LOAD SERVER =================
+function loadServer() {
   const iframe = document.getElementById("iframe-embed");
-  const servers = await getServers(epId);
+  const server = servers[currentServer];
 
-  if (!servers?.length) {
-    iframe.src = "";
-    return;
-  }
+  if (!server) return;
 
-  iframe.src = servers[0].url;
+  iframe.src = server.url;
 
-  renderServers(servers, iframe);
+  renderServers();
+
+  startFailDetection();
+  startAutoNextTimer();
 }
 
-// ===== SERVERS =====
-function renderServers(servers, iframe) {
+// ================= SERVER SWITCH =================
+function renderServers() {
   const list = document.getElementById("serverList");
 
   list.innerHTML = servers.map((s, i) => `
-    <button class="server ${i === 0 ? "active" : ""}" data-url="${s.url}">
+    <button class="server ${i === currentServer ? "active" : ""}" data-i="${i}">
       Server ${i + 1}
     </button>
   `).join("");
 
   list.querySelectorAll("button").forEach(btn => {
     btn.onclick = () => {
-      list.querySelectorAll("button").forEach(b => b.classList.remove("active"));
-      btn.classList.add("active");
-
-      iframe.src = btn.dataset.url;
+      currentServer = Number(btn.dataset.i);
+      loadServer();
     };
   });
 }
 
-// ===== EPISODES =====
-function renderEpisodes(episodes, animeId) {
+// ================= FAILOVER =================
+function startFailDetection() {
+  const iframe = document.getElementById("iframe-embed");
+
+  let loaded = false;
+
+  iframe.onload = () => {
+    loaded = true;
+  };
+
+  setTimeout(() => {
+    if (!loaded) {
+      failCount++;
+
+      if (failCount < servers.length) {
+        currentServer++;
+        loadServer();
+      } else {
+        showError();
+      }
+    }
+  }, 5000);
+}
+
+function showError() {
+  const msg = document.getElementById("player-message");
+  if (msg) msg.style.display = "block";
+}
+
+// ================= AUTO NEXT =================
+function startAutoNextTimer() {
+  const box = document.getElementById("autoNextBox");
+  const countEl = document.getElementById("countdown");
+
+  if (!box || !countEl) return;
+
+  let time = 5;
+
+  box.style.display = "block";
+  countEl.innerText = time;
+
+  const interval = setInterval(() => {
+    time--;
+    countEl.innerText = time;
+
+    if (time <= 0) {
+      clearInterval(interval);
+      nextEpisode();
+    }
+  }, 1000);
+}
+
+// ================= NEXT EP =================
+function nextEpisode() {
+  currentIndex++;
+
+  if (currentIndex >= episodes.length) {
+    console.log("No more episodes");
+    return;
+  }
+
+  loadEpisode();
+}
+
+// ================= EPISODES GRID =================
+function renderEpisodes(animeId) {
   const grid = document.getElementById("episodeGrid");
 
   grid.innerHTML = episodes.map((ep, i) => `
-    <div class="ep-card" onclick="location.href='watch.html?id=${animeId}&ep=${ep.id}'">
+    <div class="ep-card" onclick="goEp(${i})">
       <div class="ep-thumb">
-        <img src="${ep.thumbnail || ''}">
+        <img src="${ep.thumbnail || ""}">
         <span class="ep-no">EP ${i + 1}</span>
       </div>
       <p>${ep.title || "Episode " + (i + 1)}</p>
     </div>
   `).join("");
+
+  window.goEp = (i) => {
+    currentIndex = i;
+    loadEpisode();
+  };
 }
