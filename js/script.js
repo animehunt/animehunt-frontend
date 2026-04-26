@@ -34,3 +34,9 @@ const page = document.body.dataset.page;
 if (page === "history") {
   initHistoryPage?.();
 }
+
+import { initContinueWatching } from "./features/continueWatching.js";
+
+document.addEventListener("DOMContentLoaded", () => {
+  initContinueWatching();
+});
