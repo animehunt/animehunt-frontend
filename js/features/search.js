@@ -1,32 +1,22 @@
-import { getAnime } from "../core/api.js";
+const API = "https://animehunt-backend.animehunt715.workers.dev/api"
 
 let SETTINGS = null
-
-const API = "https://animehunt-backend.animehunt715.workers.dev/api"
+let ACTIVE_REQ = 0
 
 /* =========================
 LOAD SETTINGS
 ========================= */
-async function loadSettings() {
-
+async function loadSearchSettings() {
   if (SETTINGS) return SETTINGS
 
   try {
     const res = await fetch(`${API}/search`)
     SETTINGS = await res.json()
-  } catch {
-    // fallback अगर API fail हो जाए
-    SETTINGS = {
-      enableSearch: true,
-      mode: "debounce",
-      debounce: 300,
-      ui: { max: 6, thumb: true, highlight: true },
-      ranking: { boost: true, weight: 5 },
-      smart: { typo: true }
-    }
+    return SETTINGS
+  } catch (e) {
+    console.error("Search settings load failed", e)
+    return null
   }
-
-  return SETTINGS
 }
 
 /* =========================
@@ -34,50 +24,42 @@ INIT SEARCH
 ========================= */
 export async function initSearch() {
 
-  const settings = await loadSettings()
-
-  if (!settings.enableSearch) return
+  const settings = await loadSearchSettings()
+  if (!settings || !settings.enableSearch) return
 
   const input = document.querySelector(".search-bar")
   if (!input) return
 
-  let box = document.querySelector(".search-dropdown")
-
-  if (!box) {
-    box = document.createElement("div")
-    box.className = "search-dropdown"
-    document.body.appendChild(box)
-  }
-
-  let timer
+  let timeout = null
 
   input.addEventListener("input", () => {
-
-    clearTimeout(timer)
 
     const q = input.value.trim()
 
     if (!q) {
-      box.innerHTML = ""
+      clearResults()
       return
     }
 
     if (settings.mode === "debounce") {
-
-      timer = setTimeout(() => {
-        runSearch(q, box, settings)
-      }, settings.debounce)
-
+      clearTimeout(timeout)
+      timeout = setTimeout(() => runSearch(q, settings), settings.debounce)
     } else {
-      runSearch(q, box, settings)
+      runSearch(q, settings)
     }
 
   })
 
-  /* CLICK OUTSIDE */
+  // ESC key close
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") clearResults()
+  })
+
+  // outside click close
   document.addEventListener("click", (e) => {
-    if (!box.contains(e.target) && e.target !== input) {
-      box.innerHTML = ""
+    const box = document.getElementById("searchResults")
+    if (box && !box.contains(e.target) && e.target !== input) {
+      clearResults()
     }
   })
 }
@@ -85,19 +67,45 @@ export async function initSearch() {
 /* =========================
 SEARCH LOGIC
 ========================= */
-async function runSearch(query, box, settings) {
+async function runSearch(query, settings) {
 
-  let data = await getAnime(`?search=${query}&limit=20`)
+  const requestId = ++ACTIVE_REQ
 
-  // 👉 TYPO FIX
-  if (settings.smart?.typo && (!data || data.length === 0)) {
-    data = await getAnime(`?search=${query.slice(0, -1)}&limit=20`)
+  showLoading()
+
+  try {
+    const res = await fetch(`${API}/anime?search=${encodeURIComponent(query)}`)
+    let data = await res.json()
+
+    // cancel outdated request
+    if (requestId !== ACTIVE_REQ) return
+
+    // TYPO fallback
+    if (settings.smart?.typo && (!data || data.length === 0)) {
+      data = await tryTypo(query)
+    }
+
+    data = rankResults(data, settings)
+
+    renderResults(data, query, settings)
+
+  } catch (e) {
+    console.error("Search failed", e)
+    showError()
   }
+}
 
-  // 👉 RANKING
-  data = rankResults(data, settings)
-
-  render(data, query, box, settings)
+/* =========================
+TYPO FIX
+========================= */
+async function tryTypo(query) {
+  try {
+    const fixed = query.slice(0, -1)
+    const res = await fetch(`${API}/anime?search=${fixed}`)
+    return await res.json()
+  } catch {
+    return []
+  }
 }
 
 /* =========================
@@ -105,20 +113,18 @@ RANKING
 ========================= */
 function rankResults(data, settings) {
 
-  if (!data) return []
-
-  return data.sort((a, b) => {
+  return (data || []).sort((a, b) => {
 
     let A = a.views || 0
     let B = b.views || 0
 
-    // FEATURED BOOST
+    // FEATURE BOOST
     if (settings.ranking?.boost) {
       if (a.featured) A += settings.ranking.weight * 100
       if (b.featured) B += settings.ranking.weight * 100
     }
 
-    // TRENDING (AI ENGINE)
+    // AI TRENDING
     if (a.trending) A += 500
     if (b.trending) B += 500
 
@@ -127,25 +133,59 @@ function rankResults(data, settings) {
 }
 
 /* =========================
-RENDER
+RENDER RESULTS
 ========================= */
-function render(data, query, box, settings) {
+function renderResults(data, query, settings) {
 
-  const max = settings.ui?.max || 6
+  const box = getBox()
 
-  const items = (data || []).slice(0, max)
+  if (!data || data.length === 0) {
+    box.innerHTML = `<div class="search-empty">No results found</div>`
+    return
+  }
+
+  const max = settings.ui?.max || 8
+  const items = data.slice(0, max)
 
   box.innerHTML = items.map(a => `
     <div class="search-item" onclick="goTo('${a.id}')">
-
-      ${settings.ui?.thumb ? `<img src="${a.poster || a.image}">` : ""}
+      
+      ${settings.ui?.thumb ? `<img src="${a.image || a.poster}" />` : ""}
 
       <div>
         <div class="title">${highlight(a.title, query, settings)}</div>
+        <div class="meta">${a.category || ""}</div>
       </div>
 
     </div>
   `).join("")
+}
+
+/* =========================
+UI HELPERS
+========================= */
+function getBox() {
+
+  let box = document.getElementById("searchResults")
+
+  if (!box) {
+    box = document.createElement("div")
+    box.id = "searchResults"
+    box.className = "search-dropdown"
+    document.body.appendChild(box)
+  }
+
+  return box
+}
+
+function showLoading() {
+  const box = getBox()
+  box.innerHTML = `<div class="search-loading">Searching...</div>`
+}
+
+function showError() {
+  const box = getBox()
+  box.innerHTML = `<div class="search-error">Something went wrong</div>`
 }
 
 /* =========================
@@ -155,8 +195,18 @@ function highlight(text, query, settings) {
 
   if (!settings.ui?.highlight) return text
 
-  const reg = new RegExp(`(${query})`, "gi")
+  const safe = query.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
+  const reg = new RegExp(`(${safe})`, "gi")
+
   return text.replace(reg, `<b>$1</b>`)
+}
+
+/* =========================
+CLEAR
+========================= */
+function clearResults() {
+  const box = document.getElementById("searchResults")
+  if (box) box.innerHTML = ""
 }
 
 /* =========================
