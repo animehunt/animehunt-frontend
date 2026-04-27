@@ -1,4 +1,5 @@
 const API_BASE = "https://animehunt-backend.animehunt715.workers.dev/api"
+import { loadSEO, applyDynamicSEO } from "../core/seo.js"
 
 // ===== GET SLUG FROM URL =====
 function getSlug() {
