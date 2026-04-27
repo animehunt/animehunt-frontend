@@ -1,8 +1,13 @@
+import { loadSEO, applyGlobalSEO, applyHomeSEO } from "../core/seo.js"
 import { getHomepage, getAnime, getCategories } from "../core/api.js"
 import { createCard } from "../core/utils.js"
 import { loadBanner } from "./banner.js"
 
 export async function initHome() {
+  const seo = await loadSEO()
+
+applyGlobalSEO(seo)
+applyHomeSEO(seo)
 
   await loadBanner("home")
 
