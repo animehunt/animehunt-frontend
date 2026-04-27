@@ -40,3 +40,8 @@ import { initContinueWatching } from "./features/continueWatching.js";
 document.addEventListener("DOMContentLoaded", () => {
   initContinueWatching();
 });
+import { initCategoryPage } from "./features/categoryPage.js"
+
+if (window.PAGE_TYPE === "category") {
+  initCategoryPage()
+}
