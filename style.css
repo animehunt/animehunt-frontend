@@ -616,3 +616,38 @@ div{
   border: 0 !important;
   outline: 0 !important;
 }
+.search-dropdown{
+  position:absolute;
+  top:60px;
+  left:0;
+  right:0;
+  background:#0b0f1a;
+  z-index:999;
+  border-top:1px solid #1a2035;
+}
+
+.search-item{
+  display:flex;
+  gap:10px;
+  padding:10px;
+  cursor:pointer;
+  border-bottom:1px solid #1a2035;
+}
+
+.search-item:hover{
+  background:#11182b;
+}
+
+.search-item img{
+  width:40px;
+  height:60px;
+  object-fit:cover;
+}
+
+.search-item .title{
+  font-size:14px;
+}
+
+.search-item b{
+  color:#ffcc00;
+}
