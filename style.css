@@ -619,11 +619,15 @@ div{
 .search-dropdown{
   position:absolute;
   top:60px;
-  left:0;
-  right:0;
+  left:50%;
+  transform:translateX(-50%);
+  width:90%;
+  max-width:500px;
   background:#0b0f1a;
+  border:1px solid #1a2035;
+  border-radius:10px;
   z-index:999;
-  border-top:1px solid #1a2035;
+  overflow:hidden;
 }
 
 .search-item{
@@ -635,19 +639,20 @@ div{
 }
 
 .search-item:hover{
-  background:#11182b;
+  background:#11172b;
 }
 
 .search-item img{
-  width:40px;
-  height:60px;
+  width:50px;
+  height:70px;
   object-fit:cover;
 }
 
-.search-item .title{
-  font-size:14px;
-}
-
-.search-item b{
-  color:#ffcc00;
+.search-loading,
+.search-empty,
+.search-error{
+  padding:12px;
+  text-align:center;
+  font-size:13px;
+  color:#aaa;
 }
