@@ -45,3 +45,8 @@ import { initCategoryPage } from "./features/categoryPage.js"
 if (window.PAGE_TYPE === "category") {
   initCategoryPage()
 }
+import { loadSEO, applyDynamicSEO } from "../core/seo.js"
+
+const seo = await loadSEO()
+
+applyDynamicSEO("search", { query }, seo)
