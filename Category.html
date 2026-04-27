@@ -1,10 +1,16 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Ongoing Anime – AnimeHunt</title>
+
+  <!-- 🔥 Dynamic Title -->
+  <title id="pageTitle">Anime Category – AnimeHunt</title>
+
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="stylesheet" href="ongoing.css">
+
+  <!-- same CSS -->
+  <link rel="stylesheet" href="Category.css">
 </head>
 
 <body>
@@ -19,8 +25,8 @@
 
   <input type="text" class="search-bar" placeholder="Search anime">
 </header>
-  
-  <!-- SIDEBAR -->
+          
+<!-- SIDEBAR -->
 <aside class="sidebar">
   <div class="close-btn">✕</div>
   <nav class="sidebar-menu">
@@ -35,20 +41,24 @@
 <div class="overlay"></div>
 
 <!-- ================= PAGE BANNER ================= -->
-<section class="page-banner" id="categoryBanner">
-  <h1>ONGOING</h1>
+<section class="page-banner" id="pageBanner">
+  <!-- 🔥 Dynamic Banner Title -->
+  <h1 id="bannerTitle">LOADING...</h1>
 </section>
 
 <!-- ================= GRID ================= -->
 <section class="grid-wrap">
-  <div class="anime-grid" data-page="ongoing"></div>
+  <!-- 🔥 Dynamic Anime Grid -->
+  <div class="anime-grid" id="animeGrid"></div>
 </section>
 
 <!-- ================= PAGINATION ================= -->
-<nav class="pagination"></nav>
+<div class="pagination" id="pagination">
+  <!-- 🔥 JS will fill -->
+</div>
 
 <!-- ================= A–Z NAV ================= -->
-<section class="az-nav">
+<section class="az-nav" id="azNav">
   <span>A</span><span>B</span><span>C</span><span>D</span><span>E</span>
   <span>F</span><span>G</span><span>H</span><span>I</span><span>J</span>
   <span>K</span><span>L</span><span>M</span><span>N</span><span>O</span>
@@ -63,7 +73,7 @@
     <a href="disclaimer.html">Disclaimer</a>
     <a href="dmca.html">DMCA</a>
     <a href="https://t.me/toons15" target="_blank">Telegram</a>
-</div>
+  </div>
 
   <div class="copyright">
     © 2026 AnimeHunt. All Rights Reserved.
@@ -79,7 +89,13 @@
   <a href="cartoon.html" class="nav-item">CARTOON</a>
 </nav>
 
-  <script src="js/api.js"></script>  
-<script src="script.js"></script>
+<!-- 🔥 IMPORTANT: category पहचान के लिए -->
+<script>
+  window.PAGE_TYPE = "category"
+</script>
+
+<!-- JS (unchanged जैसा तुमने कहा) -->
+<script type="module" src="js/script.js"></script>
+
 </body>
 </html>
