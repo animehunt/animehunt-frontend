@@ -1,24 +1,73 @@
-import { getAnime } from "../core/api.js";
-import { createCard } from "../core/utils.js";
-import { renderPagination } from "./pagination.js";
-import { loadBanner } from "./banner.js";
+const API_BASE = "https://animehunt-backend.animehunt715.workers.dev/api"
 
-export async function initCategoryPage(category) {
-  await loadBanner("home");
+// ===== GET SLUG FROM URL =====
+function getSlug() {
+  const params = new URLSearchParams(window.location.search)
+  return params.get("type")
+}
 
-  const grid = document.querySelector(".anime-grid");
-  const pagination = document.querySelector(".pagination");
+// ===== FETCH ALL CATEGORIES =====
+async function fetchCategories() {
+  const res = await fetch(API_BASE + "/categories")
+  return res.json()
+}
 
-  async function load(page = 1) {
-    const res = await getAnime(`?category=${category}&page=${page}&limit=20`);
+// ===== FIND CATEGORY =====
+function findCategory(categories, slug) {
+  return categories.find(c => c.slug === slug && c.active)
+}
 
-    const data = res?.data || res;
-    const total = res?.totalPages || 5;
+// ===== SET PAGE DATA =====
+function setPageUI(category) {
+  const titleEl = document.getElementById("pageTitle")
+  const bannerTitle = document.getElementById("bannerTitle")
+  const banner = document.getElementById("pageBanner")
 
-    grid.innerHTML = (data || []).map(createCard).join("");
+  // title
+  titleEl.innerText = `${category.name} – AnimeHunt`
 
-    renderPagination(pagination, page, total, load);
+  // banner text
+  bannerTitle.innerText = category.name.toUpperCase()
+
+  // 🔥 optional: banner class dynamic
+  banner.className = "page-banner " + category.slug + "-banner"
+}
+
+// ===== LOAD ANIME =====
+async function loadAnime(slug) {
+  const grid = document.getElementById("animeGrid")
+
+  // अभी dummy (तुम बाद में api connect करोगे)
+  grid.innerHTML = `<p style="padding:20px">Loading ${slug}...</p>`
+
+  // 🔥 future:
+  // const data = await fetch(API_BASE + "/anime?category=" + slug).then(r=>r.json())
+  // renderAnime(data)
+}
+
+// ===== INIT =====
+export async function initCategoryPage() {
+
+  const slug = getSlug()
+
+  if (!slug) {
+    document.getElementById("animeGrid").innerHTML = "No category"
+    return
   }
 
-  load();
+  try {
+    const categories = await fetchCategories()
+    const category = findCategory(categories, slug)
+
+    if (!category) {
+      document.getElementById("animeGrid").innerHTML = "Category not found"
+      return
+    }
+
+    setPageUI(category)
+    loadAnime(slug)
+
+  } catch (err) {
+    console.error(err)
+  }
 }
