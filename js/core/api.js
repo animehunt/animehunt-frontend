@@ -26,3 +26,7 @@ export const getHomepage = () => api(`/admin/homepage`);
 export const getAnimeById = (id) => api(`/public/anime/${id}`);
 export const getEpisodes = (id) => api(`/public/episodes/${id}`);
 export const getServers = (epId) => api(`/public/servers/${epId}`);
+export async function getCategories() {
+  const res = await fetch(API_BASE + "/categories")
+  return res.json()
+}
