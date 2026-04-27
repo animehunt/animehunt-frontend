@@ -24,13 +24,13 @@ function setPageUI(category) {
   const bannerTitle = document.getElementById("bannerTitle")
   const banner = document.getElementById("pageBanner")
 
-  // title
+  // title (UI)
   titleEl.innerText = `${category.name} – AnimeHunt`
 
   // banner text
   bannerTitle.innerText = category.name.toUpperCase()
 
-  // 🔥 optional: banner class dynamic
+  // banner class dynamic
   banner.className = "page-banner " + category.slug + "-banner"
 }
 
@@ -38,12 +38,11 @@ function setPageUI(category) {
 async function loadAnime(slug) {
   const grid = document.getElementById("animeGrid")
 
-  // अभी dummy (तुम बाद में api connect करोगे)
   grid.innerHTML = `<p style="padding:20px">Loading ${slug}...</p>`
 
-  // 🔥 future:
+  // 🔥 future API
   // const data = await fetch(API_BASE + "/anime?category=" + slug).then(r=>r.json())
-  // renderAnime(data)
+  // grid.innerHTML = data.map(createCard).join("")
 }
 
 // ===== INIT =====
@@ -65,8 +64,18 @@ export async function initCategoryPage() {
       return
     }
 
+    // ===== UI SET =====
     setPageUI(category)
+
+    // ===== LOAD CONTENT =====
     loadAnime(slug)
+
+    // ===== ✅ SEO APPLY (YAHI MAIN CHEEZ HAI) =====
+    const seo = await loadSEO()
+
+    applyDynamicSEO("category", {
+      name: category.name
+    }, seo)
 
   } catch (err) {
     console.error(err)
