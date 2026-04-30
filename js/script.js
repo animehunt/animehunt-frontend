@@ -8,18 +8,25 @@ import { initDetailsPage } from "./features/detailsPage.js";
 import { initWatchPage } from "./features/watchPage.js";
 import { initHistoryPage } from "./features/historyPage.js";
 import { initContinueWatching } from "./features/continueWatching.js";
+
+// ✅ NEW
 import { initSidebar } from "./features/sidebar.js";
 import { initFooter } from "./features/footer.js";
+
 import { loadSEO, applyDynamicSEO } from "./core/seo.js";
 
 document.addEventListener("DOMContentLoaded", async () => {
   const page = getPage();
 
-  // GLOBAL
+  // ===== GLOBAL INIT =====
   initSearch();
   initContinueWatching();
 
-  // PAGE ROUTING
+  // ✅ VERY IMPORTANT (top pe hi run karo)
+  initSidebar();
+  initFooter();
+
+  // ===== PAGE ROUTING =====
   if (page === "home") initHome();
 
   if (page === "anime") initAnimePage("anime");
@@ -31,13 +38,13 @@ document.addEventListener("DOMContentLoaded", async () => {
   if (page === "watch") initWatchPage();
   if (page === "history") initHistoryPage();
 
-  // CATEGORY (dynamic)
+  // ===== CATEGORY (dynamic) =====
   const grid = document.querySelector(".anime-grid");
   if (grid?.dataset.category) {
     initCategoryPage(grid.dataset.category);
   }
 
-  // SEO SAFE LOAD
+  // ===== SEO =====
   try {
     const seo = await loadSEO();
     applyDynamicSEO(page, {}, seo);
