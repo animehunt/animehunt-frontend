@@ -8,7 +8,8 @@ import { initDetailsPage } from "./features/detailsPage.js";
 import { initWatchPage } from "./features/watchPage.js";
 import { initHistoryPage } from "./features/historyPage.js";
 import { initContinueWatching } from "./features/continueWatching.js";
-
+import { initSidebar } from "./features/sidebar.js";
+import { initFooter } from "./features/footer.js";
 import { loadSEO, applyDynamicSEO } from "./core/seo.js";
 
 document.addEventListener("DOMContentLoaded", async () => {
