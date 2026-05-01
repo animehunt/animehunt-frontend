@@ -2,6 +2,8 @@ const BASE = "https://animehunt-backend.animehunt715.workers.dev/api";
 
 const cache = new Map();
 
+/* ================= CORE API ================= */
+
 export async function api(url) {
   if (cache.has(url)) return cache.get(url);
 
@@ -10,6 +12,7 @@ export async function api(url) {
     const json = await res.json();
 
     const data = json.data || json;
+
     cache.set(url, data);
 
     return data;
@@ -19,34 +22,31 @@ export async function api(url) {
   }
 }
 
-// ===== PUBLIC APIs =====
-export const getAnime = (params = "") => api(`/public/anime${params}`);
-export const getAnimeById = (id) => api(`/public/anime/${id}`);
-export const getEpisodes = (id) => api(`/public/episodes/${id}`);
-export const getServers = (epId) => api(`/public/servers/${epId}`);
-export const getBanner = (params = "") => api(`/banner/public${params}`);
+/* ================= PUBLIC APIs ================= */
 
-// ⚠️ FIXED
-export const getCategories = () => api(`/categories`);
+export const getAnime = (params = "") =>
+  api(`/public/anime${params}`);
 
-// ❌ REMOVE this (admin endpoint)
-// export const getHomepage = () => api(`/admin/homepage`);
+export const getAnimeById = (id) =>
+  api(`/public/anime/${id}`);
 
-// ===== DOWNLOAD =====
+/* 🔥 FIXED (IMPORTANT) */
+export const getEpisodes = (anime) =>
+  api(`/public/episodes/${encodeURIComponent(anime)}`);
+
+export const getServers = (epId) =>
+  api(`/public/servers/${epId}`);
+
+export const getBanner = (params = "") =>
+  api(`/banner/public${params}`);
+
+export const getCategories = () =>
+  api(`/categories`);
+
+/* ================= DOWNLOAD ================= */
+
 export const getDownloads = (anime, season, episode) =>
-  api(`/downloads/${anime}/${season}/${episode}`)
+  api(`/downloads/${encodeURIComponent(anime)}/${season}/${episode}`);
 
-export const getAllEpisodes = (anime) =>
-  api(`/downloads/${anime}`)
-
-const BASE = "https://animehunt-backend.animehunt715.workers.dev/api"
-
-export async function getEpisodes(anime){
-  const res = await fetch(`${BASE}/public/episodes/${encodeURIComponent(anime)}`)
-  return res.json()
-}
-
-export async function getServers(id){
-  const res = await fetch(`${BASE}/public/servers/${id}`)
-  return res.json()
-}
+export const getAllDownloads = (anime) =>
+  api(`/downloads-full/${encodeURIComponent(anime)}`);
