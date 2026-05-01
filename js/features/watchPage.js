@@ -9,7 +9,7 @@ function getParams() {
 }
 
 let animeId = null;
-let animeSlug = null; // ✅ NEW
+let animeName = null; // ✅ FINAL FIX
 let episodes = [];
 let currentIndex = 0;
 let servers = [];
@@ -19,19 +19,18 @@ let failCount = 0;
 let watchTimer = null;
 let watchedSeconds = 0;
 
-// ================= INIT =================
+/* ================= INIT ================= */
 export async function initWatchPage() {
   const params = getParams();
   animeId = params.id;
 
   if (!animeId) return;
 
-  // ✅ GET ANIME DATA (slug ke liye)
   const animeData = await getAnimeById(animeId);
   if (!animeData) return;
 
-  // ⚠️ IMPORTANT: backend ke hisaab se name/slug
-  animeSlug = animeData.slug || animeData.title;
+  // ✅ ALWAYS SAME FIELD USE KARO
+  animeName = animeData.title;
 
   episodes = await getEpisodes(animeId);
   if (!episodes?.length) return;
@@ -54,7 +53,7 @@ export async function initWatchPage() {
   renderResumeButton();
 }
 
-// ================= LOAD EP =================
+/* ================= LOAD EP ================= */
 async function loadEpisode() {
   const ep = episodes[currentIndex];
   if (!ep) return;
@@ -70,11 +69,10 @@ async function loadEpisode() {
 
   loadServer();
 
-  // ✅ NEW
   renderDownloadButtons();
 }
 
-// ================= SERVER =================
+/* ================= SERVER ================= */
 function loadServer() {
   const iframe = document.getElementById("iframe-embed");
   const server = servers[currentServer];
@@ -91,7 +89,7 @@ function loadServer() {
   saveHistory();
 }
 
-// ================= SERVERS =================
+/* ================= SERVERS ================= */
 function renderServers() {
   const list = document.getElementById("serverList");
 
@@ -109,19 +107,16 @@ function renderServers() {
   });
 }
 
-// ================= DOWNLOAD BUTTONS =================
+/* ================= DOWNLOAD BUTTONS ================= */
 function renderDownloadButtons(){
 
   const container = document.getElementById("downloadBox");
   if(!container) return;
 
   const ep = episodes[currentIndex];
-
-  // Episode number backend format ke liye
   const episodeNo = currentIndex + 1;
 
   container.innerHTML = `
-  
     <button class="download-btn" id="downloadEp">
       ⬇ Download Episode ${episodeNo}
     </button>
@@ -129,34 +124,27 @@ function renderDownloadButtons(){
     <button class="download-btn secondary" id="downloadAll">
       📦 Full Download Page
     </button>
-
   `;
 
-  // 🎯 EP DOWNLOAD
+  // ✅ SINGLE EP
   document.getElementById("downloadEp").onclick = () => {
 
-    location.href = `
-      download.html
-      ?anime=${encodeURIComponent(animeSlug)}
-      &season=${ep.season || 1}
-      &episode=${episodeNo}
-    `;
+    const url = `download.html?anime=${encodeURIComponent(animeName)}&season=${ep.season || 1}&episode=${episodeNo}`;
 
+    location.href = url;
   };
 
-  // 🎯 FULL DOWNLOAD
+  // ✅ FULL PAGE
   document.getElementById("downloadAll").onclick = () => {
 
-    location.href = `
-      download.html
-      ?anime=${encodeURIComponent(animeSlug)}
-    `;
+    const url = `download.html?anime=${encodeURIComponent(animeName)}`;
 
+    location.href = url;
   };
 
 }
 
-// ================= FAILOVER =================
+/* ================= FAILOVER ================= */
 function startFailDetection() {
   const iframe = document.getElementById("iframe-embed");
 
@@ -185,7 +173,7 @@ function showError() {
   if (msg) msg.style.display = "block";
 }
 
-// ================= AUTO NEXT =================
+/* ================= AUTO NEXT ================= */
 function startAutoNextTimer() {
   const box = document.getElementById("autoNextBox");
   const countEl = document.getElementById("countdown");
@@ -208,7 +196,7 @@ function startAutoNextTimer() {
   }, 1000);
 }
 
-// ================= NEXT =================
+/* ================= NEXT ================= */
 function nextEpisode() {
   currentIndex++;
 
@@ -217,7 +205,7 @@ function nextEpisode() {
   loadEpisode();
 }
 
-// ================= WATCH TIMER =================
+/* ================= WATCH TIMER ================= */
 function startWatchTimer() {
   if (watchTimer) clearInterval(watchTimer);
 
@@ -227,7 +215,7 @@ function startWatchTimer() {
   }, 5000);
 }
 
-// ================= HISTORY =================
+/* ================= HISTORY ================= */
 function saveHistory() {
   const ep = episodes[currentIndex];
 
@@ -245,7 +233,7 @@ function saveHistory() {
   localStorage.setItem("WATCH_HISTORY", JSON.stringify(history.slice(0, 20)));
 }
 
-// ================= RESUME =================
+/* ================= RESUME ================= */
 function saveResume() {
   const ep = episodes[currentIndex];
 
@@ -267,7 +255,7 @@ function getResume() {
   }
 }
 
-// ================= RESUME BUTTON =================
+/* ================= RESUME BUTTON ================= */
 function renderResumeButton() {
   const resume = getResume();
   if (!resume || resume.animeId !== animeId) return;
@@ -287,7 +275,7 @@ function renderResumeButton() {
   container.prepend(btn);
 }
 
-// ================= EPISODES =================
+/* ================= EPISODES ================= */
 function renderEpisodes() {
   const grid = document.getElementById("episodeGrid");
 
