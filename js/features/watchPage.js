@@ -23,8 +23,8 @@ let failCount = 0;
 let watchTimer = null;
 let watchedSeconds = 0;
 
-/* 🔥 PRELOAD STATE */
-let preloadMap = {}; // { index: { serverIndex: iframe } }
+/* 🔥 PRELOAD CACHE */
+let preloadMap = {}; // { epIndex: { serverIndex: iframe } }
 
 /* ================= INIT ================= */
 export async function initWatchPage() {
@@ -59,7 +59,7 @@ export async function initWatchPage() {
   renderResumeButton();
 }
 
-/* ================= LOAD EP ================= */
+/* ================= LOAD EPISODE ================= */
 async function loadEpisode() {
 
   const ep = episodes[currentIndex];
@@ -76,11 +76,10 @@ async function loadEpisode() {
   loadServer();
   renderDownloadButtons();
 
-  /* 🔥 PRELOAD NEXT EPISODE */
   preloadNextEpisode();
 }
 
-/* ================= SERVER ================= */
+/* ================= LOAD SERVER ================= */
 function loadServer() {
 
   const iframe = document.getElementById("iframe-embed");
@@ -96,8 +95,68 @@ function loadServer() {
 
   saveHistory();
 
-  /* 🔥 PRELOAD NEXT SERVER */
   preloadNextServer();
+}
+
+/* ================= SERVERS ================= */
+function renderServers() {
+
+  const list = document.getElementById("serverList");
+
+  list.innerHTML = servers.map((s, i) => `
+    <button class="server ${i === currentServer ? "active" : ""}" data-i="${i}">
+      Server ${i + 1}
+    </button>
+  `).join("");
+
+  list.querySelectorAll("button").forEach(btn => {
+    btn.onclick = () => {
+
+      currentServer = Number(btn.dataset.i);
+
+      const pre = preloadMap[`ep${currentIndex}`]?.[currentServer];
+
+      if (pre) {
+        document.getElementById("iframe-embed").src = pre.src;
+      } else {
+        loadServer();
+      }
+
+    };
+  });
+}
+
+/* ================= DOWNLOAD BUTTONS ================= */
+function renderDownloadButtons(){
+
+  const container = document.getElementById("downloadBox");
+  if(!container) return;
+
+  const ep = episodes[currentIndex];
+  const episodeNo = currentIndex + 1;
+  const season = ep.season || "1";
+
+  container.innerHTML = `
+    <button class="download-btn">
+      ⬇ Download Episode ${episodeNo}
+    </button>
+
+    <button class="download-btn secondary">
+      📦 Full Download Page
+    </button>
+  `;
+
+  const buttons = container.querySelectorAll("button");
+
+  // Episode download
+  buttons[0].onclick = () => {
+    location.href = `download.html?anime=${encodeURIComponent(animeSlug)}&season=${season}&episode=${episodeNo}`;
+  };
+
+  // Full page
+  buttons[1].onclick = () => {
+    location.href = `download.html?anime=${encodeURIComponent(animeSlug)}`;
+  };
 }
 
 /* ================= PRELOAD NEXT SERVER ================= */
@@ -160,52 +219,6 @@ function getPreloadContainer() {
   return box;
 }
 
-/* ================= SERVERS ================= */
-function renderServers() {
-
-  const list = document.getElementById("serverList");
-
-  list.innerHTML = servers.map((s, i) => `
-    <button class="server ${i === currentServer ? "active" : ""}" data-i="${i}">
-      Server ${i + 1}
-    </button>
-  `).join("");
-
-  list.querySelectorAll("button").forEach(btn => {
-    btn.onclick = () => {
-      currentServer = Number(btn.dataset.i);
-
-      /* 🔥 INSTANT SWITCH (preloaded) */
-      const pre = preloadMap[`ep${currentIndex}`]?.[currentServer];
-
-      if (pre) {
-        document.getElementById("iframe-embed").src = pre.src;
-      } else {
-        loadServer();
-      }
-    };
-  });
-}
-
-/* ================= DOWNLOAD BUTTONS ================= */
-function renderDownloadButtons(){
-
-  const container = document.getElementById("extraActions");
-  if(!container) return;
-
-  const ep = episodes[currentIndex];
-  const episodeNo = currentIndex + 1;
-  const season = ep.season || "1";
-
-  const btn = document.getElementById("downloadBtn");
-
-  if(btn){
-    btn.onclick = () => {
-      location.href = `download.html?anime=${encodeURIComponent(animeSlug)}&season=${season}&episode=${episodeNo}`;
-    };
-  }
-}
-
 /* ================= FAILOVER ================= */
 function startFailDetection() {
 
@@ -218,6 +231,7 @@ function startFailDetection() {
   };
 
   setTimeout(() => {
+
     if (!loaded) {
 
       failCount++;
@@ -230,6 +244,7 @@ function startFailDetection() {
       }
 
     }
+
   }, 5000);
 }
 
@@ -271,7 +286,6 @@ function nextEpisode() {
 
   if (currentIndex >= episodes.length) return;
 
-  /* 🔥 INSTANT EP SWITCH */
   const pre = preloadMap[`ep${currentIndex}`]?.[0];
 
   if (pre) {
