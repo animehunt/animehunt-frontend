@@ -23,6 +23,9 @@ let failCount = 0;
 let watchTimer = null;
 let watchedSeconds = 0;
 
+/* 🔥 PRELOAD STATE */
+let preloadMap = {}; // { index: { serverIndex: iframe } }
+
 /* ================= INIT ================= */
 export async function initWatchPage() {
 
@@ -34,7 +37,6 @@ export async function initWatchPage() {
   const animeData = await getAnimeById(animeId);
   if (!animeData) return;
 
-  // ✅ FIX: slug use karo (safe)
   animeSlug = animeData.slug || animeData.title;
 
   episodes = await getEpisodes(animeId);
@@ -72,7 +74,10 @@ async function loadEpisode() {
   startWatchTimer();
 
   loadServer();
-  renderDownloadButtons(); // ✅ always update
+  renderDownloadButtons();
+
+  /* 🔥 PRELOAD NEXT EPISODE */
+  preloadNextEpisode();
 }
 
 /* ================= SERVER ================= */
@@ -90,6 +95,69 @@ function loadServer() {
   startAutoNextTimer();
 
   saveHistory();
+
+  /* 🔥 PRELOAD NEXT SERVER */
+  preloadNextServer();
+}
+
+/* ================= PRELOAD NEXT SERVER ================= */
+function preloadNextServer() {
+
+  const next = currentServer + 1;
+  if (!servers[next]) return;
+
+  const container = getPreloadContainer();
+
+  const iframe = document.createElement("iframe");
+  iframe.src = servers[next].url;
+  iframe.style.display = "none";
+
+  container.appendChild(iframe);
+
+  preloadMap[`ep${currentIndex}`] = preloadMap[`ep${currentIndex}`] || {};
+  preloadMap[`ep${currentIndex}`][next] = iframe;
+}
+
+/* ================= PRELOAD NEXT EP ================= */
+async function preloadNextEpisode() {
+
+  const nextIndex = currentIndex + 1;
+  if (!episodes[nextIndex]) return;
+
+  const nextEp = episodes[nextIndex];
+  const nextServers = await getServers(nextEp.id);
+
+  if (!nextServers?.length) return;
+
+  const container = getPreloadContainer();
+
+  preloadMap[`ep${nextIndex}`] = {};
+
+  nextServers.forEach((s, i) => {
+
+    const iframe = document.createElement("iframe");
+    iframe.src = s.url;
+    iframe.style.display = "none";
+
+    container.appendChild(iframe);
+
+    preloadMap[`ep${nextIndex}`][i] = iframe;
+  });
+}
+
+/* ================= PRELOAD CONTAINER ================= */
+function getPreloadContainer() {
+
+  let box = document.getElementById("preload-box");
+
+  if (!box) {
+    box = document.createElement("div");
+    box.id = "preload-box";
+    box.style.display = "none";
+    document.body.appendChild(box);
+  }
+
+  return box;
 }
 
 /* ================= SERVERS ================= */
@@ -106,7 +174,15 @@ function renderServers() {
   list.querySelectorAll("button").forEach(btn => {
     btn.onclick = () => {
       currentServer = Number(btn.dataset.i);
-      loadServer();
+
+      /* 🔥 INSTANT SWITCH (preloaded) */
+      const pre = preloadMap[`ep${currentIndex}`]?.[currentServer];
+
+      if (pre) {
+        document.getElementById("iframe-embed").src = pre.src;
+      } else {
+        loadServer();
+      }
     };
   });
 }
@@ -114,39 +190,20 @@ function renderServers() {
 /* ================= DOWNLOAD BUTTONS ================= */
 function renderDownloadButtons(){
 
-  const container = document.getElementById("downloadBox");
+  const container = document.getElementById("extraActions");
   if(!container) return;
 
   const ep = episodes[currentIndex];
-
   const episodeNo = currentIndex + 1;
   const season = ep.season || "1";
 
-  container.innerHTML = `
-    <button class="download-btn" id="downloadEp">
-      ⬇ Download Episode ${episodeNo}
-    </button>
+  const btn = document.getElementById("downloadBtn");
 
-    <button class="download-btn secondary" id="downloadAll">
-      📦 Full Download Page
-    </button>
-  `;
-
-  /* ===== SINGLE EP ===== */
-  document.getElementById("downloadEp").onclick = () => {
-
-    const url = `download.html?anime=${encodeURIComponent(animeSlug)}&season=${season}&episode=${episodeNo}`;
-
-    location.href = url;
-  };
-
-  /* ===== FULL PAGE ===== */
-  document.getElementById("downloadAll").onclick = () => {
-
-    const url = `download.html?anime=${encodeURIComponent(animeSlug)}`;
-
-    location.href = url;
-  };
+  if(btn){
+    btn.onclick = () => {
+      location.href = `download.html?anime=${encodeURIComponent(animeSlug)}&season=${season}&episode=${episodeNo}`;
+    };
+  }
 }
 
 /* ================= FAILOVER ================= */
@@ -213,6 +270,13 @@ function nextEpisode() {
   currentIndex++;
 
   if (currentIndex >= episodes.length) return;
+
+  /* 🔥 INSTANT EP SWITCH */
+  const pre = preloadMap[`ep${currentIndex}`]?.[0];
+
+  if (pre) {
+    document.getElementById("iframe-embed").src = pre.src;
+  }
 
   loadEpisode();
 }
