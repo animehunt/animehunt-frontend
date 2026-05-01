@@ -39,6 +39,15 @@ export async function initDetailsPage() {
     location.href = `watch.html?id=${id}`;
   };
 
+  // ===== DOWNLOAD BUTTON =====
+const dlBtn = document.querySelector(".download");
+
+if(dlBtn){
+  dlBtn.onclick = () => {
+    location.href = `download.html?anime=${encodeURIComponent(data.title)}`
+  }
+}
+
   // ===== RELATED =====
   const related = await getAnime(`?category=${data.genres?.[0] || ""}&limit=8`);
 
