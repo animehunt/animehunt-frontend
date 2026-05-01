@@ -1,7 +1,6 @@
 import { api } from "../core/api.js"
 
 /* ================= PARAMS ================= */
-
 function getParams(){
   const url = new URLSearchParams(location.search)
 
@@ -13,7 +12,6 @@ function getParams(){
 }
 
 /* ================= INIT ================= */
-
 export async function initDownloadPage(){
 
   const { anime, season, episode } = getParams()
@@ -28,7 +26,6 @@ export async function initDownloadPage(){
 
   title.innerText = `Download ${anime}`
 
-  // 🎯 SINGLE EP
   if(season && episode){
     loadEpisode(anime, season, episode)
   }else{
@@ -37,7 +34,6 @@ export async function initDownloadPage(){
 }
 
 /* ================= FULL ANIME ================= */
-
 async function loadFullAnime(anime){
 
   const container = document.getElementById("downloadContainer")
@@ -45,10 +41,10 @@ async function loadFullAnime(anime){
 
   try{
 
-    const data = await api(`/downloads-full/${anime}`)
+    const data = await api(`/downloads-full/${encodeURIComponent(anime)}`)
 
     if(!data || typeof data !== "object"){
-      container.innerHTML = "No data found"
+      container.innerHTML = "No downloads found"
       return
     }
 
@@ -56,9 +52,7 @@ async function loadFullAnime(anime){
 
     Object.keys(data).forEach(season=>{
 
-      container.innerHTML += `
-        <h2>Season ${season}</h2>
-      `
+      container.innerHTML += `<h2>Season ${season}</h2>`
 
       Object.keys(data[season]).forEach(ep=>{
 
@@ -68,7 +62,7 @@ async function loadFullAnime(anime){
           anime,
           season,
           ep,
-          episodeData
+          groupByHost(episodeData)
         )
 
       })
@@ -78,11 +72,9 @@ async function loadFullAnime(anime){
   }catch{
     container.innerHTML = "Failed to load"
   }
-
 }
 
 /* ================= SINGLE EP ================= */
-
 async function loadEpisode(anime, season, episode){
 
   const container = document.getElementById("downloadContainer")
@@ -90,7 +82,7 @@ async function loadEpisode(anime, season, episode){
 
   try{
 
-    const data = await api(`/downloads/${anime}/${season}/${episode}`)
+    const data = await api(`/downloads/${encodeURIComponent(anime)}/${season}/${episode}`)
 
     if(!Array.isArray(data) || !data.length){
       container.innerHTML = "No downloads found"
@@ -99,31 +91,28 @@ async function loadEpisode(anime, season, episode){
 
     container.innerHTML = `
       <h2>Season ${season} • Episode ${episode}</h2>
-      ${renderEpisodeBlock(anime, season, episode, convertToGrouped(data))}
+      ${renderEpisodeBlock(anime, season, episode, groupByHost(data))}
     `
 
   }catch{
     container.innerHTML = "Failed to load"
   }
-
 }
 
-/* ================= GROUP HELPER ================= */
-
-function convertToGrouped(list){
+/* ================= GROUP BY HOST ================= */
+function groupByHost(list){
 
   const grouped = {}
 
   list.forEach(d=>{
     if(!grouped[d.host]) grouped[d.host] = []
-    grouped[d.host].push({ quality: d.quality })
+    grouped[d.host].push(d)
   })
 
   return grouped
 }
 
 /* ================= EP BLOCK ================= */
-
 function renderEpisodeBlock(anime, season, episode, grouped){
 
   return `
@@ -131,27 +120,29 @@ function renderEpisodeBlock(anime, season, episode, grouped){
 
     <h3>Episode ${episode}</h3>
 
-    ${Object.keys(grouped).map(host=>`
+    ${Object.keys(grouped).map(host=>{
 
+      return `
       <div class="host-block">
 
         <h4>${host}</h4>
 
         <div class="quality-links">
 
-          ${grouped[host].map(l=>{
+          ${grouped[host].map(item=>{
 
-            const url = `/go?anime=${encodeURIComponent(anime)}&season=${season}&episode=${episode}&host=${host}&quality=${l.quality}`
+            const url = `/api/go?anime=${encodeURIComponent(anime)}&season=${season}&episode=${episode}&host=${host}&quality=${item.quality}&step=1`
 
-            return `<a href="${url}">${l.quality}</a>`
+            return `<a href="${url}">${item.quality}</a>`
 
           }).join("")}
 
         </div>
 
       </div>
+      `
 
-    `).join("")}
+    }).join("")}
 
   </div>
   `
