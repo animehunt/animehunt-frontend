@@ -9,9 +9,12 @@ import { initWatchPage } from "./features/watchPage.js";
 import { initHistoryPage } from "./features/historyPage.js";
 import { initContinueWatching } from "./features/continueWatching.js";
 
-// ✅ NEW
+// ✅ NEW UI
 import { initSidebar } from "./features/sidebar.js";
 import { initFooter } from "./features/footer.js";
+
+// ✅ 🔥 DOWNLOAD (ADD THIS)
+import { initDownloadPage } from "./features/downloadPage.js";
 
 import { loadSEO, applyDynamicSEO } from "./core/seo.js";
 
@@ -22,7 +25,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   initSearch();
   initContinueWatching();
 
-  // ✅ VERY IMPORTANT (top pe hi run karo)
+  // ===== UI =====
   initSidebar();
   initFooter();
 
@@ -37,6 +40,9 @@ document.addEventListener("DOMContentLoaded", async () => {
   if (page === "details") initDetailsPage();
   if (page === "watch") initWatchPage();
   if (page === "history") initHistoryPage();
+
+  // ✅ 🔥 DOWNLOAD PAGE ROUTE
+  if (page === "download") initDownloadPage();
 
   // ===== CATEGORY (dynamic) =====
   const grid = document.querySelector(".anime-grid");
