@@ -38,3 +38,15 @@ export const getDownloads = (anime, season, episode) =>
 
 export const getAllEpisodes = (anime) =>
   api(`/downloads/${anime}`)
+
+const BASE = "https://animehunt-backend.animehunt715.workers.dev/api"
+
+export async function getEpisodes(anime){
+  const res = await fetch(`${BASE}/public/episodes/${encodeURIComponent(anime)}`)
+  return res.json()
+}
+
+export async function getServers(id){
+  const res = await fetch(`${BASE}/public/servers/${id}`)
+  return res.json()
+}
