@@ -1,4 +1,4 @@
-import { getAnimeById, getAnime } from "../core/api.js";
+import { getAnimeById, getAnime, getEpisodes } from "../core/api.js";
 import { createCard, initLazy } from "../core/utils.js";
 
 /* ================= PARAM ================= */
@@ -6,104 +6,129 @@ function getId() {
   return new URLSearchParams(location.search).get("id");
 }
 
+/* ================= STATE ================= */
+let animeId = null;
+let episodes = [];
+let currentSeason = "1";
+
 /* ================= INIT ================= */
 export async function initDetailsPage() {
 
   const id = getId();
   if (!id) return;
 
+  animeId = id;
+
   const data = await getAnimeById(id);
   if (!data) return;
 
-  /* ================= SAFE VALUES ================= */
-  const title = data.title || "Unknown";
-  const slug = data.slug || title;
-  const banner = data.banner || "";
-  const poster = data.poster || "";
-  const year = data.year || "";
-  const type = data.type || "-";
-  const status = data.status || "-";
-  const rating = data.rating || "N/A";
-  const desc = data.description || "";
-  const genres = data.genres || [];
-  const language = data.language || "-";
-  const duration = data.duration || "-";
+  const slug = data.slug || data.title;
 
   /* ================= HERO ================= */
-  const heroBg = document.getElementById("heroBg");
-  const posterImg = document.getElementById("posterImg");
-  const titleEl = document.getElementById("animeTitle");
-  const metaEl = document.getElementById("animeMeta");
-  const descEl = document.getElementById("animeDesc");
+  document.getElementById("heroBg").style.backgroundImage = `url(${data.banner})`;
+  document.getElementById("posterImg").src = data.poster;
 
-  if(heroBg) heroBg.style.backgroundImage = `url(${banner})`;
-  if(posterImg) posterImg.src = poster;
+  document.getElementById("animeTitle").innerHTML =
+    `${data.title} <span>(${data.year || ""})</span>`;
 
-  if(titleEl){
-    titleEl.innerHTML = `${title} <span>(${year})</span>`;
-  }
+  document.getElementById("animeMeta").innerHTML = `
+    <span>${data.type}</span>
+    <span>${data.status}</span>
+    <span class="imdb">⭐ ${data.rating || "N/A"}</span>
+  `;
 
-  if(metaEl){
-    metaEl.innerHTML = `
-      <span>${type}</span>
-      <span>${status}</span>
-      <span class="imdb">⭐ ${rating}</span>
-    `;
-  }
-
-  if(descEl){
-    descEl.innerText = desc;
-  }
+  document.getElementById("animeDesc").innerText = data.description || "";
 
   /* ================= ABOUT ================= */
-  const aboutList = document.getElementById("aboutList");
-  const aboutDesc = document.getElementById("aboutDesc");
+  document.getElementById("aboutList").innerHTML = `
+    <li><b>Language:</b> ${data.language || "-"}</li>
+    <li><b>Duration:</b> ${data.duration || "-"}</li>
+    <li><b>Genres:</b> ${(data.genres || []).join(", ")}</li>
+  `;
 
-  if(aboutList){
-    aboutList.innerHTML = `
-      <li><b>Language:</b> ${language}</li>
-      <li><b>Duration:</b> ${duration}</li>
-      <li><b>Genres:</b> ${genres.join(", ") || "-"}</li>
-    `;
-  }
+  document.getElementById("aboutDesc").innerText = data.description || "";
 
-  if(aboutDesc){
-    aboutDesc.innerText = desc;
-  }
+  /* ================= WATCH ================= */
+  document.querySelector(".watch").onclick = () => {
+    location.href = `watch.html?id=${id}`;
+  };
 
-  /* ================= WATCH BUTTON ================= */
-  const watchBtn = document.querySelector(".watch");
+  /* ================= DOWNLOAD ================= */
+  document.querySelector(".download").onclick = () => {
+    location.href = `download.html?anime=${encodeURIComponent(slug)}`;
+  };
 
-  if(watchBtn){
-    watchBtn.onclick = () => {
-      location.href = `watch.html?id=${id}`;
-    };
-  }
-
-  /* ================= DOWNLOAD BUTTON ================= */
-  const downloadBtn = document.querySelector(".download");
-
-  if(downloadBtn){
-    downloadBtn.onclick = () => {
-      location.href = `download.html?anime=${encodeURIComponent(slug)}`;
-    };
-  }
+  /* ================= LOAD EPISODES ================= */
+  await loadEpisodes();
 
   /* ================= RELATED ================= */
-  try{
-
-    const related = await getAnime(`?category=${genres[0] || ""}&limit=8`);
-
-    const grid = document.getElementById("relatedGrid");
-
-    if(grid){
-      grid.innerHTML = (related || []).map(createCard).join("");
-    }
-
+  try {
+    const related = await getAnime(`?category=${data.genres?.[0] || ""}&limit=8`);
+    document.getElementById("relatedGrid").innerHTML =
+      (related || []).map(createCard).join("");
     initLazy();
+  } catch {}
+}
 
-  }catch(e){
-    console.warn("Related load failed");
+/* ================= LOAD EP ================= */
+async function loadEpisodes(){
+
+  episodes = await getEpisodes(animeId);
+  if(!episodes?.length) return;
+
+  renderSeasonTabs();
+  renderEpisodes();
+}
+
+/* ================= SEASON TABS ================= */
+function renderSeasonTabs(){
+
+  const seasons = [...new Set(episodes.map(e => e.season || "1"))];
+
+  const list = document.getElementById("seasonList");
+
+  list.innerHTML = seasons.map(s => `
+    <div onclick="selectSeason('${s}')">Season ${s}</div>
+  `).join("");
+
+  window.selectSeason = (s)=>{
+    currentSeason = s;
+    list.style.display = "none";
+    renderEpisodes();
+  };
+
+  document.getElementById("seasonBtn").onclick = ()=>{
+    list.style.display = list.style.display === "none" ? "block" : "none";
+  };
+
+  document.getElementById("allBtn").onclick = ()=>{
+    currentSeason = "ALL";
+    renderEpisodes();
+  };
+}
+
+/* ================= EP GRID ================= */
+function renderEpisodes(){
+
+  const grid = document.getElementById("episodeGrid");
+
+  let list = episodes;
+
+  if(currentSeason !== "ALL"){
+    list = episodes.filter(e => (e.season || "1") == currentSeason);
   }
 
+  grid.innerHTML = list.map((ep, i) => `
+    <div class="ep-card" onclick="goWatch('${ep.id}')">
+      <div class="ep-thumb">
+        <img src="${ep.thumbnail || ""}">
+        <span class="ep-no">EP ${ep.episode}</span>
+      </div>
+      <p>${ep.title || "Episode " + ep.episode}</p>
+    </div>
+  `).join("");
+
+  window.goWatch = (id)=>{
+    location.href = `watch.html?id=${animeId}&ep=${id}`;
+  };
 }
