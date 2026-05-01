@@ -1,5 +1,7 @@
 import { api } from "../core/api.js"
 
+/* ================= PARAMS ================= */
+
 function getParams(){
   const url = new URLSearchParams(location.search)
 
@@ -9,6 +11,8 @@ function getParams(){
     episode: url.get("episode")
   }
 }
+
+/* ================= INIT ================= */
 
 export async function initDownloadPage(){
 
@@ -24,14 +28,12 @@ export async function initDownloadPage(){
 
   title.innerText = `Download ${anime}`
 
-  // 🎯 MODE 2: SINGLE EPISODE
+  // 🎯 SINGLE EP
   if(season && episode){
     loadEpisode(anime, season, episode)
-    return
+  }else{
+    loadFullAnime(anime)
   }
-
-  // 🎯 MODE 1: FULL ANIME
-  loadFullAnime(anime)
 }
 
 /* ================= FULL ANIME ================= */
@@ -39,64 +41,34 @@ export async function initDownloadPage(){
 async function loadFullAnime(anime){
 
   const container = document.getElementById("downloadContainer")
-
   container.innerHTML = "Loading..."
 
   try{
 
     const data = await api(`/downloads-full/${anime}`)
 
-    if(!Array.isArray(data) || !data.length){
+    if(!data || typeof data !== "object"){
       container.innerHTML = "No data found"
       return
     }
 
-    const grouped = {}
-
-    data.forEach(d=>{
-
-      // ZIP = season download
-      if(d.quality === "ZIP"){
-        if(!grouped["ZIP"]) grouped["ZIP"] = []
-        grouped["ZIP"].push(d)
-        return
-      }
-
-      const key = `S${d.season}`
-
-      if(!grouped[key]) grouped[key] = {}
-
-      if(!grouped[key][d.episode]) grouped[key][d.episode] = []
-
-      grouped[key][d.episode].push(d)
-
-    })
-
     container.innerHTML = ""
 
-    /* ===== SEASONS ===== */
-
-    Object.keys(grouped).forEach(key=>{
-
-      // ZIP BLOCK
-      if(key === "ZIP"){
-        container.innerHTML += renderZIP(grouped[key], anime)
-        return
-      }
-
-      const season = key.replace("S","")
+    Object.keys(data).forEach(season=>{
 
       container.innerHTML += `
         <h2>Season ${season}</h2>
       `
 
-      Object.keys(grouped[key]).forEach(ep=>{
+      Object.keys(data[season]).forEach(ep=>{
+
+        const episodeData = data[season][ep]
 
         container.innerHTML += renderEpisodeBlock(
           anime,
           season,
           ep,
-          grouped[key][ep]
+          episodeData
         )
 
       })
@@ -109,12 +81,11 @@ async function loadFullAnime(anime){
 
 }
 
-/* ================= EPISODE MODE ================= */
+/* ================= SINGLE EP ================= */
 
 async function loadEpisode(anime, season, episode){
 
   const container = document.getElementById("downloadContainer")
-
   container.innerHTML = "Loading..."
 
   try{
@@ -128,7 +99,7 @@ async function loadEpisode(anime, season, episode){
 
     container.innerHTML = `
       <h2>Season ${season} • Episode ${episode}</h2>
-      ${renderEpisodeBlock(anime, season, episode, data)}
+      ${renderEpisodeBlock(anime, season, episode, convertToGrouped(data))}
     `
 
   }catch{
@@ -137,16 +108,23 @@ async function loadEpisode(anime, season, episode){
 
 }
 
-/* ================= EP BLOCK ================= */
+/* ================= GROUP HELPER ================= */
 
-function renderEpisodeBlock(anime, season, episode, list){
+function convertToGrouped(list){
 
   const grouped = {}
 
   list.forEach(d=>{
     if(!grouped[d.host]) grouped[d.host] = []
-    grouped[d.host].push(d)
+    grouped[d.host].push({ quality: d.quality })
   })
+
+  return grouped
+}
+
+/* ================= EP BLOCK ================= */
+
+function renderEpisodeBlock(anime, season, episode, grouped){
 
   return `
   <div class="episode-block">
@@ -157,23 +135,17 @@ function renderEpisodeBlock(anime, season, episode, list){
 
       <div class="host-block">
 
-        <h4>${host} (${grouped[host][0].storage || "-"})</h4>
+        <h4>${host}</h4>
 
         <div class="quality-links">
 
-          ${grouped[host].map(l=>`
+          ${grouped[host].map(l=>{
 
-            <a href="/go?anime=${encodeURIComponent(anime)}
-            &season=${season}
-            &episode=${episode}
-            &host=${host}
-            &quality=${l.quality}">
+            const url = `/go?anime=${encodeURIComponent(anime)}&season=${season}&episode=${episode}&host=${host}&quality=${l.quality}`
 
-              ${l.quality}
+            return `<a href="${url}">${l.quality}</a>`
 
-            </a>
-
-          `).join("")}
+          }).join("")}
 
         </div>
 
@@ -183,50 +155,4 @@ function renderEpisodeBlock(anime, season, episode, list){
 
   </div>
   `
-}
-
-/* ================= ZIP ================= */
-
-function renderZIP(list, anime){
-
-  const grouped = {}
-
-  list.forEach(d=>{
-    if(!grouped[d.season]) grouped[d.season] = []
-    grouped[d.season].push(d)
-  })
-
-  return Object.keys(grouped).map(season=>`
-
-    <div class="episode-block">
-
-      <h3>Season ${season} Complete ZIP</h3>
-
-      ${grouped[season].map(d=>`
-
-        <div class="host-block">
-
-          <h4>${d.host}</h4>
-
-          <div class="quality-links">
-
-            <a href="/go?anime=${encodeURIComponent(anime)}
-            &season=${season}
-            &episode=zip
-            &host=${d.host}
-            &quality=ZIP">
-
-              Download
-
-            </a>
-
-          </div>
-
-        </div>
-
-      `).join("")}
-
-    </div>
-
-  `).join("")
 }
