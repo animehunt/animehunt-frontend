@@ -31,3 +31,10 @@ export const getCategories = () => api(`/categories`);
 
 // ❌ REMOVE this (admin endpoint)
 // export const getHomepage = () => api(`/admin/homepage`);
+
+// ===== DOWNLOAD =====
+export const getDownloads = (anime, season, episode) =>
+  api(`/downloads/${anime}/${season}/${episode}`)
+
+export const getAllEpisodes = (anime) =>
+  api(`/downloads/${anime}`)
