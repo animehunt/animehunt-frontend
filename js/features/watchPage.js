@@ -9,6 +9,7 @@ function getParams() {
 }
 
 let animeId = null;
+let animeSlug = null; // ✅ NEW
 let episodes = [];
 let currentIndex = 0;
 let servers = [];
@@ -25,10 +26,16 @@ export async function initWatchPage() {
 
   if (!animeId) return;
 
+  // ✅ GET ANIME DATA (slug ke liye)
+  const animeData = await getAnimeById(animeId);
+  if (!animeData) return;
+
+  // ⚠️ IMPORTANT: backend ke hisaab se name/slug
+  animeSlug = animeData.slug || animeData.title;
+
   episodes = await getEpisodes(animeId);
   if (!episodes?.length) return;
 
-  // 👉 RESUME CHECK
   const resume = getResume();
 
   if (params.ep) {
@@ -62,6 +69,9 @@ async function loadEpisode() {
   startWatchTimer();
 
   loadServer();
+
+  // ✅ NEW
+  renderDownloadButtons();
 }
 
 // ================= SERVER =================
@@ -97,6 +107,53 @@ function renderServers() {
       loadServer();
     };
   });
+}
+
+// ================= DOWNLOAD BUTTONS =================
+function renderDownloadButtons(){
+
+  const container = document.getElementById("downloadBox");
+  if(!container) return;
+
+  const ep = episodes[currentIndex];
+
+  // Episode number backend format ke liye
+  const episodeNo = currentIndex + 1;
+
+  container.innerHTML = `
+  
+    <button class="download-btn" id="downloadEp">
+      ⬇ Download Episode ${episodeNo}
+    </button>
+
+    <button class="download-btn secondary" id="downloadAll">
+      📦 Full Download Page
+    </button>
+
+  `;
+
+  // 🎯 EP DOWNLOAD
+  document.getElementById("downloadEp").onclick = () => {
+
+    location.href = `
+      download.html
+      ?anime=${encodeURIComponent(animeSlug)}
+      &season=${ep.season || 1}
+      &episode=${episodeNo}
+    `;
+
+  };
+
+  // 🎯 FULL DOWNLOAD
+  document.getElementById("downloadAll").onclick = () => {
+
+    location.href = `
+      download.html
+      ?anime=${encodeURIComponent(animeSlug)}
+    `;
+
+  };
+
 }
 
 // ================= FAILOVER =================
@@ -166,9 +223,8 @@ function startWatchTimer() {
 
   watchTimer = setInterval(() => {
     watchedSeconds++;
-
     saveResume();
-  }, 5000); // हर 5 sec save
+  }, 5000);
 }
 
 // ================= HISTORY =================
