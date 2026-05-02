@@ -1,32 +1,49 @@
-import { getAnimeById, getAnime, getEpisodes } from "../core/api.js";
+import { getAnimeBySlug, getAnime, getEpisodes } from "../core/api.js";
 import { createCard, initLazy } from "../core/utils.js";
 
 /* ================= PARAM ================= */
-function getId() {
-  return new URLSearchParams(location.search).get("id");
+function getSlug() {
+  return new URLSearchParams(location.search).get("slug");
 }
 
 /* ================= STATE ================= */
-let animeId = null;
+let animeSlug = null;
 let episodes = [];
 let currentSeason = "1";
 
 /* ================= INIT ================= */
 export async function initDetailsPage() {
 
-  const id = getId();
-  if (!id) return;
+  const slug = getSlug();
+  if (!slug) {
+    document.body.innerHTML = "<p>Invalid URL</p>";
+    return;
+  }
 
-  animeId = id;
+  animeSlug = slug;
 
-  const data = await getAnimeById(id);
-  if (!data) return;
+  const data = await getAnimeBySlug(slug);
 
-  const slug = data.slug || data.title;
+  if (!data) {
+    document.body.innerHTML = "<p>Anime not found</p>";
+    return;
+  }
 
-  /* ================= HERO ================= */
-  document.getElementById("heroBg").style.backgroundImage = `url(${data.banner})`;
-  document.getElementById("posterImg").src = data.poster;
+  renderAnime(data);
+
+  await loadEpisodes(data.id);
+
+  loadRelated(data);
+}
+
+/* ================= RENDER ANIME ================= */
+function renderAnime(data) {
+
+  document.getElementById("heroBg").style.backgroundImage =
+    `url(${data.banner}?tr=w-1200,h-500)`;
+
+  document.getElementById("posterImg").src =
+    `${data.poster}?tr=w-300,h-450`;
 
   document.getElementById("animeTitle").innerHTML =
     `${data.title} <span>(${data.year || ""})</span>`;
@@ -37,98 +54,130 @@ export async function initDetailsPage() {
     <span class="imdb">⭐ ${data.rating || "N/A"}</span>
   `;
 
-  document.getElementById("animeDesc").innerText = data.description || "";
+  document.getElementById("animeDesc").innerText =
+    data.description || "No description available";
 
-  /* ================= ABOUT ================= */
   document.getElementById("aboutList").innerHTML = `
     <li><b>Language:</b> ${data.language || "-"}</li>
     <li><b>Duration:</b> ${data.duration || "-"}</li>
     <li><b>Genres:</b> ${(data.genres || []).join(", ")}</li>
   `;
 
-  document.getElementById("aboutDesc").innerText = data.description || "";
+  document.getElementById("aboutDesc").innerText =
+    data.description || "";
 
-  /* ================= WATCH ================= */
+  /* WATCH */
   document.querySelector(".watch").onclick = () => {
-    location.href = `watch.html?id=${id}`;
+    location.href = `watch.html?slug=${data.slug}`;
   };
 
-  /* ================= DOWNLOAD ================= */
+  /* DOWNLOAD */
   document.querySelector(".download").onclick = () => {
-    location.href = `download.html?anime=${encodeURIComponent(slug)}`;
+    location.href = `download.html?anime=${encodeURIComponent(data.slug)}`;
   };
+}
 
-  /* ================= LOAD EPISODES ================= */
-  await loadEpisodes();
+/* ================= LOAD EPISODES ================= */
+async function loadEpisodes(id) {
 
-  /* ================= RELATED ================= */
+  const grid = document.getElementById("episodeGrid");
+  grid.innerHTML = "Loading episodes...";
+
   try {
-    const related = await getAnime(`?category=${data.genres?.[0] || ""}&limit=8`);
-    document.getElementById("relatedGrid").innerHTML =
-      (related || []).map(createCard).join("");
-    initLazy();
-  } catch {}
+    episodes = await getEpisodes(id);
+
+    if (!episodes.length) {
+      grid.innerHTML = "<p>No episodes available</p>";
+      return;
+    }
+
+    renderSeasonTabs();
+    renderEpisodes();
+
+  } catch {
+    grid.innerHTML = "<p>Failed to load episodes</p>";
+  }
 }
 
-/* ================= LOAD EP ================= */
-async function loadEpisodes(){
-
-  episodes = await getEpisodes(animeId);
-  if(!episodes?.length) return;
-
-  renderSeasonTabs();
-  renderEpisodes();
-}
-
-/* ================= SEASON TABS ================= */
-function renderSeasonTabs(){
+/* ================= SEASON ================= */
+function renderSeasonTabs() {
 
   const seasons = [...new Set(episodes.map(e => e.season || "1"))];
 
   const list = document.getElementById("seasonList");
 
   list.innerHTML = seasons.map(s => `
-    <div onclick="selectSeason('${s}')">Season ${s}</div>
+    <div data-season="${s}">Season ${s}</div>
   `).join("");
 
-  window.selectSeason = (s)=>{
+  list.onclick = (e) => {
+    const s = e.target.dataset.season;
+    if (!s) return;
+
     currentSeason = s;
     list.style.display = "none";
     renderEpisodes();
   };
 
-  document.getElementById("seasonBtn").onclick = ()=>{
-    list.style.display = list.style.display === "none" ? "block" : "none";
+  document.getElementById("seasonBtn").onclick = () => {
+    list.style.display =
+      list.style.display === "none" ? "block" : "none";
   };
 
-  document.getElementById("allBtn").onclick = ()=>{
+  document.getElementById("allBtn").onclick = () => {
     currentSeason = "ALL";
     renderEpisodes();
   };
 }
 
-/* ================= EP GRID ================= */
-function renderEpisodes(){
+/* ================= EPISODES ================= */
+function renderEpisodes() {
 
   const grid = document.getElementById("episodeGrid");
 
   let list = episodes;
 
-  if(currentSeason !== "ALL"){
-    list = episodes.filter(e => (e.season || "1") == currentSeason);
+  if (currentSeason !== "ALL") {
+    list = episodes.filter(e =>
+      (e.season || "1") == currentSeason
+    );
   }
 
-  grid.innerHTML = list.map((ep, i) => `
-    <div class="ep-card" onclick="goWatch('${ep.id}')">
+  grid.innerHTML = list.map(ep => `
+    <div class="ep-card" data-id="${ep.id}">
       <div class="ep-thumb">
-        <img src="${ep.thumbnail || ""}">
+        <img src="${ep.thumbnail || ""}?tr=w-300,h-180">
         <span class="ep-no">EP ${ep.episode}</span>
       </div>
       <p>${ep.title || "Episode " + ep.episode}</p>
     </div>
   `).join("");
 
-  window.goWatch = (id)=>{
-    location.href = `watch.html?id=${animeId}&ep=${id}`;
+  grid.onclick = (e) => {
+    const card = e.target.closest(".ep-card");
+    if (!card) return;
+
+    const epId = card.dataset.id;
+
+    location.href = `watch.html?slug=${animeSlug}&ep=${epId}`;
   };
+}
+
+/* ================= RELATED ================= */
+async function loadRelated(data) {
+  try {
+    const res = await getAnime(
+      `?type=${data.type}&limit=8`
+    );
+
+    const list = res?.data || [];
+
+    document.getElementById("relatedGrid").innerHTML =
+      list.map(createCard).join("");
+
+    initLazy();
+
+  } catch (err) {
+    console.warn("Related failed", err);
+  }
 }
