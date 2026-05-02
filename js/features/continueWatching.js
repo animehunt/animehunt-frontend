@@ -1,10 +1,9 @@
-import { getAnimeById } from "../core/api.js";
+import { getAnimeBySlug } from "../core/api.js";
 
-// ================= INIT =================
 export async function initContinueWatching() {
+
   const section = document.getElementById("continueSection");
   const scroll = document.getElementById("continueScroll");
-  const clearBtn = document.getElementById("clearContinueBtn");
 
   let history = JSON.parse(localStorage.getItem("WATCH_HISTORY") || "[]");
 
@@ -15,14 +14,13 @@ export async function initContinueWatching() {
 
   section.style.display = "block";
 
-  // ================= RENDER =================
   const html = await Promise.all(
     history.map(async (item) => {
-      const anime = await getAnimeById(item.animeId);
+      const anime = await getAnimeBySlug(item.slug);
       if (!anime) return "";
 
       return `
-        <div class="movie-card" onclick="goResume('${item.animeId}','${item.episodeId}')">
+        <div class="movie-card" data-slug="${item.slug}" data-ep="${item.episodeId}">
           <div>${anime.title}</div>
           <small>EP ${item.episodeNo}</small>
         </div>
@@ -32,18 +30,10 @@ export async function initContinueWatching() {
 
   scroll.innerHTML = html.join("");
 
-  // ================= CLEAR =================
-  clearBtn.onclick = () => {
-    if (!confirm("Clear Continue Watching?")) return;
+  scroll.onclick = (e) => {
+    const card = e.target.closest(".movie-card");
+    if (!card) return;
 
-    localStorage.removeItem("WATCH_HISTORY");
-    localStorage.removeItem("RESUME_DATA");
-
-    section.style.display = "none";
+    location.href = `watch.html?slug=${card.dataset.slug}&ep=${card.dataset.ep}`;
   };
 }
-
-// ================= NAV =================
-window.goResume = (id, ep) => {
-  location.href = `watch.html?id=${id}&ep=${ep}`;
-};
