@@ -1,83 +1,141 @@
-const API_BASE = "https://animehunt-backend.animehunt715.workers.dev/api"
-import { loadSEO, applyDynamicSEO } from "../core/seo.js"
+import { getAnime, getCategories } from "../core/api.js";
+import { createCard, initLazy } from "../core/utils.js";
+import { loadSEO, applyDynamicSEO } from "../core/seo.js";
 
-// ===== GET SLUG FROM URL =====
+/* ================= GET SLUG ================= */
 function getSlug() {
-  const params = new URLSearchParams(window.location.search)
-  return params.get("type")
+  const params = new URLSearchParams(location.search);
+  return params.get("type");
 }
 
-// ===== FETCH ALL CATEGORIES =====
-async function fetchCategories() {
-  const res = await fetch(API_BASE + "/categories")
-  return res.json()
-}
+/* ================= STATE ================= */
+let currentSlug = null;
+let currentPage = 1;
+let loading = false;
 
-// ===== FIND CATEGORY =====
-function findCategory(categories, slug) {
-  return categories.find(c => c.slug === slug && c.active)
-}
-
-// ===== SET PAGE DATA =====
-function setPageUI(category) {
-  const titleEl = document.getElementById("pageTitle")
-  const bannerTitle = document.getElementById("bannerTitle")
-  const banner = document.getElementById("pageBanner")
-
-  // title (UI)
-  titleEl.innerText = `${category.name} – AnimeHunt`
-
-  // banner text
-  bannerTitle.innerText = category.name.toUpperCase()
-
-  // banner class dynamic
-  banner.className = "page-banner " + category.slug + "-banner"
-}
-
-// ===== LOAD ANIME =====
-async function loadAnime(slug) {
-  const grid = document.getElementById("animeGrid")
-
-  grid.innerHTML = `<p style="padding:20px">Loading ${slug}...</p>`
-
-  // 🔥 future API
-  // const data = await fetch(API_BASE + "/anime?category=" + slug).then(r=>r.json())
-  // grid.innerHTML = data.map(createCard).join("")
-}
-
-// ===== INIT =====
+/* ================= INIT ================= */
 export async function initCategoryPage() {
 
-  const slug = getSlug()
+  const slug = getSlug();
 
   if (!slug) {
-    document.getElementById("animeGrid").innerHTML = "No category"
-    return
+    renderError("Invalid category");
+    return;
   }
 
+  currentSlug = slug;
+
   try {
-    const categories = await fetchCategories()
-    const category = findCategory(categories, slug)
+    const categories = await getCategories();
+
+    const category = categories?.find(c => c.slug === slug && c.active);
 
     if (!category) {
-      document.getElementById("animeGrid").innerHTML = "Category not found"
-      return
+      renderError("Category not found");
+      return;
     }
 
-    // ===== UI SET =====
-    setPageUI(category)
+    /* ===== UI SET ===== */
+    setPageUI(category);
 
-    // ===== LOAD CONTENT =====
-    loadAnime(slug)
+    /* ===== LOAD ANIME ===== */
+    await loadAnime();
 
-    // ===== ✅ SEO APPLY (YAHI MAIN CHEEZ HAI) =====
-    const seo = await loadSEO()
+    /* ===== SEO ===== */
+    const seo = await loadSEO();
 
     applyDynamicSEO("category", {
       name: category.name
-    }, seo)
+    }, seo);
 
   } catch (err) {
-    console.error(err)
+    console.error(err);
+    renderError("Something went wrong");
   }
+}
+
+/* ================= UI ================= */
+function setPageUI(category) {
+
+  document.getElementById("pageTitle").innerText =
+    `${category.name} – AnimeHunt`;
+
+  document.getElementById("bannerTitle").innerText =
+    category.name.toUpperCase();
+
+  const banner = document.getElementById("pageBanner");
+
+  banner.className = "page-banner " + category.slug + "-banner";
+}
+
+/* ================= LOAD ANIME ================= */
+async function loadAnime(page = 1) {
+
+  if (loading) return;
+  loading = true;
+
+  const grid = document.getElementById("animeGrid");
+
+  if (page === 1) {
+    grid.innerHTML = `<p style="padding:20px">Loading...</p>`;
+  }
+
+  try {
+
+    const res = await getAnime(
+      `?category=${currentSlug}&page=${page}&limit=24`
+    );
+
+    const data = res?.data || res || [];
+
+    if (!data.length && page === 1) {
+      grid.innerHTML = `<p style="padding:20px">No anime found</p>`;
+      return;
+    }
+
+    if (page === 1) {
+      grid.innerHTML = data.map(createCard).join("");
+    } else {
+      grid.innerHTML += data.map(createCard).join("");
+    }
+
+    initLazy();
+
+    currentPage = page;
+
+    renderLoadMore(data.length);
+
+  } catch (err) {
+    console.error(err);
+    grid.innerHTML = `<p style="padding:20px">Failed to load</p>`;
+  }
+
+  loading = false;
+}
+
+/* ================= LOAD MORE ================= */
+function renderLoadMore(count) {
+
+  const box = document.getElementById("loadMoreBox");
+
+  if (!box) return;
+
+  if (count < 24) {
+    box.style.display = "none";
+    return;
+  }
+
+  box.style.display = "block";
+
+  box.innerHTML = `<button id="loadMoreBtn">Load More</button>`;
+
+  document.getElementById("loadMoreBtn").onclick = () => {
+    loadAnime(currentPage + 1);
+  };
+}
+
+/* ================= ERROR ================= */
+function renderError(msg) {
+  document.getElementById("animeGrid").innerHTML =
+    `<p style="padding:20px">${msg}</p>`;
 }
