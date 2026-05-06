@@ -1,183 +1,308 @@
-import { getAnimeBySlug, getAnime, getEpisodes } from "../core/api.js";
-import { createCard, initLazy } from "../core/utils.js";
+import {
+  getAnimeBySlug,
+  getEpisodes
+} from "../core/api.js";
 
-/* ================= PARAM ================= */
-function getSlug() {
-  return new URLSearchParams(location.search).get("slug");
-}
+import {
+  $,
+  setHTML,
+  setText,
+  loading,
+  empty,
+  error,
+  image,
+  getQuery,
+  go
+} from "../core/utils.js";
 
-/* ================= STATE ================= */
-let animeSlug = null;
-let episodes = [];
-let currentSeason = "1";
+import {
+  initSeasonManager
+} from "./seasonManager.js";
 
-/* ================= INIT ================= */
+import {
+  loadRelatedAnime
+} from "./relatedAnime.js";
+
+/* ======================================================
+   DETAILS PAGE
+====================================================== */
+
+let animeData = null;
+
+let allEpisodes = [];
+
+/* ======================================================
+   INIT
+====================================================== */
+
 export async function initDetailsPage() {
 
-  const slug = getSlug();
+  const slug = getQuery("slug");
+
   if (!slug) {
-    document.body.innerHTML = "<p>Invalid URL</p>";
+
+    document.body.innerHTML =
+      "<h2 style='padding:20px'>Invalid Anime</h2>";
+
     return;
   }
 
-  animeSlug = slug;
-
-  const data = await getAnimeBySlug(slug);
-
-  if (!data) {
-    document.body.innerHTML = "<p>Anime not found</p>";
-    return;
-  }
-
-  renderAnime(data);
-
-  await loadEpisodes(data.id);
-
-  loadRelated(data);
+  await loadAnime(slug);
 }
 
-/* ================= RENDER ANIME ================= */
-function renderAnime(data) {
+/* ======================================================
+   LOAD ANIME
+====================================================== */
 
-  document.getElementById("heroBg").style.backgroundImage =
-    `url(${data.banner}?tr=w-1200,h-500)`;
-
-  document.getElementById("posterImg").src =
-    `${data.poster}?tr=w-300,h-450`;
-
-  document.getElementById("animeTitle").innerHTML =
-    `${data.title} <span>(${data.year || ""})</span>`;
-
-  document.getElementById("animeMeta").innerHTML = `
-    <span>${data.type}</span>
-    <span>${data.status}</span>
-    <span class="imdb">⭐ ${data.rating || "N/A"}</span>
-  `;
-
-  document.getElementById("animeDesc").innerText =
-    data.description || "No description available";
-
-  document.getElementById("aboutList").innerHTML = `
-    <li><b>Language:</b> ${data.language || "-"}</li>
-    <li><b>Duration:</b> ${data.duration || "-"}</li>
-    <li><b>Genres:</b> ${(data.genres || []).join(", ")}</li>
-  `;
-
-  document.getElementById("aboutDesc").innerText =
-    data.description || "";
-
-  /* WATCH */
-  document.querySelector(".watch").onclick = () => {
-    location.href = `watch.html?slug=${data.slug}`;
-  };
-
-  /* DOWNLOAD */
-  document.querySelector(".download").onclick = () => {
-    location.href = `download.html?anime=${encodeURIComponent(data.slug)}`;
-  };
-}
-
-/* ================= LOAD EPISODES ================= */
-async function loadEpisodes(id) {
-
-  const grid = document.getElementById("episodeGrid");
-  grid.innerHTML = "Loading episodes...";
+async function loadAnime(slug) {
 
   try {
-    episodes = await getEpisodes(id);
 
-    if (!episodes.length) {
-      grid.innerHTML = "<p>No episodes available</p>";
+    const data =
+      await getAnimeBySlug(slug);
+
+    if (!data) {
+
+      document.body.innerHTML =
+        "<h2 style='padding:20px'>Anime Not Found</h2>";
+
       return;
     }
 
-    renderSeasonTabs();
-    renderEpisodes();
+    animeData = data;
 
-  } catch {
-    grid.innerHTML = "<p>Failed to load episodes</p>";
-  }
-}
+    renderAnime(data);
 
-/* ================= SEASON ================= */
-function renderSeasonTabs() {
+    await loadEpisodes(data.id);
 
-  const seasons = [...new Set(episodes.map(e => e.season || "1"))];
-
-  const list = document.getElementById("seasonList");
-
-  list.innerHTML = seasons.map(s => `
-    <div data-season="${s}">Season ${s}</div>
-  `).join("");
-
-  list.onclick = (e) => {
-    const s = e.target.dataset.season;
-    if (!s) return;
-
-    currentSeason = s;
-    list.style.display = "none";
-    renderEpisodes();
-  };
-
-  document.getElementById("seasonBtn").onclick = () => {
-    list.style.display =
-      list.style.display === "none" ? "block" : "none";
-  };
-
-  document.getElementById("allBtn").onclick = () => {
-    currentSeason = "ALL";
-    renderEpisodes();
-  };
-}
-
-/* ================= EPISODES ================= */
-function renderEpisodes() {
-
-  const grid = document.getElementById("episodeGrid");
-
-  let list = episodes;
-
-  if (currentSeason !== "ALL") {
-    list = episodes.filter(e =>
-      (e.season || "1") == currentSeason
-    );
-  }
-
-  grid.innerHTML = list.map(ep => `
-    <div class="ep-card" data-id="${ep.id}">
-      <div class="ep-thumb">
-        <img src="${ep.thumbnail || ""}?tr=w-300,h-180">
-        <span class="ep-no">EP ${ep.episode}</span>
-      </div>
-      <p>${ep.title || "Episode " + ep.episode}</p>
-    </div>
-  `).join("");
-
-  grid.onclick = (e) => {
-    const card = e.target.closest(".ep-card");
-    if (!card) return;
-
-    const epId = card.dataset.id;
-
-    location.href = `watch.html?slug=${animeSlug}&ep=${epId}`;
-  };
-}
-
-/* ================= RELATED ================= */
-async function loadRelated(data) {
-  try {
-    const res = await getAnime(
-      `?type=${data.type}&limit=8`
-    );
-
-    const list = res?.data || [];
-
-    document.getElementById("relatedGrid").innerHTML =
-      list.map(createCard).join("");
-
-    initLazy();
+    loadRelatedAnime(data);
 
   } catch (err) {
-    console.warn("Related failed", err);
+
+    console.error(err);
+
+    document.body.innerHTML =
+      "<h2 style='padding:20px'>Failed To Load</h2>";
   }
+}
+
+/* ======================================================
+   RENDER ANIME
+====================================================== */
+
+function renderAnime(data) {
+
+  /* BACKGROUND */
+
+  const bg = $("#heroBg");
+
+  if (bg) {
+
+    bg.style.backgroundImage =
+      `url(${image(data.banner || data.poster)}?tr=w-1200,h-500)`;
+  }
+
+  /* POSTER */
+
+  const poster = $("#posterImg");
+
+  if (poster) {
+
+    poster.src =
+      `${image(data.poster)}?tr=w-300,h-450`;
+  }
+
+  /* TITLE */
+
+  const title = $("#animeTitle");
+
+  if (title) {
+
+    title.innerHTML = `
+      ${data.title}
+      <span>(${data.year || ""})</span>
+    `;
+  }
+
+  /* META */
+
+  setHTML(
+    $("#animeMeta"),
+
+    `
+      <span>${data.type || "-"}</span>
+      <span>${data.status || "-"}</span>
+      <span class="imdb">
+        ⭐ ${data.rating || "N/A"}
+      </span>
+    `
+  );
+
+  /* DESC */
+
+  setText(
+    $("#animeDesc"),
+    data.description || "No description"
+  );
+
+  /* ABOUT */
+
+  setHTML(
+    $("#aboutList"),
+
+    `
+      <li>
+        <b>Language:</b>
+        ${data.language || "-"}
+      </li>
+
+      <li>
+        <b>Duration:</b>
+        ${data.duration || "-"}
+      </li>
+
+      <li>
+        <b>Genres:</b>
+        ${(data.genres || []).join(", ")}
+      </li>
+    `
+  );
+
+  setText(
+    $("#aboutDesc"),
+    data.description || ""
+  );
+
+  /* WATCH */
+
+  const watchBtn = $(".watch");
+
+  if (watchBtn) {
+
+    watchBtn.onclick = () => {
+
+      go(
+        `watch.html?slug=${data.slug}`
+      );
+    };
+  }
+
+  /* DOWNLOAD */
+
+  const downloadBtn = $(".download");
+
+  if (downloadBtn) {
+
+    downloadBtn.onclick = () => {
+
+      go(
+        `download.html?anime=${encodeURIComponent(data.slug)}`
+      );
+    };
+  }
+}
+
+/* ======================================================
+   LOAD EPISODES
+====================================================== */
+
+async function loadEpisodes(animeId) {
+
+  const grid = $("#episodeGrid");
+
+  if (!grid) return;
+
+  loading(grid, "Loading Episodes...");
+
+  try {
+
+    allEpisodes =
+      await getEpisodes(animeId);
+
+    if (!allEpisodes.length) {
+
+      empty(grid, "No episodes available");
+
+      return;
+    }
+
+    initSeasonManager({
+
+      episodes: allEpisodes,
+
+      defaultSeason: "1",
+
+      render: renderEpisodes
+    });
+
+  } catch (err) {
+
+    console.error(err);
+
+    error(grid, "Failed to load episodes");
+  }
+}
+
+/* ======================================================
+   RENDER EPISODES
+====================================================== */
+
+function renderEpisodes(list = []) {
+
+  const grid = $("#episodeGrid");
+
+  if (!grid) return;
+
+  if (!list.length) {
+
+    empty(grid, "No episodes");
+
+    return;
+  }
+
+  setHTML(
+    grid,
+
+    list.map(ep => `
+    
+      <div
+        class="ep-card"
+        data-id="${ep.id}"
+      >
+
+        <div class="ep-thumb">
+
+          <img
+            src="${image(ep.thumbnail)}?tr=w-300,h-180"
+            loading="lazy"
+          >
+
+          <span class="ep-no">
+            EP ${ep.episode}
+          </span>
+
+        </div>
+
+        <p>
+          ${ep.title || `Episode ${ep.episode}`}
+        </p>
+
+      </div>
+    
+    `).join("")
+  );
+
+  /* CLICK */
+
+  grid.onclick = (e) => {
+
+    const card =
+      e.target.closest(".ep-card");
+
+    if (!card) return;
+
+    go(
+      `watch.html?slug=${animeData.slug}&ep=${card.dataset.id}`
+    );
+  };
 }
