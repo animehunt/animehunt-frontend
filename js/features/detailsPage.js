@@ -1,5 +1,6 @@
 import {
   getAnimeBySlug,
+  getAnime,
   getEpisodes
 } from "../core/api.js";
 
@@ -24,12 +25,14 @@ import {
 } from "./relatedAnime.js";
 
 /* ======================================================
-   DETAILS PAGE
+   STATE
 ====================================================== */
 
 let animeData = null;
 
 let allEpisodes = [];
+
+let currentSeason = "1";
 
 /* ======================================================
    INIT
@@ -42,7 +45,7 @@ export async function initDetailsPage() {
   if (!slug) {
 
     document.body.innerHTML =
-      "<h2 style='padding:20px'>Invalid Anime</h2>";
+      "<h2 style='padding:20px'>Invalid URL</h2>";
 
     return;
   }
@@ -92,19 +95,21 @@ async function loadAnime(slug) {
 
 function renderAnime(data) {
 
-  /* BACKGROUND */
+  /* HERO */
 
-  const bg = $("#heroBg");
+  const hero =
+    $("#heroBg");
 
-  if (bg) {
+  if (hero) {
 
-    bg.style.backgroundImage =
-      `url(${image(data.banner || data.poster)}?tr=w-1200,h-500)`;
+    hero.style.backgroundImage =
+      `url(${image(data.banner)}?tr=w-1200,h-500)`;
   }
 
   /* POSTER */
 
-  const poster = $("#posterImg");
+  const poster =
+    $("#posterImg");
 
   if (poster) {
 
@@ -114,15 +119,17 @@ function renderAnime(data) {
 
   /* TITLE */
 
-  const title = $("#animeTitle");
+  setHTML(
+    $("#animeTitle"),
 
-  if (title) {
-
-    title.innerHTML = `
+    `
       ${data.title}
-      <span>(${data.year || ""})</span>
-    `;
-  }
+
+      <span>
+        (${data.year || ""})
+      </span>
+    `
+  );
 
   /* META */
 
@@ -131,18 +138,20 @@ function renderAnime(data) {
 
     `
       <span>${data.type || "-"}</span>
+
       <span>${data.status || "-"}</span>
+
       <span class="imdb">
         ⭐ ${data.rating || "N/A"}
       </span>
     `
   );
 
-  /* DESC */
+  /* DESCRIPTION */
 
   setText(
     $("#animeDesc"),
-    data.description || "No description"
+    data.description || ""
   );
 
   /* ABOUT */
@@ -175,7 +184,8 @@ function renderAnime(data) {
 
   /* WATCH */
 
-  const watchBtn = $(".watch");
+  const watchBtn =
+    document.querySelector(".watch");
 
   if (watchBtn) {
 
@@ -189,7 +199,8 @@ function renderAnime(data) {
 
   /* DOWNLOAD */
 
-  const downloadBtn = $(".download");
+  const downloadBtn =
+    document.querySelector(".download");
 
   if (downloadBtn) {
 
@@ -208,7 +219,8 @@ function renderAnime(data) {
 
 async function loadEpisodes(animeId) {
 
-  const grid = $("#episodeGrid");
+  const grid =
+    $("#episodeGrid");
 
   if (!grid) return;
 
@@ -221,16 +233,24 @@ async function loadEpisodes(animeId) {
 
     if (!allEpisodes.length) {
 
-      empty(grid, "No episodes available");
+      empty(
+        grid,
+        "No Episodes Available"
+      );
 
       return;
     }
+
+    currentSeason =
+      allEpisodes[0]?.season || "1";
+
+    /* SEASON MANAGER */
 
     initSeasonManager({
 
       episodes: allEpisodes,
 
-      defaultSeason: "1",
+      defaultSeason: currentSeason,
 
       render: renderEpisodes
     });
@@ -239,7 +259,10 @@ async function loadEpisodes(animeId) {
 
     console.error(err);
 
-    error(grid, "Failed to load episodes");
+    error(
+      grid,
+      "Failed To Load Episodes"
+    );
   }
 }
 
@@ -249,13 +272,14 @@ async function loadEpisodes(animeId) {
 
 function renderEpisodes(list = []) {
 
-  const grid = $("#episodeGrid");
+  const grid =
+    $("#episodeGrid");
 
   if (!grid) return;
 
   if (!list.length) {
 
-    empty(grid, "No episodes");
+    empty(grid, "No Episodes");
 
     return;
   }
@@ -263,33 +287,37 @@ function renderEpisodes(list = []) {
   setHTML(
     grid,
 
-    list.map(ep => `
-    
-      <div
-        class="ep-card"
-        data-id="${ep.id}"
-      >
+    list.map(ep => {
 
-        <div class="ep-thumb">
+      return `
+      
+        <div
+          class="ep-card"
+          data-id="${ep.id}"
+        >
 
-          <img
-            src="${image(ep.thumbnail)}?tr=w-300,h-180"
-            loading="lazy"
-          >
+          <div class="ep-thumb">
 
-          <span class="ep-no">
-            EP ${ep.episode}
-          </span>
+            <img
+              src="${image(ep.thumbnail)}?tr=w-300,h-180"
+              loading="lazy"
+            >
+
+            <span class="ep-no">
+              EP ${ep.episode}
+            </span>
+
+          </div>
+
+          <p>
+            ${ep.title || `Episode ${ep.episode}`}
+          </p>
 
         </div>
+      
+      `;
 
-        <p>
-          ${ep.title || `Episode ${ep.episode}`}
-        </p>
-
-      </div>
-    
-    `).join("")
+    }).join("")
   );
 
   /* CLICK */
@@ -301,8 +329,11 @@ function renderEpisodes(list = []) {
 
     if (!card) return;
 
+    const id =
+      card.dataset.id;
+
     go(
-      `watch.html?slug=${animeData.slug}&ep=${card.dataset.id}`
+      `watch.html?slug=${animeData.slug}&ep=${id}`
     );
   };
 }
