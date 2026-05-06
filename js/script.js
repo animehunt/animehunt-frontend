@@ -89,3 +89,101 @@ if (page === "watch") {
 
   initWatchPage();
 }
+import {
+  initWatchPage
+} from "./features/watchPage.js";
+
+import {
+  initDetailsPage
+} from "./features/detailsPage.js";
+
+import {
+  initContinueWatching
+} from "./features/continueWatching.js";
+
+/* ======================================================
+   PAGE DETECT
+====================================================== */
+
+const page =
+  document.body.dataset.page || "";
+
+/* ======================================================
+   INIT
+====================================================== */
+
+document.addEventListener(
+  "DOMContentLoaded",
+  async () => {
+
+    /* WATCH */
+
+    if (page === "watch") {
+
+      await initWatchPage();
+    }
+
+    /* DETAILS */
+
+    if (page === "details") {
+
+      await initDetailsPage();
+    }
+
+    /* CONTINUE WATCHING */
+
+    initContinueWatching();
+
+    /* SIDEBAR */
+
+    initSidebar();
+  }
+);
+
+/* ======================================================
+   SIDEBAR
+====================================================== */
+
+function initSidebar() {
+
+  const sidebar =
+    document.querySelector(".sidebar");
+
+  const overlay =
+    document.querySelector(".overlay");
+
+  const menuBtn =
+    document.querySelector(".menu-btn");
+
+  const closeBtn =
+    document.querySelector(".close-btn");
+
+  if (
+    !sidebar ||
+    !overlay ||
+    !menuBtn
+  ) return;
+
+  menuBtn.onclick = open;
+
+  if (closeBtn) {
+
+    closeBtn.onclick = close;
+  }
+
+  overlay.onclick = close;
+
+  function open() {
+
+    sidebar.classList.add("active");
+
+    overlay.classList.add("active");
+  }
+
+  function close() {
+
+    sidebar.classList.remove("active");
+
+    overlay.classList.remove("active");
+  }
+}
