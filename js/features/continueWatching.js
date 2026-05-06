@@ -1,39 +1,102 @@
-import { getAnimeBySlug } from "../core/api.js";
+import {
+  getWatchHistory
+} from "./watchHistory.js";
 
-export async function initContinueWatching() {
+import {
+  go,
+  image
+} from "../core/utils.js";
 
-  const section = document.getElementById("continueSection");
-  const scroll = document.getElementById("continueScroll");
+/* ======================================================
+   INIT
+====================================================== */
 
-  let history = JSON.parse(localStorage.getItem("WATCH_HISTORY") || "[]");
+export function initContinueWatching() {
+
+  const section =
+    document.getElementById(
+      "continueSection"
+    );
+
+  const scroll =
+    document.getElementById(
+      "continueScroll"
+    );
+
+  if (!section || !scroll) return;
+
+  const history =
+    getWatchHistory();
 
   if (!history.length) {
+
     section.style.display = "none";
+
     return;
   }
 
   section.style.display = "block";
 
-  const html = await Promise.all(
-    history.map(async (item) => {
-      const anime = await getAnimeBySlug(item.slug);
-      if (!anime) return "";
+  render(history, scroll);
+}
+
+/* ======================================================
+   RENDER
+====================================================== */
+
+function render(list, container) {
+
+  container.innerHTML =
+    list.map(item => {
 
       return `
-        <div class="movie-card" data-slug="${item.slug}" data-ep="${item.episodeId}">
-          <div>${anime.title}</div>
-          <small>EP ${item.episodeNo}</small>
+
+        <div
+          class="movie-card continue-card"
+          data-slug="${item.slug}"
+          data-ep="${item.episodeId}"
+        >
+
+          <div class="thumb">
+
+            <img
+              src="${image(item.poster)}?tr=w-300,h-450"
+              loading="lazy"
+            >
+
+          </div>
+
+          <div class="info">
+
+            <h4>
+              ${item.animeTitle}
+            </h4>
+
+            <small>
+              EP ${item.episodeNo}
+            </small>
+
+          </div>
+
         </div>
+
       `;
-    })
-  );
 
-  scroll.innerHTML = html.join("");
+    }).join("");
 
-  scroll.onclick = (e) => {
-    const card = e.target.closest(".movie-card");
+  /* CLICK */
+
+  container.onclick = (e) => {
+
+    const card =
+      e.target.closest(
+        ".continue-card"
+      );
+
     if (!card) return;
 
-    location.href = `watch.html?slug=${card.dataset.slug}&ep=${card.dataset.ep}`;
+    go(
+      `watch.html?slug=${card.dataset.slug}&ep=${card.dataset.ep}`
+    );
   };
 }
