@@ -1,56 +1,162 @@
-import {
-  saveResume,
-  getResume
-} from "../core/storage.js";
+const RESUME_KEY =
+  "RESUME_DATA";
 
 /* ======================================================
-   RESUME MANAGER
+   SAVE RESUME
+====================================================== */
+
+export function saveResume(data = {}) {
+
+  try {
+
+    const payload = {
+
+      slug:
+        data.slug || "",
+
+      animeTitle:
+        data.animeTitle || "",
+
+      poster:
+        data.poster || "",
+
+      episodeId:
+        data.episodeId || "",
+
+      episodeNo:
+        data.episodeNo || "",
+
+      season:
+        data.season || "1",
+
+      time:
+        Number(data.time || 0),
+
+      duration:
+        Number(data.duration || 0),
+
+      updatedAt:
+        Date.now()
+    };
+
+    localStorage.setItem(
+      RESUME_KEY,
+      JSON.stringify(payload)
+    );
+
+  } catch (err) {
+
+    console.error(
+      "Resume Save Failed",
+      err
+    );
+  }
+}
+
+/* ======================================================
+   GET RESUME
+====================================================== */
+
+export function getResume() {
+
+  try {
+
+    return JSON.parse(
+      localStorage.getItem(RESUME_KEY) || "null"
+    );
+
+  } catch {
+
+    return null;
+  }
+}
+
+/* ======================================================
+   CLEAR RESUME
+====================================================== */
+
+export function clearResume() {
+
+  localStorage.removeItem(
+    RESUME_KEY
+  );
+}
+
+/* ======================================================
+   VALIDATE
+====================================================== */
+
+export function hasResume(slug) {
+
+  const data =
+    getResume();
+
+  if (!data) return false;
+
+  return data.slug === slug;
+}
+
+/* ======================================================
+   WATCH TIMER
 ====================================================== */
 
 let timer = null;
 
-/* ================= START ================= */
+let current = 0;
 
-export function startResumeTracking({
+/* ======================================================
+   START
+====================================================== */
 
-  anime,
+export function startWatchTimer({
 
-  episode,
-
-  iframe
+  slug,
+  animeTitle,
+  poster,
+  episodeId,
+  episodeNo,
+  season,
+  getCurrentTime
 
 }) {
 
-  stopResumeTracking();
+  stopWatchTimer();
 
-  if (!anime || !episode || !iframe) return;
-
-  let seconds = 0;
+  current = 0;
 
   timer = setInterval(() => {
 
-    seconds += 5;
+    try {
 
-    saveResume({
+      current =
+        Number(
+          getCurrentTime?.() || 0
+        );
 
-      slug: anime.slug,
+      saveResume({
 
-      animeId: anime.id,
+        slug,
+        animeTitle,
+        poster,
+        episodeId,
+        episodeNo,
+        season,
+        time: current
+      });
 
-      episodeId: episode.id,
+    } catch (err) {
 
-      episodeNo: episode.episode,
-
-      currentTime: seconds
-
-    });
+      console.error(err);
+    }
 
   }, 5000);
 }
 
-/* ================= STOP ================= */
+/* ======================================================
+   STOP
+====================================================== */
 
-export function stopResumeTracking() {
+export function stopWatchTimer() {
 
   if (timer) {
 
@@ -58,17 +164,4 @@ export function stopResumeTracking() {
 
     timer = null;
   }
-}
-
-/* ================= GET ================= */
-
-export function getResumeData(slug) {
-
-  const data = getResume();
-
-  if (!data) return null;
-
-  if (data.slug !== slug) return null;
-
-  return data;
 }
