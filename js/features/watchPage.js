@@ -1,263 +1,477 @@
-import { getAnimeBySlug, getEpisodes, getServers } from "../core/api.js";
+import {
+  getAnimeBySlug,
+  getEpisodes,
+  getServers,
+  api
+} from "../core/api.js";
 
-/* ================= PARAMS ================= */
-function getParams() {
-  const url = new URLSearchParams(location.search);
-  return {
-    slug: url.get("slug"),
-    ep: url.get("ep")
-  };
-}
+import {
+  $,
+  setHTML,
+  setText,
+  loading,
+  empty,
+  error,
+  image,
+  getQuery,
+  go
+} from "../core/utils.js";
 
-/* ================= STATE ================= */
-let animeSlug = null;
-let episodes = [];
-let currentIndex = 0;
+import {
+  initSeasonManager
+} from "./seasonManager.js";
 
-let servers = [];
-let currentServer = 0;
-let failCount = 0;
+import {
+  loadRelatedAnime
+} from "./relatedAnime.js";
 
-let watchTimer = null;
-let watchedSeconds = 0;
+import {
+  renderDownloadButtons
+} from "./downloadManager.js";
 
-/* ================= INIT ================= */
+import {
+  addToHistory
+} from "./historyManager.js";
+
+import {
+  startResumeTracking,
+  stopResumeTracking,
+  getResumeData
+} from "./resumeManager.js";
+
+import {
+  initServerManager
+} from "./serverManager.js";
+
+import {
+  startAutoNext,
+  stopAutoNext
+} from "./autoNext.js";
+
+/* ======================================================
+   WATCH PAGE
+====================================================== */
+
+let animeData = null;
+
+let allEpisodes = [];
+
+let currentEpisodeIndex = 0;
+
+let currentServers = [];
+
+let playerConfig = null;
+
+/* ======================================================
+   INIT
+====================================================== */
+
 export async function initWatchPage() {
 
-  const params = getParams();
-  if (!params.slug) return;
+  const slug = getQuery("slug");
 
-  animeSlug = params.slug;
+  const epId = getQuery("ep");
 
-  const anime = await getAnimeBySlug(animeSlug);
-  if (!anime) return;
+  if (!slug) {
 
-  episodes = await getEpisodes(anime.id);
-  if (!episodes.length) return;
+    document.body.innerHTML =
+      "<h2 style='padding:20px'>Invalid Watch URL</h2>";
 
-  const resume = getResume();
-
-  if (params.ep) {
-    currentIndex = episodes.findIndex(e => e.id == params.ep);
-  } else if (resume && resume.slug === animeSlug) {
-    currentIndex = episodes.findIndex(e => e.id == resume.episodeId);
-  } else {
-    currentIndex = 0;
+    return;
   }
 
-  if (currentIndex < 0) currentIndex = 0;
-
-  renderEpisodes();
-  loadEpisode();
-  renderResumeButton();
+  await loadAnime(slug, epId);
 }
 
-/* ================= LOAD EP ================= */
-async function loadEpisode() {
+/* ======================================================
+   LOAD ANIME
+====================================================== */
 
-  const ep = episodes[currentIndex];
-  if (!ep) return;
+async function loadAnime(slug, epId) {
 
-  servers = await getServers(ep.id);
+  try {
 
-  currentServer = 0;
-  failCount = 0;
-  watchedSeconds = 0;
+    const data =
+      await getAnimeBySlug(slug);
 
-  startWatchTimer();
-  loadServer();
-  renderDownloadButtons();
+    if (!data) {
+
+      document.body.innerHTML =
+        "<h2 style='padding:20px'>Anime Not Found</h2>";
+
+      return;
+    }
+
+    animeData = data;
+
+    renderAnime(data);
+
+    await loadEpisodes(data.id, epId);
+
+    loadRelatedAnime(data);
+
+  } catch (err) {
+
+    console.error(err);
+
+    document.body.innerHTML =
+      "<h2 style='padding:20px'>Failed To Load</h2>";
+  }
 }
 
-/* ================= LOAD SERVER ================= */
-function loadServer() {
+/* ======================================================
+   RENDER ANIME
+====================================================== */
 
-  const iframe = document.getElementById("iframe-embed");
-  const server = servers[currentServer];
+function renderAnime(data) {
 
-  if (!server) return;
+  setHTML(
+    $("#aboutList"),
 
-  iframe.src = server.url;
+    `
+      <li>
+        <b>Language:</b>
+        ${data.language || "-"}
+      </li>
 
-  renderServers();
-  detectFailover();
-  saveHistory();
+      <li>
+        <b>Duration:</b>
+        ${data.duration || "-"}
+      </li>
+
+      <li>
+        <b>Genres:</b>
+        ${(data.genres || []).join(", ")}
+      </li>
+    `
+  );
+
+  setText(
+    $("#aboutDesc"),
+    data.description || ""
+  );
 }
 
-/* ================= FAILOVER ================= */
-function detectFailover() {
+/* ======================================================
+   LOAD EPISODES
+====================================================== */
 
-  setTimeout(() => {
+async function loadEpisodes(animeId, epId) {
 
-    const iframe = document.getElementById("iframe-embed");
+  const grid = $("#episodeGrid");
 
-    if (!iframe.src || iframe.src === "about:blank") {
-      failCount++;
+  if (!grid) return;
 
-      if (failCount < servers.length) {
-        currentServer++;
-        loadServer();
-      } else {
-        showError();
+  loading(grid, "Loading Episodes...");
+
+  try {
+
+    allEpisodes =
+      await getEpisodes(animeId);
+
+    if (!allEpisodes.length) {
+
+      empty(grid, "No episodes available");
+
+      return;
+    }
+
+    /* CURRENT */
+
+    if (epId) {
+
+      currentEpisodeIndex =
+        allEpisodes.findIndex(
+          ep => String(ep.id) === String(epId)
+        );
+
+    } else {
+
+      const resume =
+        getResumeData(animeData.slug);
+
+      if (resume) {
+
+        currentEpisodeIndex =
+          allEpisodes.findIndex(
+            ep =>
+              String(ep.id) ===
+              String(resume.episodeId)
+          );
       }
     }
 
-  }, 4000);
-}
+    if (currentEpisodeIndex < 0) {
+      currentEpisodeIndex = 0;
+    }
 
-function showError() {
-  const msg = document.getElementById("player-message");
-  if (msg) msg.style.display = "block";
-}
+    /* SEASON */
 
-/* ================= SERVERS ================= */
-function renderServers() {
+    initSeasonManager({
 
-  const list = document.getElementById("serverList");
+      episodes: allEpisodes,
 
-  list.innerHTML = servers.map((s, i) => `
-    <button class="server ${i === currentServer ? "active" : ""}" data-i="${i}">
-      Server ${i + 1}
-    </button>
-  `).join("");
+      defaultSeason:
+        allEpisodes[currentEpisodeIndex]?.season || "1",
 
-  list.onclick = (e) => {
-    const btn = e.target.closest("button");
-    if (!btn) return;
+      render: renderEpisodes
+    });
 
-    currentServer = Number(btn.dataset.i);
-    loadServer();
-  };
-}
+    /* PLAYER */
 
-/* ================= DOWNLOAD ================= */
-function renderDownloadButtons(){
+    await loadCurrentEpisode();
 
-  const box = document.getElementById("downloadBox");
-  if(!box) return;
+  } catch (err) {
 
-  const ep = episodes[currentIndex];
-  const epNo = currentIndex + 1;
+    console.error(err);
 
-  box.innerHTML = `
-    <button class="download-btn">⬇ Download EP ${epNo}</button>
-    <button class="download-btn secondary">📦 Full Page</button>
-  `;
-
-  const [epBtn, fullBtn] = box.querySelectorAll("button");
-
-  epBtn.onclick = () => {
-    location.href = `download.html?anime=${encodeURIComponent(animeSlug)}&episode=${epNo}`;
-  };
-
-  fullBtn.onclick = () => {
-    location.href = `download.html?anime=${encodeURIComponent(animeSlug)}`;
-  };
-}
-
-/* ================= NEXT ================= */
-function nextEpisode() {
-
-  currentIndex++;
-  if (currentIndex >= episodes.length) return;
-
-  loadEpisode();
-}
-
-/* ================= WATCH TIMER ================= */
-function startWatchTimer() {
-
-  if (watchTimer) clearInterval(watchTimer);
-
-  watchTimer = setInterval(() => {
-    watchedSeconds += 5;
-    saveResume();
-  }, 5000);
-}
-
-/* ================= HISTORY ================= */
-function saveHistory() {
-
-  const ep = episodes[currentIndex];
-
-  let history = JSON.parse(localStorage.getItem("WATCH_HISTORY") || "[]");
-
-  history = history.filter(h => h.slug !== animeSlug);
-
-  history.unshift({
-    slug: animeSlug,
-    episodeId: ep.id,
-    episodeNo: currentIndex + 1,
-    updatedAt: Date.now()
-  });
-
-  localStorage.setItem("WATCH_HISTORY", JSON.stringify(history.slice(0, 20)));
-}
-
-/* ================= RESUME ================= */
-function saveResume() {
-
-  const ep = episodes[currentIndex];
-
-  const data = {
-    slug: animeSlug,
-    episodeId: ep.id,
-    episodeNo: currentIndex + 1,
-    time: watchedSeconds
-  };
-
-  localStorage.setItem("RESUME_DATA", JSON.stringify(data));
-}
-
-function getResume() {
-  try {
-    return JSON.parse(localStorage.getItem("RESUME_DATA"));
-  } catch {
-    return null;
+    error(grid, "Failed to load episodes");
   }
 }
 
-/* ================= RESUME BUTTON ================= */
-function renderResumeButton() {
+/* ======================================================
+   LOAD CURRENT EPISODE
+====================================================== */
 
-  const resume = getResume();
-  if (!resume || resume.slug !== animeSlug) return;
+async function loadCurrentEpisode() {
 
-  const box = document.getElementById("extraActions");
-  if (!box) return;
+  stopResumeTracking();
 
-  const btn = document.createElement("button");
-  btn.innerText = `▶ Resume EP ${resume.episodeNo}`;
-  btn.className = "server";
+  stopAutoNext();
 
-  btn.onclick = () => {
-    currentIndex = episodes.findIndex(e => e.id == resume.episodeId);
-    loadEpisode();
-  };
+  const current =
+    allEpisodes[currentEpisodeIndex];
 
-  box.prepend(btn);
+  if (!current) return;
+
+  try {
+
+    /* SERVERS */
+
+    currentServers =
+      await getServers(current.id);
+
+    if (!currentServers.length) {
+
+      empty(
+        $("#serverList"),
+        "No servers available"
+      );
+
+      return;
+    }
+
+    /* PLAYER CONFIG */
+
+    const cfg =
+      await api("/admin/player");
+
+    playerConfig = cfg || {};
+
+    /* SERVERS */
+
+    initServerManager({
+
+      list: currentServers,
+
+      config: playerConfig,
+
+      onChange: () => {
+
+        addToHistory({
+
+          anime: animeData,
+
+          episode: current
+        });
+      }
+    });
+
+    /* DOWNLOAD */
+
+    renderDownloadButtons({
+
+      animeSlug: animeData.slug,
+
+      currentEpisode: current,
+
+      playerConfig
+    });
+
+    /* RESUME */
+
+    startResumeTracking({
+
+      anime: animeData,
+
+      episode: current,
+
+      iframe: $("#iframe-embed")
+    });
+
+    /* AUTONEXT */
+
+    setupAutoNext();
+
+  } catch (err) {
+
+    console.error(err);
+
+    empty(
+      $("#serverList"),
+      "Failed to load servers"
+    );
+  }
 }
 
-/* ================= EP LIST ================= */
-function renderEpisodes() {
+/* ======================================================
+   AUTO NEXT
+====================================================== */
 
-  const grid = document.getElementById("episodeGrid");
+function setupAutoNext() {
 
-  grid.innerHTML = episodes.map((ep, i) => `
-    <div class="ep-card" data-i="${i}">
-      <div class="ep-thumb">
-        <img src="${ep.thumbnail || ""}?tr=w-300,h-180">
-        <span class="ep-no">EP ${i + 1}</span>
-      </div>
-      <p>${ep.title || "Episode " + (i + 1)}</p>
-    </div>
-  `).join("");
+  const iframe = $("#iframe-embed");
+
+  if (!iframe) return;
+
+  iframe.onload = () => {
+
+    stopAutoNext();
+
+    /* MOCK VIDEO END */
+
+    clearTimeout(window.__AUTO_NEXT__);
+
+    window.__AUTO_NEXT__ =
+      setTimeout(() => {
+
+        if (
+          currentEpisodeIndex + 1 <
+          allEpisodes.length
+        ) {
+
+          startAutoNext({
+
+            onNext: nextEpisode
+          });
+        }
+
+      }, 1000 * 60 * 20);
+  };
+}
+
+/* ======================================================
+   NEXT
+====================================================== */
+
+function nextEpisode() {
+
+  if (
+    currentEpisodeIndex + 1 >=
+    allEpisodes.length
+  ) return;
+
+  currentEpisodeIndex++;
+
+  loadCurrentEpisode();
+
+  renderEpisodes(
+    allEpisodes.filter(
+      ep =>
+        String(ep.season || "1") ===
+        String(
+          allEpisodes[currentEpisodeIndex]
+            ?.season || "1"
+        )
+    )
+  );
+}
+
+/* ======================================================
+   RENDER EPISODES
+====================================================== */
+
+function renderEpisodes(list = []) {
+
+  const grid = $("#episodeGrid");
+
+  if (!grid) return;
+
+  if (!list.length) {
+
+    empty(grid, "No episodes");
+
+    return;
+  }
+
+  setHTML(
+    grid,
+
+    list.map(ep => {
+
+      const active =
+        allEpisodes[currentEpisodeIndex]
+          ?.id === ep.id;
+
+      return `
+      
+        <div
+          class="ep-card ${
+            active ? "active" : ""
+          }"
+          data-id="${ep.id}"
+        >
+
+          <div class="ep-thumb">
+
+            <img
+              src="${image(ep.thumbnail)}?tr=w-300,h-180"
+              loading="lazy"
+            >
+
+            <span class="ep-no">
+              EP ${ep.episode}
+            </span>
+
+          </div>
+
+          <p>
+            ${ep.title || `Episode ${ep.episode}`}
+          </p>
+
+        </div>
+      
+      `;
+
+    }).join("")
+  );
+
+  /* CLICK */
 
   grid.onclick = (e) => {
-    const card = e.target.closest(".ep-card");
+
+    const card =
+      e.target.closest(".ep-card");
+
     if (!card) return;
 
-    currentIndex = Number(card.dataset.i);
-    loadEpisode();
+    const id = card.dataset.id;
+
+    const index =
+      allEpisodes.findIndex(
+        ep => String(ep.id) === String(id)
+      );
+
+    if (index < 0) return;
+
+    currentEpisodeIndex = index;
+
+    loadCurrentEpisode();
+
+    history.replaceState(
+      null,
+      "",
+      `watch.html?slug=${animeData.slug}&ep=${id}`
+    );
   };
 }
