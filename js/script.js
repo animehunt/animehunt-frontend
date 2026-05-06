@@ -58,3 +58,8 @@ document.addEventListener("DOMContentLoaded", async () => {
     console.warn("SEO load failed");
   }
 });
+
+import { loadPerformanceConfig }
+from "./core/performance.js";
+
+loadPerformanceConfig();
