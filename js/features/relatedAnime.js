@@ -1,136 +1,116 @@
-import { getAnime } from "../core/api.js";
+import {
+  getAnime
+} from "../core/api.js";
 
 import {
   $,
   setHTML,
-  createAnimeCard,
-  empty
+  image,
+  go
 } from "../core/utils.js";
 
 /* ======================================================
-   RELATED ANIME
+   LOAD RELATED
 ====================================================== */
 
-export async function loadRelatedAnime(currentAnime) {
+export async function loadRelatedAnime(anime) {
 
-  const grid = $("#relatedGrid");
+  const grid =
+    $("#relatedGrid");
 
-  if (!grid || !currentAnime) return;
+  if (!grid) return;
 
   try {
 
-    const genres =
-      currentAnime.genres || [];
+    const res =
+      await getAnime(
+        `?type=${anime.type}&limit=8`
+      );
 
-    /* ================= FETCH ================= */
-
-    const res = await getAnime(
-      `?type=${currentAnime.type}&limit=20`
-    );
-
-    if (!res?.data?.length) {
-
-      empty(grid, "No related anime");
-
-      return;
-    }
-
-    /* ================= FILTER ================= */
-
-    let list = res.data.filter(anime => {
-
-      /* EXCLUDE SELF */
-
-      if (anime.slug === currentAnime.slug) {
-        return false;
-      }
-
-      /* HIDDEN */
-
-      if (anime.isHidden) {
-        return false;
-      }
-
-      return true;
-    });
-
-    /* ================= SCORE ================= */
-
-    list = list.map(anime => {
-
-      const sharedGenres =
-        (anime.genres || []).filter(
-          g => genres.includes(g)
-        ).length;
-
-      return {
-
-        ...anime,
-
-        score: sharedGenres
-      };
-
-    });
-
-    /* ================= SORT ================= */
-
-    list.sort((a, b) => {
-
-      /* SAME GENRE PRIORITY */
-
-      if (b.score !== a.score) {
-        return b.score - a.score;
-      }
-
-      /* TRENDING */
-
-      if (a.isTrending && !b.isTrending) {
-        return -1;
-      }
-
-      if (!a.isTrending && b.isTrending) {
-        return 1;
-      }
-
-      return 0;
-    });
-
-    /* ================= LIMIT ================= */
-
-    list = list.slice(0, 8);
+    const list =
+      res?.data || [];
 
     if (!list.length) {
 
-      empty(grid, "No related anime");
+      grid.style.display = "none";
 
       return;
     }
 
-    /* ================= RENDER ================= */
+    /* REMOVE CURRENT */
 
-    setHTML(
-      grid,
+    const filtered =
+      list.filter(
+        x => x.slug !== anime.slug
+      );
 
-      list.map(createAnimeCard).join("")
-    );
-
-    /* ================= CLICK ================= */
-
-    grid.onclick = (e) => {
-
-      const card =
-        e.target.closest(".rel-card");
-
-      if (!card) return;
-
-      location.href =
-        `details.html?slug=${card.dataset.slug}`;
-    };
+    renderRelated(filtered);
 
   } catch (err) {
 
     console.error(err);
 
-    empty(grid, "Related load failed");
+    grid.style.display = "none";
   }
+}
+
+/* ======================================================
+   RENDER
+====================================================== */
+
+function renderRelated(list = []) {
+
+  const grid =
+    $("#relatedGrid");
+
+  if (!grid) return;
+
+  setHTML(
+    grid,
+
+    list.map(item => {
+
+      return `
+
+        <div
+          class="rel-card"
+          data-slug="${item.slug}"
+          style="
+            background-image:
+            linear-gradient(
+              to top,
+              rgba(0,0,0,.95),
+              rgba(0,0,0,.2)
+            ),
+            url(${image(item.poster)}?tr=w-300,h-450);
+
+            background-size:cover;
+            background-position:center;
+          "
+        >
+
+          <span>
+            ${item.title}
+          </span>
+
+        </div>
+
+      `;
+
+    }).join("")
+  );
+
+  /* CLICK */
+
+  grid.onclick = (e) => {
+
+    const card =
+      e.target.closest(".rel-card");
+
+    if (!card) return;
+
+    go(
+      `details.html?slug=${card.dataset.slug}`
+    );
+  };
 }
