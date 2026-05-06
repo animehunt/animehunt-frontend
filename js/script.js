@@ -63,3 +63,29 @@ import { loadPerformanceConfig }
 from "./core/performance.js";
 
 loadPerformanceConfig();
+import { initDetailsPage }
+from "./features/detailsPage.js";
+
+import { initWatchPage }
+from "./features/watchPage.js";
+
+/* ======================================================
+   APP INIT
+====================================================== */
+
+const page =
+  document.body.dataset.page;
+
+/* DETAILS */
+
+if (page === "details") {
+
+  initDetailsPage();
+}
+
+/* WATCH */
+
+if (page === "watch") {
+
+  initWatchPage();
+}
