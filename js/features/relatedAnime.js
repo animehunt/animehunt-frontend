@@ -114,3 +114,40 @@ function renderRelated(list = []) {
     );
   };
 }
+import {
+  getRecommendations
+} from "../core/recommendationEngine.js"
+
+import {
+  createCard
+} from "../core/utils.js"
+
+export async function loadRelatedAnime(
+  slug
+) {
+
+  const grid =
+    document.getElementById(
+      "relatedGrid"
+    )
+
+  if (!grid) return
+
+  grid.innerHTML =
+    "Loading..."
+
+  const list =
+    await getRecommendations(slug)
+
+  if (!list.length) {
+
+    grid.innerHTML =
+      "<p>No related anime</p>"
+
+    return
+  }
+
+  grid.innerHTML =
+    list.map(createCard)
+    .join("")
+}
