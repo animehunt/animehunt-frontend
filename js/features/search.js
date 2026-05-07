@@ -1,13 +1,9 @@
-import {
-  applyDynamicSEO
-} from "../core/seo.js"
-
 const API =
 "https://animehunt-backend.animehunt715.workers.dev/api"
 
 let SETTINGS = null
 let TIMER = null
-let ACTIVE = 0
+let ACTIVE_REQUEST = 0
 
 /* =========================================
 LOAD SETTINGS
@@ -29,14 +25,19 @@ async function loadSettings() {
 
     return json
 
-  } catch {
+  } catch (err) {
+
+    console.error(
+      "Search settings failed",
+      err
+    )
 
     return null
   }
 }
 
 /* =========================================
-INIT
+INIT SEARCH
 ========================================= */
 
 export async function initSearch() {
@@ -61,7 +62,7 @@ export async function initSearch() {
 
       if (!q) {
 
-        clearSearch()
+        clearResults()
         return
       }
 
@@ -71,16 +72,31 @@ export async function initSearch() {
 
         TIMER = setTimeout(() => {
 
-          runSearch(q, settings)
+          runSearch(q)
 
-        }, settings.debounce)
+        }, settings.debounce || 300)
 
       } else {
 
-        runSearch(q, settings)
+        runSearch(q)
       }
     }
   )
+
+  /* ESC CLOSE */
+
+  document.addEventListener(
+    "keydown",
+    (e) => {
+
+      if (e.key === "Escape") {
+
+        clearResults()
+      }
+    }
+  )
+
+  /* OUTSIDE CLICK */
 
   document.addEventListener(
     "click",
@@ -97,7 +113,7 @@ export async function initSearch() {
         e.target !== input
       ) {
 
-        clearSearch()
+        clearResults()
       }
     }
   )
@@ -107,19 +123,18 @@ export async function initSearch() {
 SEARCH
 ========================================= */
 
-async function runSearch(
-  query,
-  settings
-) {
+async function runSearch(query) {
 
-  const req = ++ACTIVE
+  const requestId =
+    ++ACTIVE_REQUEST
 
   const box = getBox()
 
-  box.innerHTML =
-    `<div class="search-loading">
+  box.innerHTML = `
+    <div class="search-loading">
       Searching...
-    </div>`
+    </div>
+  `
 
   try {
 
@@ -131,7 +146,7 @@ async function runSearch(
     const json =
       await res.json()
 
-    if (req !== ACTIVE)
+    if (requestId !== ACTIVE_REQUEST)
       return
 
     const data =
@@ -139,53 +154,59 @@ async function runSearch(
 
     renderResults(
       data,
-      query,
-      settings
+      query
     )
 
-  } catch {
+  } catch (err) {
 
-    box.innerHTML =
-      `<div class="search-error">
+    console.error(
+      "Search failed",
+      err
+    )
+
+    box.innerHTML = `
+      <div class="search-error">
         Search failed
-      </div>`
+      </div>
+    `
   }
 }
 
 /* =========================================
-RENDER
+RENDER RESULTS
 ========================================= */
 
 function renderResults(
   data,
-  query,
-  settings
+  query
 ) {
 
   const box = getBox()
 
   if (!data.length) {
 
-    box.innerHTML =
-      `<div class="search-empty">
-        No results
-      </div>`
+    box.innerHTML = `
+      <div class="search-empty">
+        No results found
+      </div>
+    `
 
     return
   }
 
-  box.innerHTML = data.map(item => `
+  box.innerHTML =
+    data.map(item => `
 
-    <div
-      class="search-item"
-      data-slug="${item.slug}"
-    >
-
-      <img
-        src="${item.poster}"
+      <div
+        class="search-item"
+        data-slug="${item.slug}"
       >
 
-      <div>
+        <img
+          src="${item.poster}"
+          loading="lazy"
+          alt="${item.title}"
+        >
 
         <span>
           ${highlight(
@@ -196,9 +217,9 @@ function renderResults(
 
       </div>
 
-    </div>
+    `).join("")
 
-  `).join("")
+  /* CLICK */
 
   box.querySelectorAll(".search-item")
     .forEach(item => {
@@ -212,7 +233,7 @@ function renderResults(
 }
 
 /* =========================================
-HELPERS
+GET BOX
 ========================================= */
 
 function getBox() {
@@ -239,21 +260,34 @@ function getBox() {
   return box
 }
 
-function clearSearch() {
+/* =========================================
+CLEAR
+========================================= */
+
+function clearResults() {
 
   const box =
     document.getElementById(
       "searchResults"
     )
 
-  if (box)
+  if (box) {
+
     box.innerHTML = ""
+  }
 }
+
+/* =========================================
+HIGHLIGHT
+========================================= */
 
 function highlight(
   text,
   query
 ) {
+
+  if (!query)
+    return text
 
   const safe =
     query.replace(
@@ -262,7 +296,10 @@ function highlight(
     )
 
   return text.replace(
-    new RegExp(`(${safe})`, "gi"),
+    new RegExp(
+      `(${safe})`,
+      "gi"
+    ),
     "<b>$1</b>"
   )
 }
