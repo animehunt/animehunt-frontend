@@ -1,149 +1,407 @@
+/* =========================================================
+   js/features/downloadPage.js
+   FINAL DOWNLOAD PAGE ENGINE
+========================================================= */
+
 import { api } from "../core/api.js"
 
-/* ================= PARAMS ================= */
+/* =========================================================
+   PARAMS
+========================================================= */
+
 function getParams(){
-  const url = new URLSearchParams(location.search)
+
+  const params =
+  new URLSearchParams(
+    location.search
+  )
 
   return {
-    anime: url.get("anime"),
-    season: url.get("season"),
-    episode: url.get("episode")
+
+    anime:
+    params.get("anime")
+
   }
+
 }
 
-/* ================= INIT ================= */
+/* =========================================================
+   DOM
+========================================================= */
+
+const container =
+document.getElementById(
+  "downloadsContainer"
+)
+
+const animeTitle =
+document.getElementById(
+  "animeTitle"
+)
+
+const animeType =
+document.getElementById(
+  "animeType"
+)
+
+const poster =
+document.getElementById(
+  "poster"
+)
+
+const backdrop =
+document.getElementById(
+  "backdrop"
+)
+
+const downloadCount =
+document.getElementById(
+  "downloadCount"
+)
+
+/* =========================================================
+   INIT
+========================================================= */
+
 export async function initDownloadPage(){
 
-  const { anime, season, episode } = getParams()
+  const { anime } =
+  getParams()
 
-  const container = document.getElementById("downloadContainer")
-  const title = document.getElementById("downloadTitle")
+  /* =====================================================
+     VALIDATION
+  ===================================================== */
 
   if(!anime){
-    container.innerHTML = "Invalid request"
-    return
-  }
-
-  title.innerText = `Download ${anime}`
-
-  if(season && episode){
-    loadEpisode(anime, season, episode)
-  }else{
-    loadFullAnime(anime)
-  }
-}
-
-/* ================= FULL ANIME ================= */
-async function loadFullAnime(anime){
-
-  const container = document.getElementById("downloadContainer")
-  container.innerHTML = "Loading..."
-
-  try{
-
-    const data = await api(`/downloads-full/${encodeURIComponent(anime)}`)
-
-    if(!data || typeof data !== "object"){
-      container.innerHTML = "No downloads found"
-      return
-    }
-
-    container.innerHTML = ""
-
-    Object.keys(data).forEach(season=>{
-
-      container.innerHTML += `<h2>Season ${season}</h2>`
-
-      Object.keys(data[season]).forEach(ep=>{
-
-        const episodeData = data[season][ep]
-
-        container.innerHTML += renderEpisodeBlock(
-          anime,
-          season,
-          ep,
-          groupByHost(episodeData)
-        )
-
-      })
-
-    })
-
-  }catch{
-    container.innerHTML = "Failed to load"
-  }
-}
-
-/* ================= SINGLE EP ================= */
-async function loadEpisode(anime, season, episode){
-
-  const container = document.getElementById("downloadContainer")
-  container.innerHTML = "Loading..."
-
-  try{
-
-    const data = await api(`/downloads/${encodeURIComponent(anime)}/${season}/${episode}`)
-
-    if(!Array.isArray(data) || !data.length){
-      container.innerHTML = "No downloads found"
-      return
-    }
 
     container.innerHTML = `
-      <h2>Season ${season} • Episode ${episode}</h2>
-      ${renderEpisodeBlock(anime, season, episode, groupByHost(data))}
+
+      <div class="empty">
+
+        Invalid anime
+
+      </div>
+
     `
 
-  }catch{
-    container.innerHTML = "Failed to load"
+    return
+
   }
+
+  /* =====================================================
+     LOAD
+  ===================================================== */
+
+  try{
+
+    const data =
+
+    await api(
+
+      `/downloads-by-slug/${anime}`
+
+    )
+
+    if(
+      !data?.success
+    ){
+
+      container.innerHTML = `
+
+        <div class="empty">
+
+          Anime not found
+
+        </div>
+
+      `
+
+      return
+
+    }
+
+    renderPage(data)
+
+  }catch(err){
+
+    console.error(err)
+
+    container.innerHTML = `
+
+      <div class="empty">
+
+        Failed to load
+
+      </div>
+
+    `
+
+  }
+
 }
 
-/* ================= GROUP BY HOST ================= */
-function groupByHost(list){
+/* =========================================================
+   RENDER PAGE
+========================================================= */
+
+function renderPage(data){
+
+  const anime =
+  data.anime
+
+  const downloads =
+  data.downloads || []
+
+  /* =====================================================
+     TOP
+  ===================================================== */
+
+  animeTitle.innerText =
+
+    anime.title
+
+  animeType.innerText =
+
+    (
+      anime.type ||
+      "anime"
+    ).toUpperCase()
+
+  poster.src =
+  anime.poster || ""
+
+  backdrop.style.backgroundImage =
+
+    `url(${anime.poster})`
+
+  downloadCount.innerText =
+
+    `${downloads.length} Downloads`
+
+  /* =====================================================
+     EMPTY
+  ===================================================== */
+
+  if(!downloads.length){
+
+    container.innerHTML = `
+
+      <div class="empty">
+
+        No downloads available
+
+      </div>
+
+    `
+
+    return
+
+  }
+
+  /* =====================================================
+     GROUP
+  ===================================================== */
 
   const grouped = {}
 
-  list.forEach(d=>{
-    if(!grouped[d.host]) grouped[d.host] = []
-    grouped[d.host].push(d)
+  downloads.forEach(item=>{
+
+    const seasonKey =
+
+      item.content_type ===
+      "movie"
+
+      ? "MOVIES"
+
+      : item.content_type ===
+        "series_zip"
+
+      ? "SERIES ZIP"
+
+      : `Season ${item.season || 1}`
+
+    if(!grouped[seasonKey]){
+
+      grouped[seasonKey] = []
+
+    }
+
+    grouped[seasonKey]
+    .push(item)
+
   })
 
-  return grouped
-}
+  /* =====================================================
+     RENDER
+  ===================================================== */
 
-/* ================= EP BLOCK ================= */
-function renderEpisodeBlock(anime, season, episode, grouped){
+  container.innerHTML = ""
 
-  return `
-  <div class="episode-block">
+  Object.keys(grouped)
+  .forEach(season=>{
 
-    <h3>Episode ${episode}</h3>
+    const list =
+    grouped[season]
 
-    ${Object.keys(grouped).map(host=>{
+    const seasonDiv =
+    document.createElement("div")
 
-      return `
-      <div class="host-block">
+    seasonDiv.className =
+    "season-block"
 
-        <h4>${host}</h4>
+    seasonDiv.innerHTML = `
 
-        <div class="quality-links">
+      <div class="season-header">
 
-          ${grouped[host].map(item=>{
+        <h2>
 
-            const url = `/api/go?anime=${encodeURIComponent(anime)}&season=${season}&episode=${episode}&host=${host}&quality=${item.quality}&step=1`
+          ${season}
 
-            return `<a href="${url}">${item.quality}</a>`
+        </h2>
 
-          }).join("")}
+        <div class="season-count">
+
+          ${list.length} Entries
 
         </div>
 
       </div>
+
+    `
+
+    /* ===================================================
+       EPISODES
+    =================================================== */
+
+    list.forEach(item=>{
+
+      const card =
+      document.createElement("div")
+
+      card.className =
+      "episode-card"
+
+      const epTitle =
+
+        item.content_type ===
+        "movie"
+
+        ? (
+            item.episode_title ||
+            anime.title
+          )
+
+        : item.content_type ===
+          "season_zip"
+
+        ? `Season ${item.season} ZIP`
+
+        : item.content_type ===
+          "series_zip"
+
+        ? "Full Series ZIP"
+
+        : (
+            item.episode_title ||
+            `Episode ${item.episode}`
+          )
+
+      card.innerHTML = `
+
+        <div class="episode-top">
+
+          <div class="ep-left">
+
+            <div class="ep-number">
+
+              ${
+                item.content_type ===
+                "movie"
+
+                ? "MOVIE"
+
+                : item.content_type ===
+                  "season_zip"
+
+                ? "SEASON ZIP"
+
+                : item.content_type ===
+                  "series_zip"
+
+                ? "SERIES ZIP"
+
+                : `EPISODE ${item.episode}`
+              }
+
+            </div>
+
+            <div class="ep-title">
+
+              ${epTitle}
+
+            </div>
+
+          </div>
+
+          <div class="host-count">
+
+            ${item.hosts.length}
+            Hosts
+
+          </div>
+
+        </div>
+
+        <div class="host-grid"></div>
+
       `
 
-    }).join("")}
+      /* =================================================
+         HOSTS
+      ================================================= */
 
-  </div>
-  `
+      const hostGrid =
+      card.querySelector(
+        ".host-grid"
+      )
+
+      item.hosts.forEach(host=>{
+
+        const btn =
+        document.createElement(
+          "button"
+        )
+
+        btn.className =
+        "host-btn"
+
+        btn.innerText =
+        host.host
+
+        /* ===============================================
+           GO FLOW
+        =============================================== */
+
+        btn.onclick = ()=>{
+
+          location.href =
+
+            `/api/go?host_id=${host.id}&step=1`
+
+        }
+
+        hostGrid.appendChild(btn)
+
+      })
+
+      seasonDiv.appendChild(card)
+
+    })
+
+    container.appendChild(
+      seasonDiv
+    )
+
+  })
+
 }
