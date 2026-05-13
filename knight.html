@@ -1,71 +1,507 @@
+<!-- ======================================================
+knight.html
+FINAL KNIGHT DOWNLOAD PAGE
+====================================================== -->
+
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-<meta charset="UTF-8">
-<title>Download</title>
+
+<meta charset="UTF-8"/>
+
+<meta
+  name="viewport"
+  content="width=device-width, initial-scale=1.0"
+/>
+
+<title>
+Knight Download
+</title>
 
 <style>
-body{background:#000;color:#fff;font-family:sans-serif;text-align:center;padding-top:60px}
-.btn{
-display:block;
-margin:15px auto;
-padding:14px;
-width:200px;
-background:#ff1e3c;
-color:#fff;
-text-decoration:none;
-border-radius:10px
+
+/* ======================================================
+BASE
+====================================================== */
+
+*{
+  margin:0;
+  padding:0;
+  box-sizing:border-box;
+  -webkit-tap-highlight-color:transparent;
 }
+
+body{
+  min-height:100vh;
+  background:#060a14;
+  color:#fff;
+  font-family:system-ui,sans-serif;
+  overflow-x:hidden;
+}
+
+/* ======================================================
+WRAPPER
+====================================================== */
+
+.knight-page{
+  width:100%;
+  min-height:100vh;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:30px 20px;
+}
+
+/* ======================================================
+CARD
+====================================================== */
+
+.knight-card{
+  width:100%;
+  max-width:620px;
+
+  background:#0b0f1a;
+  border:1px solid #1a2035;
+
+  border-radius:26px;
+
+  overflow:hidden;
+}
+
+/* ======================================================
+TOP
+====================================================== */
+
+.knight-top{
+  padding:34px 30px;
+  border-bottom:1px solid #1a2035;
+  background:#0e1424;
+}
+
+.knight-badge{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+
+  height:34px;
+  padding:0 16px;
+
+  background:#141d35;
+  border:1px solid #1f2742;
+
+  border-radius:999px;
+
+  color:#ffcc00;
+  font-size:12px;
+  font-weight:700;
+
+  margin-bottom:16px;
+}
+
+.knight-title{
+  font-size:34px;
+  line-height:1.4;
+  margin-bottom:14px;
+}
+
+.knight-sub{
+  color:#888;
+  font-size:14px;
+  line-height:1.7;
+}
+
+/* ======================================================
+LINKS
+====================================================== */
+
+.knight-links{
+  padding:30px;
+  display:flex;
+  flex-direction:column;
+  gap:16px;
+}
+
+/* ======================================================
+BUTTON
+====================================================== */
+
+.download-btn{
+  width:100%;
+  min-height:66px;
+
+  border:none;
+  border-radius:18px;
+
+  background:#11162a;
+  border:1px solid #1f2742;
+
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+
+  padding:0 20px;
+
+  cursor:pointer;
+  transition:.2s;
+}
+
+.download-btn:hover{
+  border-color:#ffcc00;
+  transform:translateY(-2px);
+}
+
+.btn-left{
+  display:flex;
+  flex-direction:column;
+  align-items:flex-start;
+  gap:6px;
+}
+
+.btn-quality{
+  color:#fff;
+  font-size:18px;
+  font-weight:700;
+}
+
+.btn-text{
+  color:#888;
+  font-size:12px;
+}
+
+.btn-right{
+  color:#ffcc00;
+  font-size:13px;
+  font-weight:700;
+}
+
+/* ======================================================
+LOADER
+====================================================== */
+
+.loader{
+  padding:50px 20px;
+  text-align:center;
+  color:#777;
+}
+
+/* ======================================================
+ERROR
+====================================================== */
+
+.error-box{
+  padding:50px 20px;
+  text-align:center;
+  color:#ff4d4d;
+}
+
+/* ======================================================
+RESPONSIVE
+====================================================== */
+
+@media(max-width:700px){
+
+  .knight-top{
+    padding:28px 22px;
+  }
+
+  .knight-links{
+    padding:22px;
+  }
+
+  .knight-title{
+    font-size:26px;
+  }
+
+  .download-btn{
+    min-height:62px;
+    padding:0 16px;
+  }
+
+  .btn-quality{
+    font-size:16px;
+  }
+
+}
+
 </style>
 </head>
 
 <body>
 
-<h2 id="title"></h2>
-<p id="info"></p>
+<div class="knight-page">
 
-<div id="links">Loading...</div>
+<div class="knight-card">
+
+<!-- =====================================================
+TOP
+===================================================== -->
+
+<div class="knight-top">
+
+  <div class="knight-badge">
+
+    KNIGHT DOWNLOAD
+
+  </div>
+
+  <h1
+    class="knight-title"
+    id="title"
+  >
+
+    Loading...
+
+  </h1>
+
+  <p
+    class="knight-sub"
+    id="sub"
+  >
+
+    Preparing download links...
+
+  </p>
+
+</div>
+
+<!-- =====================================================
+LINKS
+===================================================== -->
+
+<div
+  class="knight-links"
+  id="links"
+>
+
+  <div class="loader">
+
+    Loading...
+
+  </div>
+
+</div>
+
+</div>
+
+</div>
 
 <script>
 
-const API="https://animehunt-backend.animehunt715.workers.dev/api"
+/* =========================================================
+   FINAL KNIGHT PAGE
+========================================================= */
 
-const p=new URLSearchParams(location.search)
+const API =
+"https://animehunt-backend.animehunt715.workers.dev/api"
 
-const anime=p.get("anime")
-const season=p.get("season")
-const episode=p.get("episode")
-const host=p.get("host")
+/* =========================================================
+   PARAMS
+========================================================= */
 
-const box=document.getElementById("links")
+const params =
+new URLSearchParams(
+  location.search
+)
+
+const hostId =
+params.get("host_id")
+
+/* =========================================================
+   DOM
+========================================================= */
+
+const title =
+document.getElementById(
+  "title"
+)
+
+const sub =
+document.getElementById(
+  "sub"
+)
+
+const linksBox =
+document.getElementById(
+  "links"
+)
+
+/* =========================================================
+   LOAD
+========================================================= */
 
 async function load(){
 
-document.getElementById("title").innerText=anime
-document.getElementById("info").innerText=`S${season} • E${episode}`
+  /* =====================================================
+     VALIDATION
+  ===================================================== */
 
-const res=await fetch(`${API}/downloads/${anime}/${season}/${episode}`)
-const data=await res.json()
+  if(!hostId){
 
-const filtered=data.filter(d=>d.host.toLowerCase()==host.toLowerCase())
+    linksBox.innerHTML = `
 
-box.innerHTML=""
+      <div class="error-box">
 
-filtered.forEach(d=>{
+        Invalid host
 
-const a=document.createElement("a")
-a.className="btn"
+      </div>
 
-// 🔥 FINAL STEP
-a.href=`/go?anime=${anime}&season=${season}&episode=${episode}&host=${host}&quality=${d.quality}&step=99`
+    `
 
-a.innerText=`${d.quality} Download`
+    return
 
-box.appendChild(a)
+  }
 
-})
+  try{
+
+    /* ===================================================
+       API
+    =================================================== */
+
+    const res =
+    await fetch(
+
+      `${API}/knight-data?host_id=${hostId}`
+
+    )
+
+    const data =
+    await res.json()
+
+    /* ===================================================
+       ERROR
+    =================================================== */
+
+    if(
+      !data.success
+    ){
+
+      linksBox.innerHTML = `
+
+        <div class="error-box">
+
+          ${data.error || "Failed"}
+
+        </div>
+
+      `
+
+      return
+
+    }
+
+    /* ===================================================
+       TOP
+    =================================================== */
+
+    title.innerText =
+
+      data.host.host
+
+    sub.innerText =
+
+      "Select quality to continue download"
+
+    /* ===================================================
+       EMPTY
+    =================================================== */
+
+    if(
+      !data.links?.length
+    ){
+
+      linksBox.innerHTML = `
+
+        <div class="error-box">
+
+          No links found
+
+        </div>
+
+      `
+
+      return
+
+    }
+
+    /* ===================================================
+       RENDER
+    =================================================== */
+
+    linksBox.innerHTML = ""
+
+    data.links.forEach(item=>{
+
+      const btn =
+      document.createElement(
+        "button"
+      )
+
+      btn.className =
+      "download-btn"
+
+      btn.innerHTML = `
+
+        <div class="btn-left">
+
+          <div class="btn-quality">
+
+            ${item.quality}
+
+          </div>
+
+          <div class="btn-text">
+
+            Fast Download
+
+          </div>
+
+        </div>
+
+        <div class="btn-right">
+
+          DOWNLOAD →
+
+        </div>
+
+      `
+
+      /* ===============================================
+         FINAL FLOW
+      =============================================== */
+
+      btn.onclick = ()=>{
+
+        location.href =
+
+          `/api/go?host_id=${hostId}&quality=${encodeURIComponent(item.quality)}&step=99`
+
+      }
+
+      linksBox.appendChild(btn)
+
+    })
+
+  }catch(err){
+
+    console.error(err)
+
+    linksBox.innerHTML = `
+
+      <div class="error-box">
+
+        Failed to load
+
+      </div>
+
+    `
+
+  }
 
 }
+
+/* =========================================================
+   INIT
+========================================================= */
 
 load()
 
