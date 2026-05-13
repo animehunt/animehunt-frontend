@@ -1,161 +1,758 @@
+<!-- ======================================================
+download.html
+FINAL PUBLIC DOWNLOAD PAGE
+====================================================== -->
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Download – AnimeHunt</title>
 
-<link rel="stylesheet" href="style.css"/>
+<meta charset="UTF-8"/>
+<meta
+  name="viewport"
+  content="width=device-width, initial-scale=1.0"
+/>
+
+<title>
+Download – AnimeHunt
+</title>
+
+<link
+  rel="stylesheet"
+  href="style.css"
+/>
 
 <style>
-body{background:#0b0f1a;color:#fff;font-family:system-ui}
 
-.download-title{padding:20px}
-.season-block{padding:10px 20px}
+/* ======================================================
+BASE
+====================================================== */
 
-.season{margin-bottom:25px}
-.season h2{margin-bottom:10px}
-
-.episode{
-background:#11162a;
-padding:12px;
-border-radius:10px;
-margin-bottom:12px
+*{
+  margin:0;
+  padding:0;
+  box-sizing:border-box;
+  -webkit-tap-highlight-color:transparent;
 }
 
-.host{
-margin-top:10px
+body{
+  background:#0b0f1a;
+  color:#fff;
+  font-family:system-ui,sans-serif;
+  overflow-x:hidden;
 }
 
-.host-title{
-color:#ffcc00;
-font-size:13px;
-margin-bottom:6px
+/* ======================================================
+TOP
+====================================================== */
+
+.download-hero{
+  position:relative;
+  padding:40px 20px;
+  border-bottom:1px solid #1a2035;
+  overflow:hidden;
 }
 
-.links{
-display:flex;
-gap:10px;
-flex-wrap:wrap
+.download-backdrop{
+  position:absolute;
+  inset:0;
+  opacity:.12;
+  background-size:cover;
+  background-position:center;
+  filter:blur(10px);
+  transform:scale(1.1);
 }
 
-.links a{
-padding:6px 10px;
-border:1px solid #444;
-border-radius:6px;
-font-size:12px;
-color:#fff;
-text-decoration:none
+.download-overlay{
+  position:absolute;
+  inset:0;
+  background:linear-gradient(
+    to bottom,
+    rgba(11,15,26,.5),
+    rgba(11,15,26,.95)
+  );
 }
 
-.links a:hover{
-background:#ffcc00;
-color:#000
+.download-top{
+  position:relative;
+  z-index:2;
+  max-width:1300px;
+  margin:auto;
+
+  display:flex;
+  gap:24px;
+  align-items:flex-start;
 }
+
+.poster{
+  width:180px;
+  flex-shrink:0;
+  border-radius:16px;
+  overflow:hidden;
+  border:1px solid #1f2742;
+  background:#111;
+}
+
+.poster img{
+  width:100%;
+  display:block;
+}
+
+.hero-content{
+  flex:1;
+}
+
+.hero-content h1{
+  font-size:38px;
+  margin-bottom:14px;
+}
+
+.hero-meta{
+  display:flex;
+  flex-wrap:wrap;
+  gap:12px;
+}
+
+.hero-meta span{
+  background:#141b30;
+  border:1px solid #1f2742;
+  color:#ffcc00;
+  padding:8px 14px;
+  border-radius:999px;
+  font-size:12px;
+  font-weight:700;
+}
+
+/* ======================================================
+CONTENT
+====================================================== */
+
+.download-wrapper{
+  max-width:1300px;
+  margin:auto;
+  padding:30px 20px;
+}
+
+/* ======================================================
+SEASON
+====================================================== */
+
+.season-block{
+  margin-bottom:40px;
+}
+
+.season-header{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:20px;
+  margin-bottom:20px;
+}
+
+.season-header h2{
+  font-size:28px;
+}
+
+.season-count{
+  color:#888;
+  font-size:13px;
+}
+
+/* ======================================================
+EPISODE
+====================================================== */
+
+.episode-card{
+  background:#11162a;
+  border:1px solid #1a2035;
+  border-radius:18px;
+  padding:22px;
+  margin-bottom:18px;
+}
+
+.episode-top{
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-start;
+  gap:20px;
+  margin-bottom:18px;
+}
+
+.ep-left{
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+
+.ep-number{
+  color:#ffcc00;
+  font-size:12px;
+  font-weight:700;
+  text-transform:uppercase;
+}
+
+.ep-title{
+  font-size:22px;
+  line-height:1.4;
+}
+
+.host-count{
+  background:#141d35;
+  border:1px solid #1f2742;
+  color:#ffcc00;
+  padding:8px 14px;
+  border-radius:999px;
+  font-size:12px;
+  font-weight:700;
+}
+
+/* ======================================================
+HOSTS
+====================================================== */
+
+.host-grid{
+  display:flex;
+  flex-wrap:wrap;
+  gap:12px;
+}
+
+.host-btn{
+  height:46px;
+  padding:0 20px;
+  border:none;
+  border-radius:12px;
+  background:#141b30;
+  border:1px solid #1f2742;
+  color:#fff;
+  font-weight:700;
+  cursor:pointer;
+  transition:.2s;
+}
+
+.host-btn:hover{
+  background:#ffcc00;
+  color:#000;
+  border-color:#ffcc00;
+}
+
+/* ======================================================
+EMPTY
+====================================================== */
+
+.empty{
+  background:#11162a;
+  border:1px dashed #1f2742;
+  border-radius:18px;
+  padding:30px;
+  text-align:center;
+  color:#777;
+}
+
+/* ======================================================
+LOADER
+====================================================== */
+
+.loader{
+  padding:80px 20px;
+  text-align:center;
+  color:#888;
+}
+
+/* ======================================================
+RESPONSIVE
+====================================================== */
+
+@media(max-width:900px){
+
+  .download-top{
+    flex-direction:column;
+  }
+
+  .poster{
+    width:160px;
+  }
+
+  .hero-content h1{
+    font-size:30px;
+  }
+
+}
+
+@media(max-width:700px){
+
+  .episode-top{
+    flex-direction:column;
+  }
+
+  .host-count{
+    width:max-content;
+  }
+
+}
+
 </style>
 </head>
 
 <body>
 
-<section class="download-title">
-<h1 id="title">Loading...</h1>
+<!-- ======================================================
+HERO
+====================================================== -->
+
+<section class="download-hero">
+
+<div
+  class="download-backdrop"
+  id="backdrop"
+></div>
+
+<div class="download-overlay"></div>
+
+<div class="download-top">
+
+  <div class="poster">
+
+    <img
+      id="poster"
+      src=""
+      alt=""
+    >
+
+  </div>
+
+  <div class="hero-content">
+
+    <h1 id="animeTitle">
+
+      Loading...
+
+    </h1>
+
+    <div class="hero-meta">
+
+      <span id="animeType">
+
+        ANIME
+
+      </span>
+
+      <span id="downloadCount">
+
+        0 Downloads
+
+      </span>
+
+    </div>
+
+  </div>
+
+</div>
+
 </section>
 
-<section id="container" class="season-block"></section>
+<!-- ======================================================
+CONTENT
+====================================================== -->
+
+<section class="download-wrapper">
+
+<div
+  id="downloadsContainer"
+>
+
+  <div class="loader">
+
+    Loading Downloads...
+
+  </div>
+
+</div>
+
+</section>
 
 <script>
 
-const API = "https://animehunt-backend.animehunt715.workers.dev/api"
+/* =========================================================
+   FINAL DOWNLOAD PAGE
+========================================================= */
 
-const params = new URLSearchParams(location.search)
-const anime = params.get("anime")
+const API =
+"https://animehunt-backend.animehunt715.workers.dev/api"
 
-const container = document.getElementById("container")
-const title = document.getElementById("title")
+/* =========================================================
+   PARAMS
+========================================================= */
+
+const params =
+new URLSearchParams(
+  location.search
+)
+
+const slug =
+params.get("anime")
+
+/* =========================================================
+   DOM
+========================================================= */
+
+const container =
+document.getElementById(
+  "downloadsContainer"
+)
+
+const animeTitle =
+document.getElementById(
+  "animeTitle"
+)
+
+const animeType =
+document.getElementById(
+  "animeType"
+)
+
+const poster =
+document.getElementById(
+  "poster"
+)
+
+const backdrop =
+document.getElementById(
+  "backdrop"
+)
+
+const downloadCount =
+document.getElementById(
+  "downloadCount"
+)
+
+/* =========================================================
+   LOAD
+========================================================= */
 
 async function load(){
 
-if(!anime){
-container.innerHTML="Invalid anime"
-return
+  if(!slug){
+
+    container.innerHTML = `
+
+      <div class="empty">
+
+        Invalid anime
+
+      </div>
+
+    `
+
+    return
+
+  }
+
+  try{
+
+    const res =
+    await fetch(
+
+      `${API}/downloads-by-slug/${slug}`
+
+    )
+
+    const data =
+    await res.json()
+
+    if(
+      !data.success
+    ){
+
+      container.innerHTML = `
+
+        <div class="empty">
+
+          Anime not found
+
+        </div>
+
+      `
+
+      return
+
+    }
+
+    const anime =
+    data.anime
+
+    const downloads =
+    data.downloads || []
+
+    /* =====================================================
+       TOP
+    ===================================================== */
+
+    animeTitle.innerText =
+    anime.title
+
+    animeType.innerText =
+    (
+      anime.type ||
+      "anime"
+    ).toUpperCase()
+
+    poster.src =
+    anime.poster || ""
+
+    backdrop.style.backgroundImage =
+    `url(${anime.poster})`
+
+    downloadCount.innerText =
+
+      `${downloads.length} Downloads`
+
+    /* =====================================================
+       EMPTY
+    ===================================================== */
+
+    if(!downloads.length){
+
+      container.innerHTML = `
+
+        <div class="empty">
+
+          No downloads available
+
+        </div>
+
+      `
+
+      return
+
+    }
+
+    /* =====================================================
+       GROUP
+    ===================================================== */
+
+    const grouped = {}
+
+    downloads.forEach(item=>{
+
+      const seasonKey =
+
+        item.content_type ===
+        "movie"
+
+        ? "MOVIES"
+
+        : item.content_type ===
+          "series_zip"
+
+        ? "SERIES ZIP"
+
+        : `Season ${item.season || 1}`
+
+      if(!grouped[seasonKey]){
+
+        grouped[seasonKey] = []
+
+      }
+
+      grouped[seasonKey]
+      .push(item)
+
+    })
+
+    /* =====================================================
+       RENDER
+    ===================================================== */
+
+    container.innerHTML = ""
+
+    Object.keys(grouped)
+    .forEach(season=>{
+
+      const list =
+      grouped[season]
+
+      const seasonDiv =
+      document.createElement("div")
+
+      seasonDiv.className =
+      "season-block"
+
+      seasonDiv.innerHTML = `
+
+        <div class="season-header">
+
+          <h2>
+
+            ${season}
+
+          </h2>
+
+          <div class="season-count">
+
+            ${list.length} Entries
+
+          </div>
+
+        </div>
+
+      `
+
+      /* ===================================================
+         EPISODES
+      =================================================== */
+
+      list.forEach(item=>{
+
+        const ep =
+        document.createElement("div")
+
+        ep.className =
+        "episode-card"
+
+        const epTitle =
+
+          item.content_type ===
+          "movie"
+
+          ? (
+              item.episode_title ||
+              anime.title
+            )
+
+          : item.content_type ===
+            "season_zip"
+
+          ? `Season ${item.season} ZIP`
+
+          : item.content_type ===
+            "series_zip"
+
+          ? "Full Series ZIP"
+
+          : (
+              item.episode_title ||
+              `Episode ${item.episode}`
+            )
+
+        ep.innerHTML = `
+
+          <div class="episode-top">
+
+            <div class="ep-left">
+
+              <div class="ep-number">
+
+                ${
+                  item.content_type ===
+                  "movie"
+
+                  ? "MOVIE"
+
+                  : item.content_type ===
+                    "season_zip"
+
+                  ? "SEASON ZIP"
+
+                  : item.content_type ===
+                    "series_zip"
+
+                  ? "SERIES ZIP"
+
+                  : `EPISODE ${item.episode}`
+                }
+
+              </div>
+
+              <div class="ep-title">
+
+                ${epTitle}
+
+              </div>
+
+            </div>
+
+            <div class="host-count">
+
+              ${item.hosts.length}
+              Hosts
+
+            </div>
+
+          </div>
+
+          <div class="host-grid"></div>
+
+        `
+
+        /* =================================================
+           HOSTS
+        ================================================= */
+
+        const hostGrid =
+        ep.querySelector(
+          ".host-grid"
+        )
+
+        item.hosts.forEach(host=>{
+
+          const btn =
+          document.createElement(
+            "button"
+          )
+
+          btn.className =
+          "host-btn"
+
+          btn.innerText =
+          host.host
+
+          /* ===============================================
+             FLOW
+          =============================================== */
+
+          btn.onclick = ()=>{
+
+            location.href =
+
+              `/api/go?host_id=${host.id}&step=1`
+
+          }
+
+          hostGrid.appendChild(btn)
+
+        })
+
+        seasonDiv.appendChild(ep)
+
+      })
+
+      container.appendChild(
+        seasonDiv
+      )
+
+    })
+
+  }catch(err){
+
+    console.error(err)
+
+    container.innerHTML = `
+
+      <div class="empty">
+
+        Failed to load downloads
+
+      </div>
+
+    `
+
+  }
+
 }
 
-title.innerText = anime
-
-try{
-
-const res = await fetch(`${API}/downloads-full/${anime}`)
-const data = await res.json()
-
-const grouped = {}
-
-data.forEach(d=>{
-
-if(!grouped[d.season]) grouped[d.season] = {}
-if(!grouped[d.season][d.episode]) grouped[d.season][d.episode] = {}
-if(!grouped[d.season][d.episode][d.host]) grouped[d.season][d.episode][d.host] = []
-
-grouped[d.season][d.episode][d.host].push(d)
-
-})
-
-container.innerHTML=""
-
-Object.keys(grouped).forEach(season=>{
-
-const sDiv=document.createElement("div")
-sDiv.className="season"
-
-sDiv.innerHTML=`<h2>Season ${season}</h2>`
-
-Object.keys(grouped[season]).forEach(ep=>{
-
-const epDiv=document.createElement("div")
-epDiv.className="episode"
-
-epDiv.innerHTML=`<b>Episode ${ep}</b>`
-
-Object.keys(grouped[season][ep]).forEach(host=>{
-
-const hDiv=document.createElement("div")
-hDiv.className="host"
-
-hDiv.innerHTML=`<div class="host-title">${host}</div>`
-
-const links=document.createElement("div")
-links.className="links"
-
-grouped[season][ep][host].forEach(q=>{
-
-const a=document.createElement("a")
-
-a.innerText=q.quality
-
-// 🔥 ADS FLOW ENTRY
-a.href=`/go?anime=${anime}&season=${season}&episode=${ep}&host=${host}&quality=${q.quality}`
-
-links.appendChild(a)
-
-})
-
-hDiv.appendChild(links)
-epDiv.appendChild(hDiv)
-
-})
-
-sDiv.appendChild(epDiv)
-
-})
-
-container.appendChild(sDiv)
-
-})
-
-}catch{
-container.innerHTML="Failed to load"
-}
-
-}
+/* =========================================================
+   INIT
+========================================================= */
 
 load()
 
