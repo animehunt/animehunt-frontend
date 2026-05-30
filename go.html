@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Preparing Download — AnimeHunt</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#060a14;color:#fff;font-family:system-ui,sans-serif;min-height:100vh;display:flex;align-items:center;justify-content:center}
+.wrap{text-align:center;padding:32px 20px;max-width:460px;width:100%}
+.logo{font-size:22px;font-weight:800;margin-bottom:32px}
+.logo b{color:#ffcc00}
+.card{background:#0d1322;border:1px solid #1a2035;border-radius:20px;padding:28px 24px;margin-bottom:20px}
+.icon{font-size:44px;margin-bottom:14px}
+.title{font-size:18px;font-weight:700;margin-bottom:8px}
+.sub{font-size:13px;color:#666;line-height:1.6}
+.progress{height:4px;background:#1a2035;border-radius:10px;margin:20px 0;overflow:hidden}
+.progress-bar{height:100%;background:linear-gradient(90deg,#ffcc00,#ff9800);border-radius:10px;transition:width .6s ease;width:0%}
+.step-list{display:flex;flex-direction:column;gap:8px;margin:16px 0;text-align:left}
+.step-item{display:flex;align-items:center;gap:10px;padding:10px 14px;background:#070b16;border:1px solid #1a2035;border-radius:10px;font-size:13px;color:#888;transition:.3s}
+.step-item.done{color:#4caf50;border-color:#4caf5033}
+.step-item.active{color:#fff;border-color:#ffcc0033}
+.step-item .dot{width:8px;height:8px;border-radius:50%;background:#555;flex-shrink:0;transition:.3s}
+.step-item.done .dot{background:#4caf50}
+.step-item.active .dot{background:#ffcc00;animation:pulse 1s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:13px 28px;background:#ffcc00;color:#000;border:none;border-radius:12px;font-size:15px;font-weight:800;cursor:pointer;text-decoration:none;transition:.2s;margin-top:16px;width:100%}
+.btn:hover{transform:translateY(-2px);box-shadow:0 8px 24px #ffcc0033}
+.btn-secondary{background:#1a2035;color:#ccc;margin-top:10px}
+.btn-secondary:hover{box-shadow:none;background:#232d48}
+.countdown{font-size:13px;color:#555;margin-top:10px}
+.countdown b{color:#ffcc00}
+.error-box{background:#2a0d0d;border:1px solid #f4433633;border-radius:14px;padding:16px;color:#f44336;font-size:13px;margin-top:16px}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <div class="logo"><span>Anime</span><b>Hunt</b></div>
+
+  <div class="card" id="mainCard">
+    <div class="icon" id="stateIcon">⏳</div>
+    <div class="title" id="stateTitle">Preparing Your Download</div>
+    <div class="sub" id="stateSub">Please wait while we set up your download link...</div>
+
+    <div class="progress">
+      <div class="progress-bar" id="progressBar"></div>
+    </div>
+
+    <div class="step-list" id="stepList">
+      <div class="step-item active" id="step1"><div class="dot"></div><span>Loading session</span></div>
+      <div class="step-item"        id="step2"><div class="dot"></div><span>Preparing link</span></div>
+      <div class="step-item"        id="step3"><div class="dot"></div><span>Running monetization</span></div>
+      <div class="step-item"        id="step4"><div class="dot"></div><span>Ready to download</span></div>
+    </div>
+
+    <div id="errorBox" class="error-box" style="display:none"></div>
+
+    <div id="downloadSection" style="display:none">
+      <a class="btn" id="downloadBtn" href="#">⬇️ Download Now</a>
+      <a class="btn btn-secondary" id="backBtn" href="javascript:history.back()">← Go Back</a>
+      <div class="countdown" id="countdown"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ============================================================
+  go.html — Monetization Flow Page (FIXED)
+  Flow: session load → popup script → ad (new tab) → shortlink
+        OR direct link → auto countdown → redirect
+============================================================ */
+
+const BASE      = "https://animehunt-backend.animehunt715.workers.dev"
+const params    = new URLSearchParams(location.search)
+const sessionId = params.get("session")
+const errorMode = params.get("error")
+
+const D = id => document.getElementById(id)
+
+let autoTimer = null
+
+function setStep(n) {
+  for (let i = 1; i <= 4; i++) {
+    const el = D(`step${i}`)
+    if (!el) continue
+    el.className = "step-item" + (i < n ? " done" : i === n ? " active" : "")
+  }
+  D("progressBar").style.width = (n / 4 * 100) + "%"
+}
+
+function showError(msg) {
+  D("errorBox").style.display  = "block"
+  D("errorBox").textContent    = "⚠️ " + msg
+  D("stateIcon").textContent   = "❌"
+  D("stateTitle").textContent  = "Something went wrong"
+  D("stateSub").textContent    = "Please go back and try again."
+  setStep(4)
+}
+
+function delay(ms) {
+  return new Promise(r => setTimeout(r, ms))
+}
+
+async function runFlow() {
+
+  // ── Error mode ───────────────────────────────────────────
+  if (errorMode || !sessionId) {
+    showError("Invalid download link. Please go back and try again.")
+    return
+  }
+
+  // ── STEP 1: Load session ─────────────────────────────────
+  setStep(1)
+
+  let session = null
+  try {
+    const res  = await fetch(`${BASE}/api/session/${sessionId}`)
+    const json = await res.json()
+    if (!res.ok || !json.success) throw new Error("Session not found")
+    session = json.data
+  } catch (err) {
+    showError("Download session expired or invalid. Please go back and try again.")
+    return
+  }
+
+  // ── STEP 2: Prepare link ─────────────────────────────────
+  setStep(2)
+  await delay(400)
+
+  const finalLink    = session.final_link    || ""
+  const isKnight     = session.knight === 1 || session.knight === true
+  const adCode       = session.ad_code       || ""
+  const adType       = session.ad_type       || ""
+  const adDelay      = Number(session.ad_delay || 0)
+  const shortUrl     = session.shortlink_url  || ""
+  const popupScript  = session.popup_script   || ""
+
+  if (!finalLink && !isKnight) {
+    showError("No download link found. Please go back and try again.")
+    return
+  }
+
+  D("stateTitle").textContent = "Link ready!"
+  D("stateSub").textContent   = "Running monetization flow..."
+
+  // ── STEP 3: Popup + Ads ──────────────────────────────────
+  setStep(3)
+  await delay(300)
+
+  // Run popup script first (before ads)
+  if (popupScript) {
+    try {
+      const stripped = popupScript.replace(/<script[^>]*>/gi, "").replace(/<\/script>/gi, "")
+      const s = document.createElement("script")
+      s.textContent = stripped
+      document.head.appendChild(s)
+    } catch(e) { console.warn("Popup script error:", e) }
+  }
+
+  // Run ad
+  if (adCode) {
+    await delay(200)
+    try {
+      if (adType === "redirect" || adType === "popup") {
+        // Open ad in new tab — never redirects current tab
+        window.open(adCode, "_blank", "noopener,noreferrer")
+      } else if (adType === "script") {
+        const stripped = adCode.replace(/<script[^>]*>/gi, "").replace(/<\/script>/gi, "")
+        const s = document.createElement("script")
+        s.textContent = stripped
+        document.head.appendChild(s)
+      } else if (adType === "banner") {
+        // inject banner into page (optional — does not block flow)
+        const stripped = adCode.replace(/<script[^>]*>/gi, "").replace(/<\/script>/gi, "")
+        const s = document.createElement("script")
+        s.textContent = stripped
+        document.head.appendChild(s)
+      }
+    } catch(e) { console.warn("Ad error:", e) }
+
+    // Wait for ad delay before showing download button
+    if (adDelay > 0) await delay(adDelay)
+  }
+
+  // ── STEP 4: Ready ────────────────────────────────────────
+  setStep(4)
+  D("stateIcon").textContent  = "✅"
+
+  // Determine the final destination:
+  // shortlink wraps the real link → user goes via shortlink
+  // If knight → go to knight.html quality page
+  // If direct → go straight to file
+  let target = ""
+
+  if (isKnight) {
+    // Knight page shows quality buttons — no countdown
+    target = finalLink  // /knight.html?host_id=xxx
+    D("stateTitle").textContent = "Choose Download Quality"
+    D("stateSub").textContent   = "Click below to select your preferred quality"
+    D("downloadBtn").textContent = "⚔️ Select Quality →"
+    D("downloadBtn").href = target
+    D("downloadSection").style.display = "block"
+    // No auto-redirect for knight
+    return
+  }
+
+  // For direct download — shortlink takes priority if set
+  target = shortUrl || finalLink
+
+  D("stateTitle").textContent = "Your download is ready!"
+  D("stateSub").textContent   = "Click the button below to download"
+  D("downloadBtn").href       = target
+  D("downloadBtn").textContent = "⬇️ Download Now"
+  D("downloadSection").style.display = "block"
+
+  // Auto-redirect countdown (8 seconds)
+  if (target) {
+    let secs = 8
+    D("countdown").innerHTML = `Auto-downloading in <b>${secs}s</b>...`
+
+    autoTimer = setInterval(() => {
+      secs--
+      if (secs <= 0) {
+        clearInterval(autoTimer)
+        D("countdown").textContent = "Redirecting..."
+        window.location.href = target
+      } else {
+        D("countdown").innerHTML = `Auto-downloading in <b>${secs}s</b>...`
+      }
+    }, 1000)
+  }
+}
+
+// Stop auto-timer if user clicks manually
+document.addEventListener("click", e => {
+  if (e.target.id === "downloadBtn" && autoTimer) {
+    clearInterval(autoTimer)
+    D("countdown").textContent = ""
+  }
+})
+
+runFlow()
+</script>
+</body>
+</html>
