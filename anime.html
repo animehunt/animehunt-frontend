@@ -5,17 +5,577 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Anime – AnimeHunt</title>
 
-  <!-- SEO -->
   <meta name="description" content="Watch official Hindi dubbed anime on AnimeHunt. Browse anime movies and series with fast streaming and downloads."/>
   <link rel="canonical" href="https://animehunt/anime"/>
 
-  <!-- CSS -->
-  <link rel="stylesheet" href="style.css"/>
-  <link rel="stylesheet" href="anime.css"/>
+  <style>
+    /* ===================================================
+    GLOBAL RESET & BASE
+    =================================================== */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      background: #0b0f1a;
+      color: #ffffff;
+      font-family: Arial, Helvetica, sans-serif;
+      overflow-x: hidden;
+    }
+
+    /* ===================================================
+    HEADER
+    =================================================== */
+    .main-header {
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+      height: 55px;
+      padding: 10px 16px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: rgba(11, 15, 26, 0.9);
+      backdrop-filter: blur(8px);
+      transition: box-shadow 0.3s ease;
+    }
+
+    .main-header.scrolled {
+      box-shadow: 0 6px 18px rgba(0,0,0,0.6);
+    }
+
+    .menu-btn {
+      font-size: 22px;
+      cursor: pointer;
+      transition: transform 0.25s ease;
+    }
+
+    .menu-btn:active {
+      transform: scale(0.9);
+    }
+
+    .logo {
+      font-size: 18px;
+      font-weight: bold;
+      white-space: nowrap;
+    }
+
+    .logo .anime {
+      color: #ffffff;
+    }
+
+    .logo .hunt {
+      color: #ffcc00;
+    }
+
+    .search-bar {
+      margin-left: auto;
+      width: 60%;
+      height: 32px;
+      border-radius: 25px;
+      border: none;
+      padding: 0 14px;
+      font-size: 12px;
+      background: #1a1f2e;
+      color: #ccc;
+      outline: none;
+      transition: box-shadow 0.3s ease, transform 0.3s ease;
+    }
+
+    .search-bar:focus {
+      box-shadow: 0 0 0 2px rgba(255,204,0,0.4);
+      transform: scale(1.02);
+    }
+
+    /* ===================================================
+    SIDEBAR
+    =================================================== */
+    .sidebar {
+      position: fixed;
+      top: 0;
+      left: -260px;
+      width: 260px;
+      height: 100%;
+      background: #11162a;
+      z-index: 2000;
+      padding: 20px;
+      transition: left 0.35s cubic-bezier(0.2,0.8,0.2,1);
+    }
+
+    .sidebar.active {
+      left: 0;
+    }
+
+    .close-btn {
+      font-size: 22px;
+      cursor: pointer;
+      margin-bottom: 20px;
+    }
+
+    .sidebar-menu a {
+      display: block;
+      padding: 12px 0;
+      color: #fff;
+      text-decoration: none;
+      transition: transform 0.25s ease, color 0.25s ease;
+    }
+
+    .sidebar-menu a:hover {
+      transform: translateX(6px);
+      color: #ffcc00;
+    }
+
+    .overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.6);
+      backdrop-filter: blur(6px);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s ease;
+      z-index: 1500;
+    }
+
+    .overlay.active {
+      opacity: 1;
+      pointer-events: all;
+    }
+
+    /* ===================================================
+    HERO BANNER
+    =================================================== */
+    .hero-banner {
+      position: relative;
+      height: 260px;
+      padding: 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      background:
+        linear-gradient(to bottom, rgba(0,0,0,0.05), rgba(0,0,0,0.15)),
+        url("images/raya-banner.jpg") center / cover no-repeat;
+      overflow: hidden;
+    }
+
+    .hero-content {
+      position: relative;
+      z-index: 2;
+      max-width: 65%;
+    }
+
+    .hero-title {
+      font-size: 26px;
+      font-weight: bold;
+      margin-bottom: 6px;
+    }
+
+    .hero-meta {
+      font-size: 12px;
+      color: #ccc;
+      margin-bottom: 12px;
+    }
+
+    .play-btn {
+      position: relative;
+      z-index: 3;
+      width: 100px;
+      height: 35px;
+      background: #3498db;
+      border: none;
+      border-radius: 20px;
+      color: #fff;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .hero-thumbnails {
+      position: relative;
+      z-index: 3;
+      display: flex;
+      gap: 8px;
+    }
+
+    .hero-thumbnails img {
+      width: 60px;
+      height: 90px;
+      border-radius: 6px;
+      object-fit: cover;
+    }
+
+    /* ===================================================
+    CATEGORY BAR
+    =================================================== */
+    .category-bar {
+      display: flex;
+      gap: 10px;
+      padding: 14px 16px;
+      overflow-x: auto;
+    }
+
+    .category-bar button {
+      height: 30px;
+      padding: 0 14px;
+      border-radius: 20px;
+      border: 1px solid #555;
+      background: transparent;
+      color: #fff;
+      font-size: 12px;
+      cursor: pointer;
+      transition: all 0.25s ease;
+    }
+
+    .category-bar button:hover {
+      transform: translateY(-2px);
+    }
+
+    .category-bar .active {
+      background: #ffcc00;
+      color: #000;
+      border-color: #ffcc00;
+    }
+
+    /* ===================================================
+    MOVIE ROWS & CARDS
+    =================================================== */
+    .movie-row {
+      padding: 0 16px;
+      margin-bottom: 40px;
+    }
+
+    .movie-row h2 {
+      font-size: 18px;
+      margin-bottom: 10px;
+    }
+
+    .movie-scroll {
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      scroll-behavior: smooth;
+    }
+
+    .movie-card {
+      min-width: 22%;
+      aspect-ratio: 2 / 3;
+      background: #1a1f2e;
+      border-radius: 10px;
+      display: flex;
+      align-items: flex-end;
+      padding: 8px;
+      font-size: 12px;
+      cursor: pointer;
+      transition: transform 0.3s ease, box-shadow 0.3s ease, filter 0.3s ease;
+    }
+
+    .movie-card:hover {
+      transform: translateY(-6px) scale(1.05) rotateZ(1deg);
+      box-shadow: 0 18px 40px rgba(0,0,0,0.7);
+    }
+
+    .movie-card.view-more {
+      background: linear-gradient(135deg, #ffcc00, #e6b800);
+      color: #000;
+      font-weight: bold;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .row-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+
+    .see-more-btn {
+      background: none;
+      border: none;
+      color: #ffffff;
+      font-size: 13px;
+      font-weight: normal;
+      cursor: pointer;
+      padding: 2px 4px;
+      opacity: 0.8;
+      text-decoration: none;
+    }
+
+    .see-more-btn:hover {
+      opacity: 1;
+      text-decoration: none;
+      color: #ffcc00;
+    }
+
+    /* ===================================================
+    A–Z NAV
+    =================================================== */
+    .az-nav {
+      padding: 10px 16px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: center;
+    }
+
+    .az-nav span {
+      font-size: 12px;
+      cursor: pointer;
+      color: #ccc;
+      transition: transform 0.2s ease, color 0.2s ease;
+    }
+
+    .az-nav span:hover {
+      transform: scale(1.2);
+      color: #ffcc00;
+    }
+
+    /* ===================================================
+    FOOTER
+    =================================================== */
+    .main-footer {
+      padding: 20px 16px 80px;
+      background: #0b0f1a;
+      text-align: center;
+    }
+
+    .footer-links {
+      display: flex;
+      justify-content: center;
+      gap: 14px;
+      flex-wrap: wrap;
+      margin-bottom: 10px;
+    }
+
+    .footer-links a {
+      color: #ccc;
+      font-size: 12px;
+      text-decoration: none;
+    }
+
+    .footer-links a:hover {
+      color: #ffcc00;
+    }
+
+    .copyright {
+      font-size: 11px;
+      color: #777;
+    }
+
+    /* ===================================================
+    BOTTOM NAV
+    =================================================== */
+    .bottom-nav {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: 65px;
+      background: rgba(11,15,26,0.9);
+      backdrop-filter: blur(10px);
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      z-index: 1200;
+    }
+
+    .nav-item {
+      font-size: 11px;
+      color: #ccc;
+      cursor: pointer;
+      transition: transform 0.2s ease, color 0.2s ease;
+      text-decoration: none !important;
+    }
+
+    .nav-item:hover,
+    .nav-item.active,
+    .nav-item * {
+      text-decoration: none !important;
+    }
+
+    .nav-item.active {
+      color: #ffcc00;
+      transform: scale(1.15);
+    }
+
+    /* ===================================================
+    SEARCH DROPDOWN
+    =================================================== */
+    .search-dropdown {
+      position: absolute;
+      top: 60px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 90%;
+      max-width: 500px;
+      background: #0b0f1a;
+      border: 1px solid #1a2035;
+      border-radius: 10px;
+      z-index: 3000;
+      overflow: hidden;
+    }
+
+    .search-item {
+      display: flex;
+      gap: 10px;
+      padding: 10px;
+      cursor: pointer;
+      border-bottom: 1px solid #1a2035;
+    }
+
+    .search-item:hover {
+      background: #11172b;
+    }
+
+    .search-item img {
+      width: 50px;
+      height: 70px;
+      object-fit: cover;
+    }
+
+    .search-loading,
+    .search-empty,
+    .search-error {
+      padding: 12px;
+      text-align: center;
+      font-size: 13px;
+      color: #aaa;
+    }
+
+    /* ===================================================
+    HOME FILTER GRID (VERTICAL MODE)
+    =================================================== */
+    .home-grid {
+      padding: 0 16px 40px;
+      display: none;
+    }
+
+    .home-grid.active {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+    }
+
+    .home-grid .movie-card {
+      min-width: unset;
+    }
+
+    body.grid-mode .movie-row {
+      display: none;
+    }
+
+    /* ===================================================
+    SCROLLBAR REMOVAL & RENDERING FIXES
+    =================================================== */
+    .category-bar::-webkit-scrollbar,
+    .movie-scroll::-webkit-scrollbar,
+    .az-nav::-webkit-scrollbar,
+    *::-webkit-scrollbar {
+      height: 0 !important;
+      width: 0 !important;
+      display: none !important;
+    }
+
+    .category-bar,
+    .movie-scroll {
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+      background-clip: padding-box;
+    }
+
+    section, div {
+      border: 0 !important;
+      outline: 0 !important;
+    }
+
+    /* ===================================================
+    ANIMATIONS
+    =================================================== */
+    @keyframes fadeUp {
+      from {
+        opacity: 0;
+        transform: translateY(12px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* ===================================================
+    ANIME PAGE SPECIFIC STYLES (FROM ANIME.CSS)
+    =================================================== */
+    .page-banner {
+      height: 28vh;
+      display: flex;
+      align-items: flex-end;
+      padding: 16px;
+      background:
+        linear-gradient(to bottom, rgba(0,0,0,0.03), rgba(0,0,0,0.08)),
+        url("images/banner-anime.jpg") center/cover no-repeat;
+    }
+
+    .type-filter {
+      display: flex;
+      gap: 10px;
+      padding: 14px 16px;
+    }
+
+    .type-filter button {
+      height: 30px;
+      padding: 0 14px;
+      border-radius: 20px;
+      border: 1px solid #555;
+      background: transparent;
+      color: #fff;
+      font-size: 12px;
+      cursor: pointer;
+    }
+
+    .type-filter .active {
+      background: #ffcc00;
+      color: #000;
+      border-color: #ffcc00;
+    }
+
+    .grid-wrap {
+      padding: 0 16px;
+    }
+
+    .anime-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+      animation: fadeUp .4s ease both;
+    }
+
+    .pagination {
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+      padding: 20px 0 80px;
+    }
+
+    .pagination button {
+      min-width: 32px;
+      height: 32px;
+      border-radius: 6px;
+      border: 1px solid #444;
+      background: transparent;
+      color: #fff;
+      font-size: 12px;
+      cursor: pointer;
+    }
+
+    .pagination .active {
+      background: #ffcc00;
+      color: #000;
+      border-color: #ffcc00;
+    }
+  </style>
 </head>
 <body data-page="anime">
 
-<!-- HEADER (UNCHANGED – same as home) -->
 <header class="main-header">
   <div class="menu-btn">☰</div>
   <div class="logo">
@@ -24,7 +584,6 @@
   <input type="text" class="search-bar" placeholder="Search movie"/>
 </header>
 
-<!-- SIDEBAR (UNCHANGED) -->
 <aside class="sidebar">
   <div class="close-btn">✕</div>
   <nav class="sidebar-menu">
@@ -32,30 +591,25 @@
     <a href="privacy.html">Privacy Policy</a>
     <a href="disclaimer.html">Disclaimer</a>
     <a href="dmca.html">DMCA</a>
-
     <a href="https://t.me/toons15" target="_blank">Telegram</a>
   </nav>
 </aside>
 <div class="overlay"></div>
 
-<!-- BANNER (ANIME SPECIFIC) -->
 <section class="page-banner anime-banner" id="categoryBanner">
   <h1>Anime</h1>
 </section>
 
-<!-- FILTER (ONLY FOR ANIME PAGE) -->
 <section class="type-filter">
   <button class="active">ALL</button>
   <button>MOVIES</button>
   <button>SERIES</button>
 </section>
 
-<!-- GRID (20 ITEMS PER PAGE) -->
 <section class="grid-wrap">
   <div class="anime-grid" data-type-page="anime"></div>
 </section>
   
-<!-- PAGINATION (BOTTOM ONLY) -->
 <nav class="pagination">
   <button disabled>Prev</button>
   <button class="active">1</button>
@@ -64,7 +618,6 @@
   <button>Next</button>
 </nav>
 
-<!-- A–Z NAV (ALLOWED HERE) -->
 <section class="az-nav">
   <span>A</span><span>B</span><span>C</span><span>D</span><span>E</span>
   <span>F</span><span>G</span><span>H</span><span>I</span><span>J</span>
@@ -72,7 +625,7 @@
   <span>P</span><span>Q</span><span>R</span><span>S</span><span>T</span>
   <span>U</span><span>V</span><span>W</span><span>X</span><span>Y</span><span>Z</span>
 </section>
-<!-- FOOTER (GLOBAL – SCROLL BOTTOM) -->
+
 <footer class="main-footer">
   <div class="footer-links">
     <a href="about.html">About AnimeHunt</a>
@@ -85,7 +638,6 @@
   </div>
 </footer>
 
-<!-- BOTTOM NAV (UNCHANGED) -->
 <nav class="bottom-nav">
   <a href="anime.html" class="nav-item active">ANIME</a>
   <a href="movies.html" class="nav-item">MOVIES</a>
@@ -94,7 +646,7 @@
   <a href="cartoon.html" class="nav-item">CARTOON</a>
 </nav>
 
-  <script src="js/api.js"></script>
+<script src="js/api.js"></script>
 <script src="script.js"></script>
 </body>
 </html>
