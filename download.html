@@ -1,762 +1,674 @@
-<!-- ======================================================
-download.html
-FINAL PUBLIC DOWNLOAD PAGE
-====================================================== -->
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
-
-<meta charset="UTF-8"/>
-<meta
-  name="viewport"
-  content="width=device-width, initial-scale=1.0"
-/>
-
-<title>
-Download – AnimeHunt
-</title>
-
-<link
-  rel="stylesheet"
-  href="style.css"
-/>
-
+<meta charset="UTF-8">
+<title>Download – AnimeHunt</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <style>
+/* ================= GLOBAL (matches details.html design language) ================= */
+*{margin:0;padding:0;box-sizing:border-box;font-family:system-ui,sans-serif}
+body{background:#0b0f1a;color:#fff;padding-bottom:70px}
+a{text-decoration:none;color:inherit}
 
-/* ======================================================
-BASE
-====================================================== */
-
-*{
-  margin:0;
-  padding:0;
-  box-sizing:border-box;
-  -webkit-tap-highlight-color:transparent;
+/* ================= HEADER ================= */
+.main-header{
+  height:56px;padding:0 16px;display:flex;align-items:center;
+  background:rgba(0,0,0,.85);position:sticky;top:0;z-index:50
+}
+.menu-btn{font-size:22px;cursor:pointer}
+.logo{margin-left:16px;font-size:20px;font-weight:700}
+.logo .anime{color:#fff}
+.logo .hunt{color:#ffcc00}
+.search-bar{
+  margin-left:auto;width:150px;height:32px;border-radius:16px;
+  border:none;background:#1b2030;color:#ccc;padding:0 12px;font-size:12px
 }
 
-body{
-  background:#0b0f1a;
-  color:#fff;
-  font-family:system-ui,sans-serif;
-  overflow-x:hidden;
+/* ================= SIDEBAR ================= */
+.sidebar{
+  position:fixed;top:0;left:-260px;width:260px;height:100%;
+  background:#0e1424;z-index:200;transition:left .25s;padding:16px
 }
-
-/* ======================================================
-TOP
-====================================================== */
-
-.download-hero{
-  position:relative;
-  padding:40px 20px;
-  border-bottom:1px solid #1a2035;
-  overflow:hidden;
+.sidebar.open{left:0}
+.close-btn{font-size:20px;margin-bottom:20px;cursor:pointer}
+.sidebar-menu{display:flex;flex-direction:column;gap:14px}
+.sidebar-menu a{font-size:13px;color:#ccc}
+.overlay{
+  position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:199;
+  display:none
 }
+.overlay.show{display:block}
 
-.download-backdrop{
-  position:absolute;
-  inset:0;
-  opacity:.12;
-  background-size:cover;
-  background-position:center;
-  filter:blur(10px);
-  transform:scale(1.1);
+/* ================= HERO (banner + poster, same as details.html) ================= */
+.hero{position:relative;height:300px}
+.hero-bg{position:absolute;inset:0;background-size:cover;background-position:center;background-color:#1a2035}
+.hero-bg::after{
+  content:'';position:absolute;inset:0;
+  background:linear-gradient(180deg,rgba(11,15,26,.2) 0%,rgba(11,15,26,.55) 60%,#0b0f1a 100%)
 }
-
-.download-overlay{
-  position:absolute;
-  inset:0;
-  background:linear-gradient(
-    to bottom,
-    rgba(11,15,26,.5),
-    rgba(11,15,26,.95)
-  );
-}
-
-.download-top{
-  position:relative;
-  z-index:2;
-  max-width:1300px;
-  margin:auto;
-
-  display:flex;
-  gap:24px;
-  align-items:flex-start;
-}
-
 .poster{
-  width:180px;
-  flex-shrink:0;
-  border-radius:16px;
-  overflow:hidden;
-  border:1px solid #1f2742;
-  background:#111;
+  position:absolute;left:16px;bottom:16px;width:110px;height:165px;
+  border-radius:6px;object-fit:cover;background:#1a2035;z-index:2;
+  box-shadow:0 8px 20px rgba(0,0,0,.4)
+}
+.hero-info{position:absolute;left:140px;right:16px;bottom:16px;z-index:2}
+.hero-info h1{font-size:18px;line-height:1.25}
+.hero-info h1 span{font-size:13px;color:#aaa;display:block;margin-top:2px;font-weight:400}
+.meta{display:flex;gap:10px;font-size:11px;color:#ccc;margin:6px 0;flex-wrap:wrap}
+.imdb{background:#ffcc00;color:#000;padding:2px 6px;border-radius:4px;font-weight:700}
+
+/* ================= ACTION ROW ================= */
+.actions{display:flex;gap:6px;justify-content:flex-end;padding:12px 16px 0}
+.actions button, .actions a{
+  height:30px;padding:0 12px;font-size:11.5px;border-radius:6px;
+  display:flex;align-items:center;gap:5px;font-weight:600;cursor:pointer
+}
+.watch{background:#ffcc00;border:none;color:#000}
+.subscribe{background:transparent;border:1px solid #229ED9;color:#229ED9}
+
+/* ================= ANIME QUICK INFO STRIP ================= */
+.quick-info{
+  display:flex;gap:8px;padding:14px 16px;overflow-x:auto;
+  border-bottom:1px solid #161c2c
+}
+.quick-info .qi-badge{
+  flex-shrink:0;font-size:10.5px;padding:5px 11px;border-radius:20px;
+  background:#141a2c;color:#9aa3bd;border:1px solid #1f273e;white-space:nowrap
 }
 
-.poster img{
-  width:100%;
-  display:block;
+/* ================= SECTION TITLES ================= */
+.section-title{
+  font-size:14px;font-weight:700;padding:18px 16px 6px;
+  display:flex;align-items:center;gap:8px
 }
+.section-title .icon{font-size:15px}
 
-.hero-content{
-  flex:1;
+/* ================= SEASON TABS ================= */
+.season-tabs{
+  display:flex;gap:8px;padding:8px 16px 14px;overflow-x:auto;
+  -ms-overflow-style:none;scrollbar-width:none
 }
-
-.hero-content h1{
-  font-size:38px;
-  margin-bottom:14px;
+.season-tabs::-webkit-scrollbar{display:none}
+.season-tab{
+  flex-shrink:0;padding:8px 16px;border-radius:8px;font-size:12px;font-weight:700;
+  background:#141a2c;color:#8a93ad;border:1px solid #1f273e;cursor:pointer;transition:.2s
 }
+.season-tab.active{background:#ffcc00;color:#000;border-color:#ffcc00}
 
-.hero-meta{
-  display:flex;
-  flex-wrap:wrap;
-  gap:12px;
+/* ================= EPISODES LIST ================= */
+.episodes{padding:0 16px}
+.ep-block{
+  background:#10162580;border:1px solid #1a2035;border-radius:12px;
+  margin-bottom:10px;overflow:hidden
 }
-
-.hero-meta span{
-  background:#141b30;
-  border:1px solid #1f2742;
-  color:#ffcc00;
-  padding:8px 14px;
-  border-radius:999px;
-  font-size:12px;
-  font-weight:700;
+.ep-block-head{
+  display:flex;align-items:center;gap:10px;padding:11px 13px;cursor:pointer;
+  transition:.15s
 }
-
-/* ======================================================
-CONTENT
-====================================================== */
-
-.download-wrapper{
-  max-width:1300px;
-  margin:auto;
-  padding:30px 20px;
+.ep-block-head:hover{background:#141a2c}
+.ep-num-badge{
+  font-size:11px;font-weight:800;color:#ffcc00;background:#1a1500;
+  padding:4px 9px;border-radius:6px;flex-shrink:0;min-width:34px;text-align:center
 }
-
-/* ======================================================
-SEASON
-====================================================== */
-
-.season-block{
-  margin-bottom:40px;
+.ep-block-title{font-size:12.5px;font-weight:600;flex:1}
+.ep-block-sub{font-size:10.5px;color:#556;margin-top:2px}
+.ep-host-count{
+  font-size:10px;color:#4caf50;background:#0d2218;border:1px solid #4caf5033;
+  padding:3px 8px;border-radius:10px;flex-shrink:0
 }
+.ep-chevron{font-size:11px;color:#445;transition:transform .2s;flex-shrink:0}
+.ep-block.open .ep-chevron{transform:rotate(180deg)}
 
-.season-header{
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap:20px;
-  margin-bottom:20px;
-}
-
-.season-header h2{
-  font-size:28px;
-}
-
-.season-count{
-  color:#888;
-  font-size:13px;
-}
-
-/* ======================================================
-EPISODE
-====================================================== */
-
-.episode-card{
-  background:#11162a;
-  border:1px solid #1a2035;
-  border-radius:18px;
-  padding:22px;
-  margin-bottom:18px;
-}
-
-.episode-top{
-  display:flex;
-  justify-content:space-between;
-  align-items:flex-start;
-  gap:20px;
-  margin-bottom:18px;
-}
-
-.ep-left{
-  display:flex;
-  flex-direction:column;
-  gap:8px;
-}
-
-.ep-number{
-  color:#ffcc00;
-  font-size:12px;
-  font-weight:700;
-  text-transform:uppercase;
-}
-
-.ep-title{
-  font-size:22px;
-  line-height:1.4;
-}
-
-.host-count{
-  background:#141d35;
-  border:1px solid #1f2742;
-  color:#ffcc00;
-  padding:8px 14px;
-  border-radius:999px;
-  font-size:12px;
-  font-weight:700;
-}
-
-/* ======================================================
-HOSTS
-====================================================== */
-
-.host-grid{
-  display:flex;
-  flex-wrap:wrap;
-  gap:12px;
-}
-
+/* Host buttons inside expanded episode */
+.ep-hosts{display:none;padding:0 13px 13px;flex-direction:column;gap:7px}
+.ep-block.open .ep-hosts{display:flex}
 .host-btn{
-  height:46px;
-  padding:0 20px;
-  border:none;
-  border-radius:12px;
-  background:#141b30;
-  border:1px solid #1f2742;
-  color:#fff;
-  font-weight:700;
-  cursor:pointer;
-  transition:.2s;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:11px 13px;background:#0b0f1a;border:1px solid #1a2035;
+  border-radius:9px;cursor:pointer;transition:.2s
+}
+.host-btn:hover{border-color:#ffcc00;background:#141a2c}
+.host-btn .hb-left{display:flex;align-items:center;gap:10px}
+.host-btn .hb-icon{font-size:17px;width:24px;text-align:center}
+.host-btn .hb-name{font-size:12.5px;font-weight:700}
+.host-btn .hb-sub{font-size:10px;color:#556;margin-top:1px}
+.host-btn .hb-right{display:flex;align-items:center;gap:6px}
+.host-tag{font-size:9.5px;padding:2px 7px;border-radius:10px;background:#1a2035;color:#9aa3bd}
+.host-tag.rec{background:#1a1500;color:#ffcc00}
+.host-tag.knight{background:#1a0d2e;color:#ce93d8}
+.hb-arrow{color:#445;font-size:13px}
+
+/* ================= SEASON ZIP CARD ================= */
+.zip-card{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:14px 16px;margin:4px 16px 18px;
+  background:linear-gradient(135deg,#1a1500,#241d00);
+  border:1px solid #ffcc0044;border-radius:12px;cursor:pointer;transition:.2s
+}
+.zip-card:hover{border-color:#ffcc00;transform:translateY(-1px)}
+.zip-left{display:flex;align-items:center;gap:12px}
+.zip-icon{font-size:24px}
+.zip-title{font-size:13px;font-weight:800;color:#ffcc00}
+.zip-sub{font-size:10.5px;color:#9a8a55;margin-top:2px}
+.zip-arrow{color:#ffcc00;font-size:15px}
+
+/* ================= SPECIAL SECTIONS (collection/pack/batch) ================= */
+.special-row{
+  display:flex;gap:10px;padding:0 16px 14px;overflow-x:auto;
+  -ms-overflow-style:none;scrollbar-width:none
+}
+.special-row::-webkit-scrollbar{display:none}
+.special-card{
+  flex-shrink:0;width:150px;background:#10162580;border:1px solid #1a2035;
+  border-radius:10px;padding:13px;cursor:pointer;transition:.2s
+}
+.special-card:hover{border-color:#ffcc00}
+.special-icon{font-size:20px;margin-bottom:6px}
+.special-title{font-size:12px;font-weight:700}
+.special-sub{font-size:10px;color:#556;margin-top:3px}
+
+/* ================= LOADING / EMPTY ================= */
+.loading-state{text-align:center;padding:50px 20px;color:#445}
+.spinner{
+  display:inline-block;width:28px;height:28px;border:3px solid #1a2035;
+  border-top-color:#ffcc00;border-radius:50%;animation:spin .7s linear infinite;margin-bottom:10px
+}
+@keyframes spin{to{transform:rotate(360deg)}}
+.empty-state{text-align:center;padding:40px 20px;color:#445;font-size:12.5px}
+.empty-state .icon{font-size:36px;margin-bottom:10px;display:block}
+
+/* ================= NOTICE ================= */
+.notice{
+  margin:0 16px 14px;background:#10162580;border:1px solid #1a2035;
+  border-radius:9px;padding:10px 13px;font-size:11px;color:#7a8296;
+  display:flex;gap:8px;line-height:1.6
 }
 
-.host-btn:hover{
-  background:#ffcc00;
-  color:#000;
-  border-color:#ffcc00;
+/* ================= AD SLOTS ================= */
+.ad-slot{padding:10px 16px}
+.ad-slot-inner{
+  background:#0d1322;border:1px dashed #1a2035;border-radius:8px;
+  min-height:60px;display:flex;align-items:center;justify-content:center;
+  color:#333;font-size:11px;overflow:hidden
 }
+.ad-slot-inner.filled{border:none;min-height:auto}
 
-/* ======================================================
-EMPTY
-====================================================== */
+/* ================= FOOTER ================= */
+.main-footer{padding:24px 16px 20px;text-align:center}
+.footer-links{display:flex;gap:14px;justify-content:center;margin-bottom:10px;font-size:12px;color:#ccc;flex-wrap:wrap}
+.copyright{font-size:11px;color:#777}
 
-.empty{
-  background:#11162a;
-  border:1px dashed #1f2742;
-  border-radius:18px;
-  padding:30px;
-  text-align:center;
-  color:#777;
+/* ================= BOTTOM NAV (fixed, correct order: Anime Movies Home Series Cartoon) ================= */
+.bottom-nav{
+  position:fixed;bottom:0;left:0;width:100%;height:58px;
+  background:rgba(11,15,26,.97);backdrop-filter:blur(10px);
+  display:flex;justify-content:space-around;align-items:center;
+  border-top:1px solid #1a2035;z-index:100
 }
-
-/* ======================================================
-LOADER
-====================================================== */
-
-.loader{
-  padding:80px 20px;
-  text-align:center;
-  color:#888;
-}
-
-/* ======================================================
-RESPONSIVE
-====================================================== */
-
-@media(max-width:900px){
-
-  .download-top{
-    flex-direction:column;
-  }
-
-  .poster{
-    width:160px;
-  }
-
-  .hero-content h1{
-    font-size:30px;
-  }
-
-}
-
-@media(max-width:700px){
-
-  .episode-top{
-    flex-direction:column;
-  }
-
-  .host-count{
-    width:max-content;
-  }
-
-}
-
+.nav-item{font-size:11px;color:#7a8296;display:flex;align-items:center;justify-content:center;font-weight:600;letter-spacing:.3px}
+.nav-item.active{color:#ffcc00}
 </style>
 </head>
+<body data-page="download">
 
-<body>
+<header class="main-header">
+  <div class="menu-btn" id="menuBtn">☰</div>
+  <div class="logo"><span class="anime">anime</span><span class="hunt">hunt</span></div>
+  <input class="search-bar" placeholder="Search movie">
+</header>
 
-<!-- ======================================================
-HERO
-====================================================== -->
+<aside class="sidebar" id="sidebar">
+  <div class="close-btn" id="closeBtn">✕</div>
+  <nav class="sidebar-menu">
+    <a href="about.html">About AnimeHunt</a>
+    <a href="privacy.html">Privacy Policy</a>
+    <a href="disclaimer.html">Disclaimer</a>
+    <a href="dmca.html">DMCA</a>
+    <a href="https://t.me/toons15" target="_blank">Telegram</a>
+  </nav>
+</aside>
+<div class="overlay" id="overlay"></div>
 
-<section class="download-hero">
-
-<div
-  class="download-backdrop"
-  id="backdrop"
-></div>
-
-<div class="download-overlay"></div>
-
-<div class="download-top">
-
-  <div class="poster">
-
-    <img
-      id="poster"
-      src=""
-      alt=""
-    >
-
+<!-- HERO: banner + poster (same structure as details.html) -->
+<section class="hero">
+  <div class="hero-bg" id="heroBg"></div>
+  <img id="posterImg" class="poster" alt="">
+  <div class="hero-info">
+    <h1 id="animeTitle">Loading...<span id="animeSubtitle"></span></h1>
+    <div class="meta" id="animeMeta"></div>
   </div>
-
-  <div class="hero-content">
-
-    <h1 id="animeTitle">
-
-      Loading...
-
-    </h1>
-
-    <div class="hero-meta">
-
-      <span id="animeType">
-
-        ANIME
-
-      </span>
-
-      <span id="downloadCount">
-
-        0 Downloads
-
-      </span>
-
-    </div>
-
-  </div>
-
-</div>
-
 </section>
 
-<!-- ======================================================
-CONTENT
-====================================================== -->
-
-<section class="download-wrapper">
-
-<div
-  id="downloadsContainer"
->
-
-  <div class="loader">
-
-    Loading Downloads...
-
-  </div>
-
+<div class="actions">
+  <a class="watch" id="watchBtn" href="#">Watch</a>
+  <a class="subscribe" href="https://t.me/toons15" target="_blank">Subscribe</a>
 </div>
 
-</section>
+<div class="quick-info" id="quickInfo"></div>
+
+<!-- AD SLOT: above_download -->
+<div class="ad-slot" id="adSlotAbove"><div class="ad-slot-inner" id="adSlotAboveInner"></div></div>
+
+<div class="notice"><span>If a link is broken or slow, try another host. <b>NightWolf</b> hosts offer multiple quality options (480p / 720p / 1080p).</span></div>
+
+<!-- SEASON TABS -->
+<div class="section-title">Download Links</div>
+<div class="season-tabs" id="seasonTabs"></div>
+
+<!-- EPISODES (with per-episode host buttons) -->
+<div class="episodes" id="episodesContainer">
+  <div class="loading-state"><div class="spinner"></div><br>Loading episodes...</div>
+</div>
+
+<!-- SEASON ZIP (shown after all episodes of current season) -->
+<div id="zipContainer"></div>
+
+<!-- SPECIAL: Movies / Collections / Packs / Batch (only if anime type supports) -->
+<div id="specialContainer"></div>
+
+<!-- AD SLOT: below_download -->
+<div class="ad-slot" id="adSlotBelow"><div class="ad-slot-inner" id="adSlotBelowInner"></div></div>
+
+<footer class="main-footer">
+  <div class="footer-links">
+    <a href="about.html">About AnimeHunt</a>
+    <a href="disclaimer.html">Disclaimer</a>
+    <a href="dmca.html">DMCA</a>
+    <a href="https://t.me/toons15" target="_blank">Telegram</a>
+  </div>
+  <div class="copyright">© 2026 AnimeHunt. All Rights Reserved.</div>
+</footer>
+
+<!-- BOTTOM NAV — correct order per requirement: Anime, Movies, Home, Series, Cartoon -->
+<nav class="bottom-nav">
+  <a href="anime.html" class="nav-item">ANIME</a>
+  <a href="movies.html" class="nav-item">MOVIES</a>
+  <a href="index.html" class="nav-item active">HOME</a>
+  <a href="series.html" class="nav-item">SERIES</a>
+  <a href="cartoon.html" class="nav-item">CARTOON</a>
+</nav>
 
 <script>
-
-/* =========================================================
-   FINAL DOWNLOAD PAGE
-========================================================= */
-
-const API =
-"https://animehunt-backend.animehunt715.workers.dev/api"
-
-/* =========================================================
-   PARAMS
-========================================================= */
-
-const params =
-new URLSearchParams(
-  location.search
-)
-
-const slug =
-params.get("anime")
-
-/* =========================================================
-   DOM
-========================================================= */
-
-const container =
-document.getElementById(
-  "downloadsContainer"
-)
-
-const animeTitle =
-document.getElementById(
-  "animeTitle"
-)
-
-const animeType =
-document.getElementById(
-  "animeType"
-)
-
-const poster =
-document.getElementById(
-  "poster"
-)
-
-const backdrop =
-document.getElementById(
-  "backdrop"
-)
-
-const downloadCount =
-document.getElementById(
-  "downloadCount"
-)
-
-/* =========================================================
-   LOAD
-========================================================= */
-
-async function load(){
-
-  if(!slug){
-
-    container.innerHTML = `
-
-      <div class="empty">
-
-        Invalid anime
-
-      </div>
-
-    `
-
-    return
-
-  }
-
-  try{
-
-    const res =
-    await fetch(
-
-      `${API}/downloads-by-slug/${slug}`
-
-    )
-
-    const data =
-    await res.json()
-
-    if(
-      !data.success
-    ){
-
-      container.innerHTML = `
-
-        <div class="empty">
-
-          Anime not found
-
-        </div>
-
-      `
-
-      return
-
-    }
-
-    const anime =
-    data.anime
-
-    const downloads =
-    data.downloads || []
-
-    /* =====================================================
-       TOP
-    ===================================================== */
-
-    animeTitle.innerText =
-    anime.title
-
-    animeType.innerText =
-    (
-      anime.type ||
-      "anime"
-    ).toUpperCase()
-
-    poster.src =
-    anime.poster || ""
-
-    backdrop.style.backgroundImage =
-    `url(${anime.poster})`
-
-    downloadCount.innerText =
-
-      `${downloads.length} Downloads`
-
-    /* =====================================================
-       EMPTY
-    ===================================================== */
-
-    if(!downloads.length){
-
-      container.innerHTML = `
-
-        <div class="empty">
-
-          No downloads available
-
-        </div>
-
-      `
-
-      return
-
-    }
-
-    /* =====================================================
-       GROUP
-    ===================================================== */
-
-    const grouped = {}
-
-    downloads.forEach(item=>{
-
-      const seasonKey =
-
-        item.content_type ===
-        "movie"
-
-        ? "MOVIES"
-
-        : item.content_type ===
-          "series_zip"
-
-        ? "SERIES ZIP"
-
-        : `Season ${item.season || 1}`
-
-      if(!grouped[seasonKey]){
-
-        grouped[seasonKey] = []
-
-      }
-
-      grouped[seasonKey]
-      .push(item)
-
+const API    = 'https://animehunt-backend.animehunt715.workers.dev/api'
+const params = new URLSearchParams(location.search)
+
+const animeId = params.get('anime_id') || params.get('id')
+let currentSeason = parseInt(params.get('season')) || 1
+
+const D = id => document.getElementById(id)
+function esc(s) { return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;') }
+
+/* ── SIDEBAR ── */
+D('menuBtn').onclick  = () => { D('sidebar').classList.add('open'); D('overlay').classList.add('show') }
+D('closeBtn').onclick = () => { D('sidebar').classList.remove('open'); D('overlay').classList.remove('show') }
+D('overlay').onclick  = () => { D('sidebar').classList.remove('open'); D('overlay').classList.remove('show') }
+
+/* ── TRACK ── */
+async function track(event_type, extra = {}) {
+  try {
+    await fetch(`${API}/analytics`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ event_type, event_data: JSON.stringify({ anime_id: animeId, season: currentSeason, ...extra }) })
     })
-
-    /* =====================================================
-       RENDER
-    ===================================================== */
-
-    container.innerHTML = ""
-
-    Object.keys(grouped)
-    .forEach(season=>{
-
-      const list =
-      grouped[season]
-
-      const seasonDiv =
-      document.createElement("div")
-
-      seasonDiv.className =
-      "season-block"
-
-      seasonDiv.innerHTML = `
-
-        <div class="season-header">
-
-          <h2>
-
-            ${season}
-
-          </h2>
-
-          <div class="season-count">
-
-            ${list.length} Entries
-
-          </div>
-
-        </div>
-
-      `
-
-      /* ===================================================
-         EPISODES
-      =================================================== */
-
-      list.forEach(item=>{
-
-        const ep =
-        document.createElement("div")
-
-        ep.className =
-        "episode-card"
-
-        const epTitle =
-
-          item.content_type ===
-          "movie"
-
-          ? (
-              item.episode_title ||
-              anime.title
-            )
-
-          : item.content_type ===
-            "season_zip"
-
-          ? `Season ${item.season} ZIP`
-
-          : item.content_type ===
-            "series_zip"
-
-          ? "Full Series ZIP"
-
-          : (
-              item.episode_title ||
-              `Episode ${item.episode}`
-            )
-
-        ep.innerHTML = `
-
-          <div class="episode-top">
-
-            <div class="ep-left">
-
-              <div class="ep-number">
-
-                ${
-                  item.content_type ===
-                  "movie"
-
-                  ? "MOVIE"
-
-                  : item.content_type ===
-                    "season_zip"
-
-                  ? "SEASON ZIP"
-
-                  : item.content_type ===
-                    "series_zip"
-
-                  ? "SERIES ZIP"
-
-                  : `EPISODE ${item.episode}`
-                }
-
-              </div>
-
-              <div class="ep-title">
-
-                ${epTitle}
-
-              </div>
-
-            </div>
-
-            <div class="host-count">
-
-              ${item.hosts.length}
-              Hosts
-
-            </div>
-
-          </div>
-
-          <div class="host-grid"></div>
-
-        `
-
-        /* =================================================
-           HOSTS
-        ================================================= */
-
-        const hostGrid =
-        ep.querySelector(
-          ".host-grid"
-        )
-
-        item.hosts.forEach(host=>{
-
-          const btn =
-          document.createElement(
-            "button"
-          )
-
-          btn.className =
-          "host-btn"
-
-          btn.innerText =
-          host.host
-
-          /* ===============================================
-             FLOW
-          =============================================== */
-
-          btn.onclick = ()=>{
-
-            location.href =
-
-              `/api/go?host_id=${host.id}&step=1`
-
-          }
-
-          hostGrid.appendChild(btn)
-
-        })
-
-        seasonDiv.appendChild(ep)
-
-      })
-
-      container.appendChild(
-        seasonDiv
-      )
-
-    })
-
-  }catch(err){
-
-    console.error(err)
-
-    container.innerHTML = `
-
-      <div class="empty">
-
-        Failed to load downloads
-
-      </div>
-
-    `
-
-  }
-
+  } catch {}
 }
 
-/* =========================================================
-   INIT
-========================================================= */
+/* ── HOST ICON MAP ── */
+const HOST_ICONS = {
+  mega: '📦', meganz: '📦', streamwish: '🎬', filepress: '📂',
+  knight: '🐺', knightwolf: '🐺', nightwolf: '🐺', telegram: '✈️',
+  direct: '⬇️', gdrive: '📁', googledrive: '📁', terabox: '📦', dropbox: '📦'
+}
+function getHostIcon(name) {
+  const key = (name || '').toLowerCase().replace(/[\s\-_.]/g, '')
+  return HOST_ICONS[key] || '🌐'
+}
 
-load()
+/* ════════════════════════════════════════════════════════
+   LOAD ANIME INFO (hero banner + poster, same as details.html)
+════════════════════════════════════════════════════════ */
+let animeData = null
 
+async function loadAnimeInfo() {
+  if (!animeId) return
+  try {
+    const r = await fetch(`${API}/public/anime/${animeId}`)
+    const j = await r.json()
+    if (!j.success || !j.data) return
+    animeData = j.data
+
+    document.title = `Download ${animeData.title} — AnimeHunt`
+    D('animeTitle').innerHTML = `${esc(animeData.title)}<span>${esc((animeData.type || 'anime').toUpperCase())} · Download</span>`
+
+    if (animeData.poster) D('posterImg').src = animeData.poster
+    if (animeData.banner || animeData.poster) {
+      D('heroBg').style.backgroundImage = `url('${esc(animeData.banner || animeData.poster)}')`
+    }
+
+    const meta = D('animeMeta')
+    let metaHtml = ''
+    if (animeData.year)   metaHtml += `<span>${animeData.year}</span>`
+    if (animeData.rating) metaHtml += `<span class="imdb">★ ${animeData.rating}</span>`
+    if (animeData.status) metaHtml += `<span>${esc(animeData.status)}</span>`
+    meta.innerHTML = metaHtml
+
+    const qi = D('quickInfo')
+    let qiHtml = ''
+    if (animeData.genres?.length) animeData.genres.forEach(g => { qiHtml += `<span class="qi-badge">${esc(g)}</span>` })
+    qi.innerHTML = qiHtml
+
+    D('watchBtn').href = `watch.html?anime_id=${animeId}`
+  } catch {}
+}
+
+/* ════════════════════════════════════════════════════════
+   LOAD SEASON STRUCTURE
+════════════════════════════════════════════════════════ */
+let seasonsList = []
+let animeType    = 'anime'
+
+async function loadStructure() {
+  try {
+    const r = await fetch(`${API}/public/download-structure?anime_id=${animeId}`)
+    const j = await r.json()
+    if (j.success && j.data) {
+      seasonsList = j.data.seasons || [1]
+      animeType   = j.data.type || 'anime'
+    } else {
+      seasonsList = [1]
+    }
+  } catch { seasonsList = [1] }
+
+  renderSeasonTabs()
+  loadEpisodesForSeason(currentSeason)
+  loadSpecials()
+}
+
+function renderSeasonTabs() {
+  const tabs = D('seasonTabs')
+  if (animeType === 'movie') {
+    D('seasonTabs').style.display = 'none'
+    document.querySelector('.section-title').textContent = 'Download Links'
+    return
+  }
+  tabs.innerHTML = seasonsList.map(s =>
+    `<div class="season-tab ${s === currentSeason ? 'active' : ''}" data-season="${s}">Season ${s}</div>`
+  ).join('')
+  tabs.querySelectorAll('.season-tab').forEach(el => {
+    el.onclick = () => {
+      currentSeason = parseInt(el.dataset.season)
+      tabs.querySelectorAll('.season-tab').forEach(t => t.classList.remove('active'))
+      el.classList.add('active')
+      loadEpisodesForSeason(currentSeason)
+    }
+  })
+}
+
+/* ════════════════════════════════════════════════════════
+   LOAD EPISODES + INLINE HOSTS for current season
+   Every episode shows its OWN host buttons when expanded
+════════════════════════════════════════════════════════ */
+async function loadEpisodesForSeason(season) {
+  const container = D('episodesContainer')
+  container.innerHTML = `<div class="loading-state"><div class="spinner"></div><br>Loading episodes...</div>`
+  D('zipContainer').innerHTML = ''
+
+  try {
+    const url = animeType === 'movie'
+      ? `${API}/public/download-entries?anime_id=${animeId}&content_type=movie`
+      : `${API}/public/download-entries?anime_id=${animeId}&content_type=episode&season=${season}`
+
+    const r = await fetch(url)
+    const j = await r.json()
+    const entries = j.success ? (j.data || []) : []
+
+    if (!entries.length) {
+      container.innerHTML = `<div class="empty-state"><span class="icon">📭</span>No downloads available yet for this ${animeType === 'movie' ? 'movie' : 'season'}.</div>`
+      return
+    }
+
+    container.innerHTML = ''
+    entries.forEach((ep, idx) => {
+      const block = document.createElement('div')
+      block.className = 'ep-block'
+      block.innerHTML = `
+        <div class="ep-block-head" data-entry="${ep.id}">
+          <span class="ep-num-badge">${animeType === 'movie' ? '🎬' : 'EP ' + (ep.episode ?? idx + 1)}</span>
+          <div style="flex:1">
+            <div class="ep-block-title">${esc(ep.episode_title || (animeType === 'movie' ? animeData?.title : `Episode ${ep.episode ?? idx + 1}`))}</div>
+            <div class="ep-block-sub" id="ep-sub-${ep.id}">Tap to view download hosts</div>
+          </div>
+          <span class="ep-chevron">▾</span>
+        </div>
+        <div class="ep-hosts" id="ep-hosts-${ep.id}"></div>
+      `
+      container.appendChild(block)
+
+      const head = block.querySelector('.ep-block-head')
+      head.onclick = () => toggleEpisode(block, ep.id)
+    })
+
+    // Show Season ZIP card after episode list (only for series, not movies)
+    if (animeType !== 'movie') {
+      loadSeasonZip(season)
+    }
+
+  } catch {
+    container.innerHTML = `<div class="empty-state"><span class="icon">⚠️</span>Error loading episodes.</div>`
+  }
+}
+
+/* Expand/collapse episode → lazy-load its hosts */
+const loadedHosts = {}
+
+async function toggleEpisode(block, entryId) {
+  const wasOpen = block.classList.contains('open')
+  document.querySelectorAll('.ep-block.open').forEach(b => { if (b !== block) b.classList.remove('open') })
+  block.classList.toggle('open', !wasOpen)
+  if (wasOpen) return
+
+  if (loadedHosts[entryId]) return // already loaded
+
+  const hostsEl = D(`ep-hosts-${entryId}`)
+  hostsEl.innerHTML = `<div class="loading-state" style="padding:16px"><div class="spinner" style="width:20px;height:20px"></div></div>`
+
+  try {
+    const r = await fetch(`${API}/public/download-hosts?entry_id=${entryId}`)
+    const j = await r.json()
+    const hosts = j.success ? (j.data || []) : []
+    loadedHosts[entryId] = hosts
+
+    const subEl = D(`ep-sub-${entryId}`)
+    if (subEl) subEl.textContent = `${hosts.length} host${hosts.length !== 1 ? 's' : ''} available`
+
+    if (!hosts.length) {
+      hostsEl.innerHTML = `<div class="empty-state" style="padding:12px;font-size:11px">No hosts added yet.</div>`
+      return
+    }
+
+    hostsEl.innerHTML = ''
+    hosts.forEach((h, idx) => {
+      const isKnight = h.knight == 1 || h.knight === true
+      const icon     = getHostIcon(isKnight ? 'nightwolf' : h.host_name)
+      const btn      = document.createElement('div')
+      btn.className  = 'host-btn'
+      btn.innerHTML = `
+        <div class="hb-left">
+          <span class="hb-icon">${icon}</span>
+          <div>
+            <div class="hb-name">${esc(isKnight ? 'NightWolf' : h.host_name)}</div>
+            <div class="hb-sub">${isKnight ? 'Multiple qualities' : (h.storage || 'Direct download')}</div>
+          </div>
+        </div>
+        <div class="hb-right">
+          ${idx === 0 ? '<span class="host-tag rec">Recommended</span>' : ''}
+          ${isKnight ? '<span class="host-tag knight">480p–1080p</span>' : ''}
+          <span class="hb-arrow">›</span>
+        </div>`
+      btn.onclick = () => startDownloadFlow(h)
+      hostsEl.appendChild(btn)
+    })
+  } catch {
+    hostsEl.innerHTML = `<div class="empty-state" style="padding:12px;font-size:11px">⚠️ Failed to load hosts.</div>`
+  }
+}
+
+/* ════════════════════════════════════════════════════════
+   SEASON ZIP — shown once all episodes for the season are listed
+════════════════════════════════════════════════════════ */
+async function loadSeasonZip(season) {
+  const zipBox = D('zipContainer')
+  try {
+    const r = await fetch(`${API}/public/download-entries?anime_id=${animeId}&content_type=season_zip&season=${season}`)
+    const j = await r.json()
+    const zipEntries = j.success ? (j.data || []) : []
+    if (!zipEntries.length) { zipBox.innerHTML = ''; return }
+
+    const zipEntry = zipEntries[0]
+    const card = document.createElement('div')
+    card.className = 'zip-card'
+    card.innerHTML = `
+      <div class="zip-left">
+        <span class="zip-icon">🗜️</span>
+        <div>
+          <div class="zip-title">Season ${season} — Full ZIP</div>
+          <div class="zip-sub">Download all episodes in one file</div>
+        </div>
+      </div>
+      <span class="zip-arrow">›</span>`
+    card.onclick = async () => {
+      try {
+        const hr = await fetch(`${API}/public/download-hosts?entry_id=${zipEntry.id}`)
+        const hj = await hr.json()
+        const hosts = hj.success ? (hj.data || []) : []
+        if (hosts.length) {
+          track('host_click', { zip: true, season })
+          startDownloadFlow(hosts[0])
+        }
+      } catch {}
+    }
+    zipBox.innerHTML = ''
+    zipBox.appendChild(card)
+  } catch { zipBox.innerHTML = '' }
+}
+
+/* ════════════════════════════════════════════════════════
+   SPECIAL: Collections / Packs / Batch
+════════════════════════════════════════════════════════ */
+async function loadSpecials() {
+  if (animeType === 'movie') return
+  const container = D('specialContainer')
+  const types = [
+    { key: 'collection', icon: '📦', label: 'Collections' },
+    { key: 'pack',       icon: '🎁', label: 'Packs' },
+    { key: 'batch',      icon: '🗂️', label: 'Batch' }
+  ]
+
+  const results = await Promise.all(types.map(t =>
+    fetch(`${API}/public/download-entries?anime_id=${animeId}&content_type=${t.key}`)
+      .then(r => r.json()).then(j => ({ ...t, entries: j.success ? (j.data || []) : [] }))
+      .catch(() => ({ ...t, entries: [] }))
+  ))
+
+  const withData = results.filter(r => r.entries.length)
+  if (!withData.length) return
+
+  let html = `<div class="section-title">Special Packages</div><div class="special-row">`
+  withData.forEach(group => {
+    group.entries.forEach(entry => {
+      html += `
+        <div class="special-card" data-entry="${entry.id}">
+          <div class="special-icon">${group.icon}</div>
+          <div class="special-title">${esc(entry.episode_title || group.label)}</div>
+          <div class="special-sub">${group.label}</div>
+        </div>`
+    })
+  })
+  html += '</div>'
+  container.innerHTML = html
+
+  container.querySelectorAll('.special-card').forEach(card => {
+    card.onclick = async () => {
+      const entryId = card.dataset.entry
+      try {
+        const r = await fetch(`${API}/public/download-hosts?entry_id=${entryId}`)
+        const j = await r.json()
+        const hosts = j.success ? (j.data || []) : []
+        if (hosts.length) startDownloadFlow(hosts[0])
+      } catch {}
+    }
+  })
+}
+
+/* ════════════════════════════════════════════════════════
+   START DOWNLOAD FLOW (calls /api/go → redirects to go.html)
+════════════════════════════════════════════════════════ */
+async function startDownloadFlow(host) {
+  try {
+    track('host_click', { host_id: host.id, host_name: host.host_name })
+    const r = await fetch(`${API}/go`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        host_entry_id: host.id,
+        anime_id: animeId,
+        season: currentSeason,
+        episode: null
+      })
+    })
+    const j = await r.json()
+    if (!j.success) throw new Error(j.message)
+    const sessionId = j.data.session_id
+    window.location.href = `go.html?session=${sessionId}&anime=${encodeURIComponent(animeData?.title || '')}&season=${encodeURIComponent(currentSeason || '')}`
+  } catch {
+    alert('Something went wrong. Please try again.')
+  }
+}
+
+/* ════════════════════════════════════════════════════════
+   PAGE ADS (above/below download)
+════════════════════════════════════════════════════════ */
+async function loadPageAds() {
+  try {
+    const r = await fetch(`${API}/public/page-ads?page=download`)
+    const j = await r.json()
+    if (!j.success) return
+    const slots = j.data || {}
+    if (slots.above_download) renderAdSlot('adSlotAboveInner', slots.above_download)
+    else D('adSlotAbove').style.display = 'none'
+    if (slots.below_download) renderAdSlot('adSlotBelowInner', slots.below_download)
+    else D('adSlotBelow').style.display = 'none'
+  } catch {
+    D('adSlotAbove').style.display = 'none'
+    D('adSlotBelow').style.display = 'none'
+  }
+}
+
+function renderAdSlot(containerId, adData) {
+  const el = D(containerId)
+  if (!adData || !adData.code) { el.closest('.ad-slot').style.display = 'none'; return }
+  el.classList.add('filled')
+  try {
+    if (adData.type === 'script' || adData.type === 'banner') {
+      const stripped = adData.code.replace(/<script[^>]*>/gi, '').replace(/<\/script>/gi, '')
+      const s = document.createElement('script')
+      s.textContent = stripped
+      document.head.appendChild(s)
+      el.innerHTML = adData.html || ''
+    } else {
+      el.innerHTML = adData.code
+    }
+    track('page_ad_view', { slot: containerId, ad_name: adData.name })
+    el.addEventListener('click', () => track('page_ad_click', { slot: containerId, ad_name: adData.name }), { once: true })
+  } catch {}
+}
+
+/* ── INIT ── */
+loadAnimeInfo()
+loadStructure()
+loadPageAds()
+track('page_view')
 </script>
-
 </body>
 </html>
