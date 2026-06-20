@@ -2,403 +2,223 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Download — KnightWolf</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Select Quality — KnightWolf</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
+body{background:#060a14;color:#fff;font-family:system-ui,sans-serif;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:16px}
+.wrap{max-width:480px;width:100%;text-align:center}
+.logo{font-size:22px;font-weight:800;margin-bottom:24px}.logo b{color:#ffcc00}
 
-body {
-  background: #060a14;
-  color: #fff;
-  font-family: system-ui, sans-serif;
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 20px;
-  position: relative;
-  overflow-x: hidden;
-}
+/* CARD */
+.card{background:#0d1322;border:1px solid #1a2035;border-radius:20px;padding:28px 24px}
+.knight-header{margin-bottom:22px}
+.knight-icon{font-size:48px;margin-bottom:10px}
+.knight-title{font-size:20px;font-weight:800}
+.knight-sub{font-size:12.5px;color:#556;margin-top:6px;line-height:1.6}
 
-/* Animated background glow */
-body::before {
-  content: '';
-  position: fixed;
-  top: -120px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 500px;
-  height: 300px;
-  background: radial-gradient(ellipse, rgba(255,204,0,0.07) 0%, transparent 70%);
-  pointer-events: none;
-  z-index: 0;
-}
+/* EPISODE INFO */
+.ep-info{background:#070b16;border:1px solid #1a2035;border-radius:10px;padding:11px 14px;margin-bottom:20px;display:flex;align-items:center;gap:10px}
+.ep-info .poster{width:38px;height:52px;border-radius:5px;object-fit:cover;background:#1a2035;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:18px;overflow:hidden}
+.ep-info .poster img{width:100%;height:100%;object-fit:cover}
+.ep-info .details{text-align:left}
+.ep-info .anime-name{font-size:13px;font-weight:700}
+.ep-info .ep-meta{font-size:11px;color:#555;margin-top:3px}
 
-/* Logo */
-.logo {
-  font-size: 22px;
-  font-weight: 900;
-  margin-bottom: 24px;
-  text-align: center;
-  letter-spacing: -0.5px;
-  position: relative;
-  z-index: 1;
+/* QUALITY BUTTONS */
+.quality-list{display:flex;flex-direction:column;gap:10px;margin-bottom:16px}
+.quality-btn{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:14px 18px;background:#0b0f1a;border:1px solid #1a2035;
+  border-radius:12px;cursor:pointer;text-decoration:none;
+  transition:all .25s;color:#fff
 }
-.logo span { color: #ccd; }
-.logo b { color: #ffcc00; }
-.logo-sub {
-  font-size: 10px;
-  color: #334;
-  font-weight: 600;
-  letter-spacing: 2px;
-  text-transform: uppercase;
-  text-align: center;
-  margin-top: -18px;
-  margin-bottom: 22px;
-  position: relative;
-  z-index: 1;
-}
+.quality-btn:hover{border-color:#ffcc00;background:#111827;transform:translateX(4px)}
+.quality-btn.recommended{border-color:#ffcc0044;background:#0d1020}
+.quality-btn.recommended:hover{border-color:#ffcc00}
 
-/* Card */
-.card {
-  background: linear-gradient(160deg, #0d1322 0%, #0a0f1e 100%);
-  border: 1px solid #1a2540;
-  border-radius: 22px;
-  padding: 0;
-  max-width: 420px;
-  width: 100%;
-  overflow: hidden;
-  position: relative;
-  z-index: 1;
-  box-shadow: 0 24px 60px rgba(0,0,0,0.7), 0 0 0 1px rgba(255,204,0,0.04);
-}
+.qb-left{display:flex;align-items:center;gap:13px}
+.qb-icon{font-size:20px;width:32px;text-align:center}
+.qb-quality{font-size:17px;font-weight:800;line-height:1}
+.qb-details{font-size:11px;color:#555;margin-top:3px}
+.qb-right{display:flex;align-items:center;gap:8px}
+.rec-badge{font-size:10px;padding:3px 8px;border-radius:10px;background:#1a1500;color:#ffcc00;border:1px solid #ffcc0033;font-weight:700}
+.size-badge{font-size:10px;padding:3px 8px;border-radius:10px;background:#1a2035;color:#777}
+.qb-arrow{color:#555;font-size:14px;transition:.2s}
+.quality-btn:hover .qb-arrow{color:#ffcc00}
 
-/* Card top accent line */
-.card::before {
-  content: '';
-  position: absolute;
-  top: 0; left: 0; right: 0;
-  height: 2px;
-  background: linear-gradient(90deg, transparent, #ffcc00, transparent);
-  opacity: 0.6;
-}
+/* QUALITY RESOLUTION MAP */
+.res-4K .qb-quality{color:#ce93d8}
+.res-1080p .qb-quality{color:#64b5f6}
+.res-720p .qb-quality{color:#4caf50}
+.res-480p .qb-quality{color:#ffcc00}
+.res-360p .qb-quality{color:#aaa}
 
-/* Header inside card */
-.card-header {
-  padding: 22px 22px 16px;
-  text-align: center;
-  border-bottom: 1px solid #111d30;
-  background: rgba(255,204,0,0.02);
-}
-.episode-tag {
-  display: inline-block;
-  background: rgba(255,204,0,0.1);
-  border: 1px solid rgba(255,204,0,0.2);
-  border-radius: 20px;
-  padding: 4px 12px;
-  font-size: 10px;
-  font-weight: 700;
-  color: #ffcc00;
-  margin-bottom: 10px;
-  letter-spacing: 0.5px;
-  text-transform: uppercase;
-}
-.host-name {
-  font-size: 19px;
-  font-weight: 800;
-  margin-bottom: 5px;
-  letter-spacing: -0.3px;
-}
-.host-meta {
-  font-size: 11px;
-  color: #445;
-  font-weight: 500;
-}
+/* LOADING */
+.loading-state{padding:40px;color:#556}
+.spinner{display:inline-block;width:28px;height:28px;border:3px solid #1a2035;border-top-color:#ffcc00;border-radius:50%;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.error-box{background:#1a0808;border:1px solid #f4433633;border-radius:10px;padding:13px 15px;color:#f44336;font-size:12.5px;text-align:left}
 
-/* Quality section */
-.quality-wrap {
-  padding: 18px 18px 20px;
+/* BACK */
+.btn-back{
+  display:inline-flex;align-items:center;justify-content:center;
+  width:100%;padding:11px;margin-top:6px;
+  background:transparent;border:1px solid #1a2035;color:#556;
+  border-radius:11px;font-size:12.5px;cursor:pointer;text-decoration:none;transition:.2s
 }
-.section-title {
-  font-size: 10px;
-  color: #445;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  font-weight: 700;
-  margin-bottom: 12px;
-  padding-left: 2px;
-}
+.btn-back:hover{border-color:#334;color:#aaa}
 
-.quality-grid {
-  display: flex;
-  flex-direction: column;
-  gap: 9px;
-  margin-bottom: 16px;
-}
+/* NOTICE */
+.notice{background:#070b16;border:1px solid #1a2035;border-radius:8px;padding:9px 12px;font-size:11px;color:#556;text-align:left;margin-bottom:14px;line-height:1.6}
 
-/* Quality buttons */
-.quality-btn {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 13px 16px;
-  background: #080d1a;
-  border: 1.5px solid #1a2540;
-  border-radius: 13px;
-  font-size: 13px;
-  font-weight: 700;
-  cursor: pointer;
-  color: #fff;
-  transition: all 0.22s cubic-bezier(0.2,0.8,0.2,1);
-  text-decoration: none;
-  position: relative;
-  overflow: hidden;
-}
-.quality-btn::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(90deg, rgba(255,204,0,0.04), transparent);
-  opacity: 0;
-  transition: opacity 0.2s;
-}
-.quality-btn:hover {
-  border-color: #ffcc00;
-  transform: translateX(5px);
-  box-shadow: -4px 0 16px rgba(255,204,0,0.12);
-}
-.quality-btn:hover::before { opacity: 1; }
-.quality-btn:active { transform: translateX(2px) scale(0.99); }
-
-.q-left { display: flex; align-items: center; gap: 11px; position: relative; }
-.q-badge {
-  width: 36px;
-  height: 36px;
-  border-radius: 9px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 16px;
-  flex-shrink: 0;
-}
-.q-text { display: flex; flex-direction: column; gap: 2px; }
-.q-label { font-size: 13px; font-weight: 800; line-height: 1; }
-.q-note  { font-size: 10px; color: #445; font-weight: 500; }
-
-.q-arrow {
-  font-size: 14px;
-  color: #334;
-  transition: all 0.2s;
-  flex-shrink: 0;
-}
-.quality-btn:hover .q-arrow { color: #ffcc00; transform: translateX(3px); }
-
-/* Quality color variants */
-.quality-btn.sd  { border-color: #1e2a3a; }
-.quality-btn.hd  { border-color: rgba(255,204,0,0.18); }
-.quality-btn.hd  .q-badge { background: rgba(255,204,0,0.08); }
-.quality-btn.fhd { border-color: rgba(33,150,243,0.2); }
-.quality-btn.fhd .q-badge { background: rgba(33,150,243,0.08); }
-.quality-btn.uhd { border-color: rgba(156,39,176,0.22); }
-.quality-btn.uhd .q-badge { background: rgba(156,39,176,0.1); }
-
-/* Back link */
-.back-link {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 5px;
-  color: #334;
-  font-size: 12px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: color 0.2s;
-  text-decoration: none;
-  padding: 6px;
-  border-radius: 8px;
-}
-.back-link:hover { color: #ffcc00; }
-
-/* Loading */
-.loading {
-  text-align: center;
-  padding: 32px 22px;
-  color: #445;
-  font-size: 12px;
-  font-weight: 600;
-}
-.spinner {
-  width: 32px;
-  height: 32px;
-  border: 2px solid #1a2540;
-  border-top-color: #ffcc00;
-  border-radius: 50%;
-  animation: spin 0.7s linear infinite;
-  margin: 0 auto 14px;
-}
-@keyframes spin { to { transform: rotate(360deg); } }
-
-/* Error */
-.error-box {
-  padding: 22px;
-  text-align: center;
-  color: #556;
-  font-size: 13px;
-}
-.error-icon { font-size: 38px; margin-bottom: 12px; }
-.error-title { font-size: 15px; font-weight: 700; color: #778; margin-bottom: 6px; }
-.error-sub { font-size: 12px; color: #445; margin-bottom: 16px; line-height: 1.6; }
-
-/* Footer note */
-.card-footer {
-  padding: 12px 22px 16px;
-  border-top: 1px solid #0e1828;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  font-size: 10px;
-  color: #223;
-  font-weight: 600;
-  letter-spacing: 0.3px;
-}
-.card-footer span { color: #ffcc0044; }
-
-/* Fade-in animation */
-@keyframes fadeUp {
-  from { opacity:0; transform:translateY(16px); }
-  to   { opacity:1; transform:translateY(0); }
-}
-.card { animation: fadeUp 0.35s cubic-bezier(0.2,0.8,0.2,1) both; }
-.logo { animation: fadeUp 0.3s ease both; }
+/* FOOTER */
+.card-footer{margin-top:16px;font-size:11px;color:#334;line-height:1.7}
 </style>
 </head>
 <body>
+<div class="wrap">
+  <div class="logo"><span>Knight</span><b>Wolf</b></div>
 
-<div class="logo"><span>Knight</span><b>Wolf</b></div>
-<div class="logo-sub">Secure Download</div>
+  <div class="card">
+    <div class="knight-header">
+      <div class="knight-icon">⚔️</div>
+      <div class="knight-title">Select Download Quality</div>
+      <div class="knight-sub">Choose your preferred quality below</div>
+    </div>
 
-<div class="card">
+    <!-- EPISODE INFO -->
+    <div class="ep-info" id="epInfo" style="display:none">
+      <div class="poster" id="posterEl">🎬</div>
+      <div class="details">
+        <div class="anime-name" id="animeName">Loading...</div>
+        <div class="ep-meta"   id="epMeta"></div>
+      </div>
+    </div>
 
-  <!-- LOADING -->
-  <div id="loading" class="loading">
-    <div class="spinner"></div>
-    Fetching download links…
+    <div class="notice">💡 Higher quality = larger file size. 720p is recommended for most devices.</div>
+
+    <!-- QUALITY LIST -->
+    <div class="quality-list" id="qualityList">
+      <div class="loading-state"><div class="spinner"></div><br><br>Loading qualities...</div>
+    </div>
+
+    <a class="btn-back" href="javascript:history.back()">← Back</a>
+    <div class="card-footer">Downloaded from KnightWolf · Click download and save the file</div>
   </div>
-
-  <!-- CONTENT -->
-  <div id="content" style="display:none">
-    <div class="card-header">
-      <div class="episode-tag" id="epTag">Download</div>
-      <div class="host-name" id="hostName">Select Quality</div>
-      <div class="host-meta" id="hostMeta">Choose your preferred quality</div>
-    </div>
-
-    <div class="quality-wrap">
-      <div class="section-title">Available Qualities</div>
-      <div class="quality-grid" id="qualityGrid"></div>
-      <a class="back-link" href="javascript:history.back()">← Go Back</a>
-    </div>
-
-    <div class="card-footer">
-      <span>⚔</span> Powered by KnightWolf
-    </div>
-  </div>
-
-  <!-- ERROR -->
-  <div id="errorBox" style="display:none">
-    <div class="error-box">
-      <div class="error-icon">⚠️</div>
-      <div class="error-title">Links Not Found</div>
-      <div class="error-sub">Download links are unavailable.<br>Please go back and try again.</div>
-      <a class="back-link" href="javascript:history.back()">← Go Back</a>
-    </div>
-    <div class="card-footer"><span>⚔</span> Powered by KnightWolf</div>
-  </div>
-
 </div>
 
 <script>
-const BASE    = "https://animehunt-backend.animehunt715.workers.dev"
-const params  = new URLSearchParams(location.search)
-const hostId  = params.get("host_id")
-const animeQ  = params.get("anime")   || ""
-const seasonQ = params.get("season")  || ""
-const epQ     = params.get("episode") || ""
+const BASE   = 'https://animehunt-backend.animehunt715.workers.dev'
+const params = new URLSearchParams(location.search)
 
-const D = id => document.getElementById(id)
+const hostId  = params.get('host_id')
+const anime   = params.get('anime')
+const season  = params.get('season')
+const episode = params.get('episode')
 
+/* ── QUALITY META ── */
 const QUALITY_META = {
-  "480p":  { icon:"📱", label:"480p SD",   cls:"sd",  note:"Smaller file size" },
-  "720p":  { icon:"📺", label:"720p HD",   cls:"hd",  note:"Recommended" },
-  "1080p": { icon:"🖥", label:"1080p FHD", cls:"fhd", note:"Full HD quality" },
-  "4K":    { icon:"🌟", label:"4K UHD",    cls:"uhd", note:"Ultra HD" }
+  '4K':    { icon: '💎', details: '3840×2160 · Ultra HD',   res: 'res-4K',    size: '~8-15GB',  recommended: false },
+  '1080p': { icon: '🎬', details: '1920×1080 · Full HD',    res: 'res-1080p', size: '~1.5-4GB', recommended: false },
+  '720p':  { icon: '📺', details: '1280×720  · HD Ready',   res: 'res-720p',  size: '~700MB-1.5GB', recommended: true },
+  '480p':  { icon: '📱', details: '854×480   · Standard',   res: 'res-480p',  size: '~300-600MB', recommended: false },
+  '360p':  { icon: '⚡', details: '640×360   · Low Quality', res: 'res-360p',  size: '~150-300MB', recommended: false }
 }
 
-async function loadLinks() {
-  if (!hostId) { showError(); return }
+function esc(s) { return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;') }
 
+async function track(event_type, extra = {}) {
   try {
-    const res  = await fetch(`${BASE}/api/knight-data?host_id=${encodeURIComponent(hostId)}`)
-    const json = await res.json()
+    await fetch(`${BASE}/api/analytics`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ event_type, event_data: JSON.stringify({ host_id: hostId, anime, season, episode, ...extra }) })
+    })
+  } catch {}
+}
 
-    if (!res.ok || !json.success) { showError(); return }
-
-    const { host, links } = json.data || {}
-    if (!links?.length) { showError(); return }
-
-    D("hostName").textContent = host?.name || "Download"
-    D("hostMeta").textContent = `${links.length} ${links.length === 1 ? "quality" : "qualities"} available`
-
-    if (animeQ || epQ) {
-      let tag = ""
-      if (animeQ)  tag += animeQ
-      if (seasonQ) tag += ` · S${seasonQ}`
-      if (epQ)     tag += ` EP${epQ}`
-      D("epTag").textContent = tag.trim() || "Download"
+async function loadKnightData() {
+  const list = document.getElementById('qualityList')
+  try {
+    const r = await fetch(`${BASE}/api/knight-data?host_id=${encodeURIComponent(hostId || '')}`)
+    const j = await r.json()
+    if (!j.success || !j.data?.qualities?.length) {
+      list.innerHTML = `<div class="error-box">⚠️ No quality links found. Please go back and try another host.</div>`
+      return
     }
-
-    const grid = D("qualityGrid")
-    grid.innerHTML = ""
-
-    for (const link of links) {
-      const meta = QUALITY_META[link.quality] || {
-        icon:"📥", label: link.quality || "Download", cls:"sd", note:""
-      }
-      const href = `${BASE}/api/download-final?host_id=${encodeURIComponent(hostId)}&quality=${encodeURIComponent(link.quality || "")}`
-
-      const a = document.createElement("a")
-      a.className = `quality-btn ${meta.cls}`
-      a.href = href
-      a.innerHTML = `
-        <div class="q-left">
-          <div class="q-badge">${meta.icon}</div>
-          <div class="q-text">
-            <span class="q-label">${meta.label}</span>
-            ${meta.note ? `<span class="q-note">${meta.note}</span>` : ""}
-          </div>
-        </div>
-        <span class="q-arrow">›</span>
-      `
-      grid.appendChild(a)
-    }
-
-    D("loading").style.display = "none"
-    D("content").style.display = "block"
-
-  } catch (err) {
-    console.error("knight error:", err)
-    showError()
+    renderQualities(j.data)
+    loadAnimeInfo(j.data)
+    track('knight_page_view')
+  } catch {
+    list.innerHTML = `<div class="error-box">⚠️ Failed to load. Please try again.</div>`
   }
 }
 
-function showError() {
-  D("loading").style.display  = "none"
-  D("errorBox").style.display = "block"
+function loadAnimeInfo(data) {
+  if (!anime && !data.anime_title) return
+  const epInfo   = document.getElementById('epInfo')
+  const nameEl   = document.getElementById('animeName')
+  const metaEl   = document.getElementById('epMeta')
+  const posterEl = document.getElementById('posterEl')
+
+  nameEl.textContent = data.anime_title || decodeURIComponent(anime || '')
+  const parts = []
+  if (season)  parts.push(`Season ${season}`)
+  if (episode) parts.push(`Episode ${episode}`)
+  if (data.episode_title) parts.push(data.episode_title)
+  metaEl.textContent = parts.join(' · ')
+
+  if (data.poster) {
+    const img = document.createElement('img')
+    img.src = data.poster; img.alt = 'poster'
+    posterEl.textContent = ''
+    posterEl.appendChild(img)
+  }
+  epInfo.style.display = 'flex'
 }
 
-loadLinks()
+function renderQualities(data) {
+  const list = document.getElementById('qualityList')
+  const qs   = data.qualities || []
+  list.innerHTML = ''
+
+  const sorted = [...qs].sort((a, b) => {
+    const order = ['4K','1080p','720p','480p','360p']
+    return order.indexOf(a.quality) - order.indexOf(b.quality)
+  })
+
+  sorted.forEach((q, idx) => {
+    const meta    = QUALITY_META[q.quality] || { icon: '📥', details: 'Download', res: '', size: '', recommended: false }
+    const isRec   = meta.recommended
+    const btn     = document.createElement('a')
+    btn.className = `quality-btn ${meta.res}${isRec ? ' recommended' : ''}`
+    btn.href      = '#'
+
+    btn.innerHTML = `
+      <div class="qb-left">
+        <span class="qb-icon">${meta.icon}</span>
+        <div>
+          <div class="qb-quality">${esc(q.quality)}</div>
+          <div class="qb-details">${meta.details}</div>
+        </div>
+      </div>
+      <div class="qb-right">
+        ${isRec ? '<span class="rec-badge">⭐ Recommended</span>' : ''}
+        <span class="size-badge">${meta.size}</span>
+        <span class="qb-arrow">›</span>
+      </div>`
+
+    btn.addEventListener('click', (e) => {
+      e.preventDefault()
+      track('knight_download', { quality: q.quality })
+      window.location.href = q.link
+    })
+    list.appendChild(btn)
+  })
+}
+
+loadKnightData()
 </script>
 </body>
 </html>
