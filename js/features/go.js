@@ -4,7 +4,7 @@
 // Ye file go.html ke inline script ki jagah use hogi
 // ============================================================
 
-const BASE = 'https://animehunt-backend.animehunt715.workers.dev';
+import { BASE } from '../config.js'; // MEDIUM FIX #6: shared URL
 
 const params    = new URLSearchParams(location.search);
 const sessionId = params.get('session');
