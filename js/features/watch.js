@@ -164,9 +164,10 @@ function renderServerList(servers, anime, season, ep) {
 }
 
 function loadServer(server, iframe, msgBox) {
-  if (!server?.url) return;
+  const src = server?.embed || server?.url;
+  if (!src) return;
   if (msgBox) msgBox.style.display = 'none';
-  iframe.src = server.url;
+  iframe.src = src;
 }
 
 // ============================================================
@@ -280,4 +281,4 @@ function renderRelated(related) {
     const c = e.target.closest('[data-slug]');
     if (c) location.href = `details.html?slug=${c.dataset.slug}`;
   });
-}
+    }
