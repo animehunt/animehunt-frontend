@@ -4,7 +4,7 @@
 // Host ID se quality links fetch karo
 // ============================================================
 
-const BASE = 'https://animehunt-backend.animehunt715.workers.dev';
+import { BASE } from '../config.js'; // MEDIUM FIX #6: shared URL
 
 const params  = new URLSearchParams(location.search);
 const hostId  = params.get('host_id');
