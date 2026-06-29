@@ -1,0 +1,279 @@
+// ============================================================
+// js/features/details.js
+// details.html — anime/movie details page
+// ============================================================
+
+import { fetchDetails, fetchEpisodes, fetchRelated } from '../api.js';
+import { saveToHistory, getParam, showEpSkeletons, showRelSkeletons, lazyLoadCards } from '../utils.js';
+
+export async function initDetails() {
+  const slug = getParam('slug');
+  if (!slug) return;
+
+  // Immediate skeletons
+  showEpSkeletons(document.getElementById('episodeGrid'), 8);
+  showRelSkeletons(document.getElementById('relatedGrid'), 4);
+
+  try {
+    const anime = await fetchDetails(slug);
+    if (!anime) return;
+
+    renderHero(anime);
+    renderAbout(anime);
+    updateMetaTags(anime);
+    saveToHistory(anime);
+
+    const episodes = await fetchEpisodes(anime.id, 1);
+    renderEpisodeGrid(episodes, anime.slug, 1);
+    renderSeasonDropdown(anime.totalSeasons || 1, anime);
+
+    const related = await fetchRelated(anime.id);
+    renderRelated(related);
+
+    setupActionButtons(anime, episodes);
+
+  } catch (err) {
+    console.error('Details load error:', err);
+  }
+}
+
+// ============================================================
+// HERO SECTION
+// ============================================================
+function renderHero(anime) {
+  const heroBg    = document.getElementById('heroBg');
+  const posterImg = document.getElementById('posterImg');
+  const titleEl   = document.getElementById('animeTitle');
+  const metaEl    = document.getElementById('animeMeta');
+  const descEl    = document.getElementById('animeDesc');
+
+  if (heroBg) {
+    heroBg.style.backgroundImage    = `url('${anime.banner || anime.poster}')`;
+    heroBg.style.backgroundSize     = 'cover';
+    heroBg.style.backgroundPosition = 'center';
+  }
+
+  if (posterImg) {
+    posterImg.src = anime.poster;
+    posterImg.alt = (anime.title || '').replace(/"/g, '&quot;');
+  }
+
+  if (titleEl) {
+    const year  = anime.year ? ` <span>(${anime.year})</span>` : '';
+    titleEl.innerHTML = `${(anime.title || '').replace(/</g,'&lt;')}${year}`;
+  }
+
+  if (metaEl) {
+    metaEl.innerHTML = `
+      <span>${anime.year || ''}</span>
+      <span class="imdb">⭐ ${anime.rating || 'N/A'}</span>
+      <span>${anime.type || ''}</span>
+      <span>${anime.language || ''}</span>
+    `;
+  }
+
+  if (descEl) descEl.textContent = anime.description || '';
+
+  // Page title
+  document.title = `${anime.title} – AnimeHunt`;
+}
+
+// ============================================================
+// SEO META TAGS — Dynamic update for crawlers
+// ============================================================
+function updateMetaTags(anime) {
+  const desc = (anime.description || '').slice(0, 160);
+  const img  = anime.poster || '';
+  const url  = `${location.origin}/details.html?slug=${encodeURIComponent(anime.slug || '')}`;
+
+  // Description
+  let metaDesc = document.querySelector('meta[name="description"]');
+  if (!metaDesc) {
+    metaDesc = document.createElement('meta');
+    metaDesc.name = 'description';
+    document.head.appendChild(metaDesc);
+  }
+  metaDesc.content = desc;
+
+  function setOG(prop, content) {
+    let el = document.querySelector(`meta[property="${prop}"]`);
+    if (!el) {
+      el = document.createElement('meta');
+      el.setAttribute('property', prop);
+      document.head.appendChild(el);
+    }
+    el.content = content;
+  }
+
+  setOG('og:title',       `${anime.title} – AnimeHunt`);
+  setOG('og:description', desc);
+  setOG('og:image',       img);
+  setOG('og:type',        'video.episode');
+  setOG('og:url',         url);
+
+  let canonical = document.querySelector('link[rel="canonical"]');
+  if (!canonical) {
+    canonical = document.createElement('link');
+    canonical.rel = 'canonical';
+    document.head.appendChild(canonical);
+  }
+  canonical.href = url;
+}
+
+// ============================================================
+// ABOUT SECTION
+// ============================================================
+function renderAbout(anime) {
+  const list   = document.getElementById('aboutList');
+  const descEl = document.getElementById('aboutDesc');
+
+  if (list) {
+    const rows = [
+      { label: 'Type',     value: anime.type },
+      { label: 'Status',   value: anime.status },
+      { label: 'Language', value: anime.language },
+      { label: 'Genres',   value: (anime.genres || []).join(', ') },
+      { label: 'Episodes', value: anime.totalEpisodes },
+      { label: 'Seasons',  value: anime.totalSeasons },
+      { label: 'Year',     value: anime.year },
+    ];
+    list.innerHTML = rows
+      .filter(r => r.value)
+      .map(r => `
+        <li>
+          <strong style="color:#ccc">${r.label}:</strong>
+          <span style="color:#fff; margin-left:6px;">${r.value}</span>
+        </li>
+      `).join('');
+  }
+
+  if (descEl) descEl.textContent = anime.description || '';
+}
+
+// ============================================================
+// EPISODE GRID — exported so watch.js bhi use kar sake
+// ============================================================
+export function renderEpisodeGrid(episodes, slug, season) {
+  const grid = document.getElementById('episodeGrid');
+  if (!grid) return;
+
+  if (!episodes || episodes.length === 0) {
+    grid.innerHTML = '<p style="color:#666;font-size:12px;padding:10px;grid-column:1/-1;">No episodes found.</p>';
+    return;
+  }
+
+  const safeSlug = encodeURIComponent(slug || '');
+
+  grid.innerHTML = episodes.map(ep => `
+    <div class="ep-card"
+      data-slug="${safeSlug}"
+      data-season="${season}"
+      data-ep="${ep.number}"
+      style="cursor:pointer;">
+      <div class="ep-thumb">
+        <img src="${ep.thumbnail || ''}"
+             alt="EP ${ep.number}"
+             loading="lazy"
+             onerror="this.style.display='none'">
+        <div class="ep-no">EP ${ep.number}</div>
+      </div>
+      <p>${(ep.title || 'Episode ' + ep.number).replace(/</g,'&lt;')}</p>
+    </div>
+  `).join('');
+
+  // Event delegation
+  grid.addEventListener('click', e => {
+    const card = e.target.closest('[data-slug]');
+    if (card) {
+      location.href = `watch.html?slug=${card.dataset.slug}&season=${card.dataset.season}&ep=${card.dataset.ep}`;
+    }
+  });
+}
+
+// ============================================================
+// SEASON DROPDOWN
+// ============================================================
+function renderSeasonDropdown(totalSeasons, anime) {
+  const seasonBtn  = document.getElementById('seasonBtn');
+  const seasonList = document.getElementById('seasonList');
+  const allBtn     = document.getElementById('allBtn');
+  if (!seasonBtn || !seasonList) return;
+
+  let currentSeason = 1;
+  seasonBtn.textContent = 'SEASON 1';
+
+  const seasons = Array.from({ length: totalSeasons }, (_, i) => i + 1);
+  seasonList.innerHTML = seasons.map(s =>
+    `<div data-season="${s}">Season ${s}</div>`
+  ).join('');
+
+  // Toggle dropdown
+  seasonBtn.addEventListener('click', () => {
+    const open = seasonList.style.display === 'block';
+    seasonList.style.display = open ? 'none' : 'block';
+    seasonBtn.classList.toggle('active', !open);
+  });
+
+  // Season select
+  seasonList.querySelectorAll('div').forEach(div => {
+    div.addEventListener('click', async () => {
+      currentSeason = parseInt(div.dataset.season);
+      seasonBtn.textContent = `SEASON ${currentSeason}`;
+      seasonBtn.classList.remove('active');
+      seasonList.style.display = 'none';
+      showEpSkeletons(document.getElementById('episodeGrid'), 8);
+      const eps = await fetchEpisodes(anime.id, currentSeason);
+      renderEpisodeGrid(eps, anime.slug, currentSeason);
+    });
+  });
+
+  // All Episodes button
+  allBtn?.addEventListener('click', async () => {
+    showEpSkeletons(document.getElementById('episodeGrid'), 12);
+    const allEps = await fetchEpisodes(anime.id, 'all');
+    renderEpisodeGrid(allEps, anime.slug, currentSeason);
+    seasonList.style.display = 'none';
+  });
+}
+
+// ============================================================
+// RELATED ANIME
+// ============================================================
+function renderRelated(related) {
+  const grid = document.getElementById('relatedGrid');
+  if (!grid || !related?.length) return;
+
+  grid.innerHTML = related.map(item => {
+    const slug  = encodeURIComponent(item.slug || '');
+    const title = (item.title || '').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    return `
+      <div class="rel-card" data-slug="${slug}" data-poster="${item.poster || ''}" style="background:#1a1f2e;">
+        <span style="background:rgba(0,0,0,0.6);padding:2px 5px;border-radius:4px;font-size:10px;color:#fff;">${title}</span>
+      </div>`;
+  }).join('');
+
+  lazyLoadCards(grid);
+
+  grid.addEventListener('click', e => {
+    const c = e.target.closest('[data-slug]');
+    if (c) location.href = `details.html?slug=${c.dataset.slug}`;
+  });
+}
+
+// ============================================================
+// ACTION BUTTONS
+// ============================================================
+function setupActionButtons(anime, episodes) {
+  const watchBtn    = document.querySelector('.actions .watch');
+  const downloadBtn = document.querySelector('.actions .download');
+  const firstEp     = episodes?.[0]?.number || 1;
+  const safeSlug    = encodeURIComponent(anime.slug || '');
+
+  watchBtn?.addEventListener('click', () => {
+    window.location.href = `watch.html?slug=${safeSlug}&season=1&ep=${firstEp}`;
+  });
+
+  downloadBtn?.addEventListener('click', () => {
+    window.location.href = `download.html?slug=${safeSlug}&season=1&ep=${firstEp}`;
+  });
+}
