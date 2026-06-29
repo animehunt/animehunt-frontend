@@ -17,17 +17,15 @@ async function apiFetch(path) {
 // HOME PAGE
 // ============================================================
 
-// BUG FIX (Section 2, Bug 3): was /api/homepage — backend route is /api/homepage/public
-// Response format: { success: true, data: [...rows with items] }
+// { rows: [], categories: [] }
 export function fetchHomepage() {
-  return apiFetch('/api/homepage/public');
+  return apiFetch('/api/homepage');
 }
 
 // featured banners array — hero slider ke liye
-// returns: { success: true, data: [{ slug, title, banner, poster, year, rating }] }
-// BUG FIX (Section 2, Bug 3): was /api/featured — backend route is /api/anime/featured
+// returns: [{ slug, title, banner, poster, year, rating }]
 export function fetchFeaturedBanners() {
-  return apiFetch('/api/anime/featured');
+  return apiFetch('/api/featured');
 }
 
 // ============================================================
@@ -41,15 +39,13 @@ export function fetchDetails(slug) {
 
 // episodes array for a season
 // season = 1,2,3... OR 'all'
-// BUG FIX (Section 2, Bug 4): was /api/episodes/:animeId — backend route is /api/public/episodes/:animeId
 export function fetchEpisodes(animeId, season = 1) {
-  return apiFetch(`/api/public/episodes/${encodeURIComponent(animeId)}?season=${season}`);
+  return apiFetch(`/api/episodes/${encodeURIComponent(animeId)}?season=${season}`);
 }
 
 // related anime array
-// BUG FIX (Section 2, Bug 2): was /api/related/:animeId — backend route is /api/recommendations/:animeId
 export function fetchRelated(animeId) {
-  return apiFetch(`/api/recommendations/${encodeURIComponent(animeId)}`);
+  return apiFetch(`/api/related/${encodeURIComponent(animeId)}`);
 }
 
 // ============================================================
@@ -57,10 +53,9 @@ export function fetchRelated(animeId) {
 // ============================================================
 
 // servers array for an episode
-// returns: [{ id, name, embed, type, priority }]
-// BUG FIX (Section 2, Bug 4): was /api/servers/:episodeId — backend route is /api/public/servers/:episodeId
+// returns: [{ name, url }]
 export function fetchServers(episodeId) {
-  return apiFetch(`/api/public/servers/${encodeURIComponent(episodeId)}`);
+  return apiFetch(`/api/servers/${encodeURIComponent(episodeId)}`);
 }
 
 // ============================================================
@@ -86,11 +81,9 @@ export function fetchGoSession(sessionId) {
 // anime.html / movies.html / series.html / cartoon.html
 // type: 'anime' | 'movie' | 'series' | 'cartoon'
 // filter: 'all' | 'movie' | 'series'
-// returns: { data: [], total, page }  ← backend /api/anime wraps in { success, data }
-// BUG FIX (Section 2, Bug 1): was /api/listing — route did not exist. Correct path is /api/anime?type=
+// returns: { items: [], total, page }
 export function fetchListing(type, page = 1, filter = 'all') {
-  const f = filter === 'all' ? '' : `&filter=${filter}`;
-  return apiFetch(`/api/anime?type=${type}&page=${page}${f}`);
+  return apiFetch(`/api/listing?type=${type}&page=${page}&filter=${filter}`);
 }
 
 // ============================================================
