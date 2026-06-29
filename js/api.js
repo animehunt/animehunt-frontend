@@ -19,13 +19,13 @@ async function apiFetch(path) {
 
 // { rows: [], categories: [] }
 export function fetchHomepage() {
-  return apiFetch('/api/homepage');
+  return apiFetch('/api/homepage/public');
 }
 
 // featured banners array — hero slider ke liye
 // returns: [{ slug, title, banner, poster, year, rating }]
 export function fetchFeaturedBanners() {
-  return apiFetch('/api/featured');
+  return apiFetch('/api/anime/featured');
 }
 
 // ============================================================
@@ -40,12 +40,12 @@ export function fetchDetails(slug) {
 // episodes array for a season
 // season = 1,2,3... OR 'all'
 export function fetchEpisodes(animeId, season = 1) {
-  return apiFetch(`/api/episodes/${encodeURIComponent(animeId)}?season=${season}`);
+  return apiFetch(`/api/public/episodes/${encodeURIComponent(animeId)}?season=${season}`);
 }
 
 // related anime array
 export function fetchRelated(animeId) {
-  return apiFetch(`/api/related/${encodeURIComponent(animeId)}`);
+  return apiFetch(`/api/recommendations/${encodeURIComponent(animeId)}`);
 }
 
 // ============================================================
@@ -55,7 +55,7 @@ export function fetchRelated(animeId) {
 // servers array for an episode
 // returns: [{ name, url }]
 export function fetchServers(episodeId) {
-  return apiFetch(`/api/servers/${encodeURIComponent(episodeId)}`);
+  return apiFetch(`/api/public/servers/${encodeURIComponent(episodeId)}`);
 }
 
 // ============================================================
@@ -83,7 +83,8 @@ export function fetchGoSession(sessionId) {
 // filter: 'all' | 'movie' | 'series'
 // returns: { items: [], total, page }
 export function fetchListing(type, page = 1, filter = 'all') {
-  return apiFetch(`/api/listing?type=${type}&page=${page}&filter=${filter}`);
+  const f = filter === 'all' ? '' : `&filter=${filter}`;
+  return apiFetch(`/api/anime?type=${type}&page=${page}${f}`);
 }
 
 // ============================================================
