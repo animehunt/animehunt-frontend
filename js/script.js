@@ -95,4 +95,3 @@ switch (page) {
     // Koi page match nahi hua — kuch nahi karna
     break;
 }
-
