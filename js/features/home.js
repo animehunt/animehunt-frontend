@@ -10,22 +10,23 @@ import { showSkeletons, lazyLoadCards }        from '../utils.js';
 export async function initHome() {
 
   try {
-    const [data, banners] = await Promise.all([
+    const [resp, bannerResp] = await Promise.all([
       fetchHomepage(),
       fetchFeaturedBanners()
     ]);
 
+    // Unwrap API envelope: /api/homepage/public returns { success, data: [...rows] }
+    const rows    = resp?.data    || resp?.rows    || [];
+    const banners = bannerResp?.data || bannerResp || [];
+
     // Hero slider
     initHeroSlider(banners);
-
-    // Category bar
-    if (data.categories?.length) renderCategoryBar(data.categories);
 
     // Continue Watching
     renderContinueWatching();
 
     // Homepage rows
-    if (data.rows?.length) renderHomepageRows(data.rows);
+    if (rows.length) renderHomepageRows(rows);
 
   } catch (err) {
     console.error('Home load error:', err);
