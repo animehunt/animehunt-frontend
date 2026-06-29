@@ -265,4 +265,3 @@ export function renderPaginationShared(navEl, page, total, onPageChange, perPage
     }
   }, { once: true }); // once: true — re-render pe naya listener lagega
 }
-
