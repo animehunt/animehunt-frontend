@@ -1,10 +1,10 @@
 // ============================================================
 // js/api.js
 // Saare backend API calls ek jagah
-// Base: https://animehunt-backend.animehunt715.workers.dev
+// Base: https://YOUR-ACTUAL-BACKEND-DOMAIN.com  ⚠️ REPLACE with the real backend domain
 // ============================================================
 
-const BASE = 'https://animehunt-backend.animehunt715.workers.dev';
+const BASE = 'https://YOUR-ACTUAL-BACKEND-DOMAIN.com';  // ⚠️ REPLACE
 
 // Generic fetch helper — error handle karta hai
 async function apiFetch(path) {
@@ -108,3 +108,5 @@ export function fetchCategory(key, page = 1, type = '') {
 export function searchAnime(query) {
   return apiFetch(`/api/search?q=${encodeURIComponent(query)}`);
 }
+
+
