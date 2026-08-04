@@ -7,7 +7,7 @@
 <style>
 /* ================= GLOBAL (matches details.html design language) ================= */
 *{margin:0;padding:0;box-sizing:border-box;font-family:system-ui,sans-serif}
-body{background:#0b0f1a;color:#fff;padding-bottom:70px}
+body{background:#000;color:#fff;padding-bottom:70px}
 a{text-decoration:none;color:inherit}
 
 /* ================= HEADER ================= */
@@ -44,7 +44,7 @@ a{text-decoration:none;color:inherit}
 .hero-bg{position:absolute;inset:0;background-size:cover;background-position:center;background-color:#1a2035}
 .hero-bg::after{
   content:'';position:absolute;inset:0;
-  background:linear-gradient(180deg,rgba(11,15,26,.2) 0%,rgba(11,15,26,.55) 60%,#0b0f1a 100%)
+  background:linear-gradient(180deg,rgba(0,0,0,.2) 0%,rgba(0,0,0,.55) 60%,#000 100%)
 }
 .poster{
   position:absolute;left:16px;bottom:16px;width:110px;height:165px;
@@ -199,14 +199,54 @@ a{text-decoration:none;color:inherit}
 .copyright{font-size:11px;color:#777}
 
 /* ================= BOTTOM NAV (fixed, correct order: Anime Movies Home Series Cartoon) ================= */
+/* BOTTOM NAV — mobile only, hidden on desktop below */
 .bottom-nav{
-  position:fixed;bottom:0;left:0;width:100%;height:58px;
-  background:rgba(11,15,26,.97);backdrop-filter:blur(10px);
-  display:flex;justify-content:space-around;align-items:center;
-  border-top:1px solid #1a2035;z-index:100
+  position:fixed;bottom:0;left:0;width:100%;height:auto;
+  padding:2px 0 6px;background:transparent;display:flex;
+  justify-content:space-around;align-items:stretch;z-index:1200;
 }
-.nav-item{font-size:11px;color:#7a8296;display:flex;align-items:center;justify-content:center;font-weight:600;letter-spacing:.3px}
-.nav-item.active{color:#ffcc00}
+.bottom-nav::before{
+  content:'';position:absolute;left:0;right:0;bottom:0;
+  height:50px;background:#000;z-index:-1;
+}
+.nav-item{
+  display:flex;flex-direction:column;align-items:center;justify-content:flex-end;
+  gap:4px;font-size:10px;color:#888;cursor:pointer;text-decoration:none!important;
+  padding:0 10px 10px;border-radius:8px;
+  transition:color .22s ease,transform .22s ease,background .22s ease;
+  text-align:center;line-height:1.2;letter-spacing:.3px;font-weight:600;position:relative;
+}
+.nav-item img{
+  width:18px;height:18px;object-fit:contain;opacity:.7;
+  transition:opacity .22s ease,filter .22s ease,transform .22s ease;
+}
+.nav-item:hover img{opacity:.9}
+.nav-item:hover{color:#ccc}
+.nav-item.active{color:#ffcc00;font-weight:bold}
+.nav-item.nav-home img{width:38px;height:38px}
+.nav-item.active::after{
+  content:'';position:absolute;bottom:2px;left:50%;transform:translateX(-50%);
+  width:26px;height:3px;border-radius:2px;background:#ffcc00;
+  box-shadow:0 0 8px rgba(255,204,0,.7);
+}
+.desktop-nav{display:none}
+@media (min-width:1024px){
+  .bottom-nav{display:none}
+  .desktop-nav{
+    display:flex;align-items:center;gap:22px;margin-left:24px;
+  }
+  .desktop-nav a{
+    color:#aaa;font-size:13px;font-weight:600;letter-spacing:.3px;
+    text-decoration:none!important;padding:6px 2px;position:relative;
+    transition:color .2s ease;
+  }
+  .desktop-nav a:hover{color:#ddd}
+  .desktop-nav a.active{color:#ffcc00}
+  .desktop-nav a.active::after{
+    content:'';position:absolute;bottom:-4px;left:0;right:0;height:2px;
+    border-radius:2px;background:#ffcc00;box-shadow:0 0 8px rgba(255,204,0,.7);
+  }
+}
 </style>
 </head>
 <body data-page="download">
@@ -214,6 +254,13 @@ a{text-decoration:none;color:inherit}
 <header class="main-header">
   <div class="menu-btn" id="menuBtn">☰</div>
   <div class="logo"><span class="anime">anime</span><span class="hunt">hunt</span></div>
+  <nav class="desktop-nav">
+    <a href="movies.html">Movies</a>
+    <a href="series.html">Series</a>
+    <a href="index.html">Home</a>
+    <a href="anime.html">Anime</a>
+    <a href="cartoon.html">Cartoon</a>
+  </nav>
   <input class="search-bar" placeholder="Search movie">
 </header>
 
@@ -224,7 +271,7 @@ a{text-decoration:none;color:inherit}
     <a href="privacy.html">Privacy Policy</a>
     <a href="disclaimer.html">Disclaimer</a>
     <a href="dmca.html">DMCA</a>
-    <a href="https://t.me/toons15" target="_blank">Telegram</a>
+    <a href="https://t.me/toons15" target="_blank" rel="noopener noreferrer">Telegram</a>
   </nav>
 </aside>
 <div class="overlay" id="overlay"></div>
@@ -241,7 +288,7 @@ a{text-decoration:none;color:inherit}
 
 <div class="actions">
   <a class="watch" id="watchBtn" href="#">Watch</a>
-  <a class="subscribe" href="https://t.me/toons15" target="_blank">Subscribe</a>
+  <a class="subscribe" href="https://t.me/toons15" target="_blank" rel="noopener noreferrer">Subscribe</a>
 </div>
 
 <div class="quick-info" id="quickInfo"></div>
@@ -274,29 +321,52 @@ a{text-decoration:none;color:inherit}
     <a href="about.html">About AnimeHunt</a>
     <a href="disclaimer.html">Disclaimer</a>
     <a href="dmca.html">DMCA</a>
-    <a href="https://t.me/toons15" target="_blank">Telegram</a>
+    <a href="https://t.me/toons15" target="_blank" rel="noopener noreferrer">Telegram</a>
   </div>
   <div class="copyright">© 2026 AnimeHunt. All Rights Reserved.</div>
 </footer>
 
 <!-- BOTTOM NAV — correct order per requirement: Anime, Movies, Home, Series, Cartoon -->
 <nav class="bottom-nav">
-  <a href="anime.html" class="nav-item">ANIME</a>
-  <a href="movies.html" class="nav-item">MOVIES</a>
-  <a href="index.html" class="nav-item active">HOME</a>
-  <a href="series.html" class="nav-item">SERIES</a>
-  <a href="cartoon.html" class="nav-item">CARTOON</a>
+  <a href="movies.html" class="nav-item">
+    <img src="assets/icons/nav-movies.png" alt="">
+    <span>MOVIES</span>
+  </a>
+  <a href="series.html" class="nav-item">
+    <img src="assets/icons/nav-series.png" alt="">
+    <span>SERIES</span>
+  </a>
+  <a href="index.html" class="nav-item nav-home">
+    <img src="assets/icons/nav-home.png" alt="">
+    <span>HOME</span>
+  </a>
+  <a href="anime.html" class="nav-item">
+    <img src="assets/icons/nav-anime.png" alt="">
+    <span>ANIME</span>
+  </a>
+  <a href="cartoon.html" class="nav-item">
+    <img src="assets/icons/nav-cartoon.png" alt="">
+    <span>CARTOON</span>
+  </a>
 </nav>
 
 <script>
-const API    = 'https://animehunt-backend.animehunt715.workers.dev/api'
+// ✅ FIX (FE-ISSUE-001): stale Cloudflare Workers URL — the backend has
+// migrated to a Node/VPS deployment (confirmed separately). This is one
+// of 6 independent hardcoded copies of this URL found across the
+// codebase (js/api.js, js/config.js, and the inline scripts in
+// download.html/go.html/knight.html) — all need the same real URL.
+const API    = 'https://YOUR-ACTUAL-BACKEND-DOMAIN.com/api'  // ⚠️ REPLACE
 const params = new URLSearchParams(location.search)
 
 const animeId = params.get('anime_id') || params.get('id')
 let currentSeason = parseInt(params.get('season')) || 1
 
 const D = id => document.getElementById(id)
-function esc(s) { return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;') }
+// ✅ FIX (FE-ISSUE-003, download.html inline script instance): was only
+// escaping &, <, > — missing " and ' — matching the full 5-character
+// implementation used in utils.js and every other fixed file.
+function esc(s) { return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;') }
 
 /* ── SIDEBAR ── */
 D('menuBtn').onclick  = () => { D('sidebar').classList.add('open'); D('overlay').classList.add('show') }
@@ -343,13 +413,16 @@ async function loadAnimeInfo() {
 
     if (animeData.poster) D('posterImg').src = animeData.poster
     if (animeData.banner || animeData.poster) {
-      D('heroBg').style.backgroundImage = `url('${esc(animeData.banner || animeData.poster)}')`
+      // ✅ FIX (FE-ISSUE-003, minor): JSON.stringify() for safe CSS url()
+      // quoting instead of manual esc()-inside-single-quotes, which would
+      // still break on a banner URL containing a single quote.
+      D('heroBg').style.backgroundImage = `url(${JSON.stringify(animeData.banner || animeData.poster || '')})`
     }
 
     const meta = D('animeMeta')
     let metaHtml = ''
-    if (animeData.year)   metaHtml += `<span>${animeData.year}</span>`
-    if (animeData.rating) metaHtml += `<span class="imdb">★ ${animeData.rating}</span>`
+    if (animeData.year)   metaHtml += `<span>${esc(String(animeData.year))}</span>`
+    if (animeData.rating) metaHtml += `<span class="imdb">★ ${esc(String(animeData.rating))}</span>`
     if (animeData.status) metaHtml += `<span>${esc(animeData.status)}</span>`
     meta.innerHTML = metaHtml
 
@@ -620,7 +693,11 @@ async function startDownloadFlow(host) {
     const j = await r.json()
     if (!j.success) throw new Error(j.message)
     const sessionId = j.data.session_id
-    window.location.href = `go.html?session=${sessionId}&anime=${encodeURIComponent(animeData?.title || '')}&season=${encodeURIComponent(currentSeason || '')}`
+    // ✅ FIX: encodeURIComponent() on sessionId for consistency with
+    // every other URL-building pattern in this codebase — typically a
+    // UUID with no special characters, so low practical risk, but cheap
+    // to close.
+    window.location.href = `go.html?session=${encodeURIComponent(sessionId)}&anime=${encodeURIComponent(animeData?.title || '')}&season=${encodeURIComponent(currentSeason || '')}`
   } catch {
     alert('Something went wrong. Please try again.')
   }
