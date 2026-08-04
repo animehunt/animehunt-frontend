@@ -9,7 +9,7 @@
 <style>
 /* ================= GLOBAL ================= */
 *{margin:0;padding:0;box-sizing:border-box;font-family:system-ui,sans-serif}
-body{background:#0b0f1a;color:#fff}
+body{background:#000;color:#fff}
 
 /* ================= HEADER ================= */
 .main-header{
@@ -94,7 +94,6 @@ body{background:#0b0f1a;color:#fff}
 /* ================= EPISODES ================= */
 .ep-grid{
   display:grid;
-  grid-template-columns:repeat(4,1fr);
   gap:10px;
 }
 .ep-card{width:100%}
@@ -131,7 +130,6 @@ body{background:#0b0f1a;color:#fff}
 .related h3{font-size:16px;margin-bottom:10px}
 .related-grid{
   display:grid;
-  grid-template-columns:repeat(4,1fr);
   gap:12px;
 }
 .rel-card{
@@ -160,18 +158,7 @@ body{background:#0b0f1a;color:#fff}
 .copyright{font-size:11px;color:#777}
 
 /* ================= BOTTOM NAV ================= */
-.bottom-nav{
-  position:fixed;
-  bottom:0;
-  width:100%;
-  height:55px;
-  background:rgba(11,15,26,.95);
-  display:flex;
-  justify-content:space-around;
-  align-items:center;
-}
-.nav-item{font-size:11px;color:#aaa}
-.nav-item.active{color:#ffcc00}
+/* BOTTOM NAV — now defined in style.css only */
 /* ================= FULLSCREEN PLAYER FIX ================= */
 
 .hero{
@@ -220,7 +207,7 @@ iframe:-moz-full-screen{
 /* ===== SERVER LIST ===== */
 .ps-list-container{
   padding:12px 16px;
-  background:#0b0f1a;
+  background:#000;
 }
 
 .ps__-title{
@@ -300,7 +287,7 @@ iframe:-moz-full-screen{
   left: -260px;
   width: 260px;
   height: 100%;
-  background: #0b0f1a;
+  background: #000;
   z-index: 100000;
   transition: .3s ease;
   padding: 20px;
@@ -433,6 +420,13 @@ iframe:-moz-full-screen{
 <header class="main-header">
   <div class="menu-btn">☰</div>
   <div class="logo"><span class="anime">anime</span><span class="hunt">hunt</span></div>
+  <nav class="desktop-nav">
+    <a href="movies.html">Movies</a>
+    <a href="series.html">Series</a>
+    <a href="index.html">Home</a>
+    <a href="anime.html">Anime</a>
+    <a href="cartoon.html">Cartoon</a>
+  </nav>
   <input class="search-bar" placeholder="Search movie">
 </header>
   <!-- SIDEBAR -->
@@ -444,7 +438,7 @@ iframe:-moz-full-screen{
     <a href="privacy.html">Privacy Policy</a>
     <a href="disclaimer.html">Disclaimer</a>
     <a href="dmca.html">DMCA</a>
-    <a href="https://t.me/toons15" target="_blank">Telegram</a>
+    <a href="https://t.me/toons15" target="_blank" rel="noopener noreferrer">Telegram</a>
   </nav>
 </aside>
 
@@ -458,8 +452,7 @@ iframe:-moz-full-screen{
 
        <!-- MESSAGE OVERLAY -->
   <div id="player-message">
-    Server not working 😢 <br><br>
-    Please switch server
+    Loading player…
   </div>
 
   <!-- IFRAME -->
@@ -496,7 +489,7 @@ iframe:-moz-full-screen{
 <div class="actions" id="downloadBox"></div>
 
 <div class="actions" id="extraActions">
-  <a href="https://t.me/toons15" target="_blank">
+  <a href="https://t.me/toons15" target="_blank" rel="noopener noreferrer">
     <button class="subscribe">
       <img src="telegram.svg"> Subscribe
     </button>
@@ -531,7 +524,7 @@ iframe:-moz-full-screen{
     <a href="about.html">About AnimeHunt</a>
     <a href="disclaimer.html">Disclaimer</a>
     <a href="dmca.html">DMCA</a>
-    <a href="https://t.me/toons15" target="_blank">Telegram</a>
+    <a href="https://t.me/toons15" target="_blank" rel="noopener noreferrer">Telegram</a>
   </div>
   <div class="copyright">
     © 2026 AnimeHunt. All Rights Reserved.
@@ -539,11 +532,26 @@ iframe:-moz-full-screen{
 </footer>
 
 <nav class="bottom-nav">
-  <a href="anime.html" class="nav-item">ANIME</a>
-  <a href="movies.html" class="nav-item">MOVIES</a>
-  <a href="index.html" class="nav-item">HOME</a>
-  <a href="series.html" class="nav-item">SERIES</a>
-  <a href="cartoon.html" class="nav-item">CARTOON</a>
+  <a href="movies.html" class="nav-item">
+    <img src="assets/icons/nav-movies.png" alt="">
+    <span>MOVIES</span>
+  </a>
+  <a href="series.html" class="nav-item">
+    <img src="assets/icons/nav-series.png" alt="">
+    <span>SERIES</span>
+  </a>
+  <a href="index.html" class="nav-item nav-home">
+    <img src="assets/icons/nav-home.png" alt="">
+    <span>HOME</span>
+  </a>
+  <a href="anime.html" class="nav-item">
+    <img src="assets/icons/nav-anime.png" alt="">
+    <span>ANIME</span>
+  </a>
+  <a href="cartoon.html" class="nav-item">
+    <img src="assets/icons/nav-cartoon.png" alt="">
+    <span>CARTOON</span>
+  </a>
 </nav>
 <script type="module" src="js/script.js"></script>
 </body>
