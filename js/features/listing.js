@@ -4,8 +4,8 @@
 // body mein: data-page="listing" data-type="anime" etc.
 // ============================================================
 
-import { fetchListing } from '../api.js';
-import { getParam }     from '../utils.js';
+import { fetchListing }        from '../api.js';
+import { getParam, escapeHtml } from '../utils.js';
 
 let currentPage = 1;
 let currentType = 'anime';
@@ -43,17 +43,23 @@ async function loadMore() {
   const activeFilter = document.querySelector('.filter-btn.active')?.dataset.value || '';
 
   try {
-    const data = await fetchListing(currentType, currentPage, activeFilter);
+    // ✅ FIX (FE-ISSUE-006/009): same double-nested {data:{data,total}}
+    // shape as the 4 dedicated listing pages this file duplicates. This
+    // file is currently dead code (never imported — see script.js's
+    // router, which has no 'listing' case), fixed here for consistency.
+    const resp  = await fetchListing(currentType, currentPage, activeFilter);
+    const items = resp?.data?.data  || [];
+    const total = resp?.data?.total || 0;
 
-    if (!data?.items?.length) {
+    if (!items.length) {
       hasMore = false;
       isLoading = false;
       return;
     }
 
-    renderGrid(data.items, currentPage === 1);
+    renderGrid(items, currentPage === 1);
 
-    hasMore = currentPage < Math.ceil(data.total / 20);
+    hasMore = currentPage < Math.ceil(total / 20);
     currentPage++;
   } catch (err) {
     console.error('Listing error:', err);
@@ -84,10 +90,12 @@ function renderGrid(items, replace = false) {
     footer ? footer.before(grid) : main.appendChild(grid);
   }
 
+  // ✅ FIX (FE-ISSUE-003/009): poster (in a CSS url()) and title (in
+  // innerHTML) were both completely unescaped.
   const cards = items.map(item => `
     <div
       style="
-        background-image: url('${item.poster}');
+        background-image: url(${JSON.stringify(item.poster || '')});
         background-size: cover;
         background-position: center;
         aspect-ratio: 2/3;
@@ -114,7 +122,7 @@ function renderGrid(items, replace = false) {
         white-space:nowrap;
         max-width:100%;
         display:block;
-      ">${item.title}</span>
+      ">${escapeHtml(item.title || '')}</span>
     </div>
   `).join('');
 
