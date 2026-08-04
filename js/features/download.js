@@ -5,7 +5,7 @@
 // ============================================================
 
 import { fetchDetails, fetchEpisodes, fetchDownloadLinks } from '../api.js';
-import { getParam, showSkeletons }                         from '../utils.js';
+import { getParam, showSkeletons, escapeHtml }              from '../utils.js';
 
 export async function initDownload() {
   const slug   = getParam('slug');
@@ -17,14 +17,22 @@ export async function initDownload() {
   showSkeletons(document.querySelector('.quality-list, #qualityLinks'), 3);
 
   try {
-    const anime      = await fetchDetails(slug);
-    const episodes   = await fetchEpisodes(anime.id, season);
-    const currentEp  = episodes.find(e => e.number === ep) || episodes[0];
+    // ✅ FIX (FE-ISSUE-004/007): unwrap every {success, data} envelope —
+    // apiFetch() returns the raw response body for all three of these,
+    // never the anime object / episodes array / links array directly.
+    const animeResp = await fetchDetails(slug);
+    const anime      = animeResp?.data || animeResp;
+    if (!anime?.id) return;
+
+    const episodesResp = await fetchEpisodes(anime.id, season);
+    const episodes       = episodesResp?.data || [];
+    const currentEp        = episodes.find(e => e.number === ep) || episodes[0];
 
     renderDownloadHero(anime, season, ep);
 
     if (currentEp) {
-      const links = await fetchDownloadLinks(currentEp.id);
+      const linksResp = await fetchDownloadLinks(currentEp.id);
+      const links       = linksResp?.data || [];
       renderQualityLinks(links, anime.slug, season, ep);
     }
 
@@ -41,13 +49,15 @@ export async function initDownload() {
 function renderDownloadHero(anime, season, ep) {
   const backdrop = document.querySelector('.download-backdrop');
   if (backdrop) {
-    backdrop.style.backgroundImage = `url('${anime.banner || anime.poster}')`;
+    // ✅ FIX (FE-ISSUE-003, minor): JSON.stringify() for safe CSS url() quoting
+    backdrop.style.backgroundImage = `url(${JSON.stringify(anime.banner || anime.poster || '')})`;
   }
 
   const posterImg = document.querySelector('.poster img');
   if (posterImg) {
-    posterImg.src = anime.poster;
-    posterImg.alt = (anime.title || '').replace(/"/g, '&quot;');
+    posterImg.src = anime.poster || '';
+    // ✅ FIX (FE-ISSUE-003): full escapeHtml() instead of only escaping "
+    posterImg.alt = escapeHtml(anime.title || '');
   }
 
   const titleEl = document.querySelector('.dl-title, .download-title, h1');
@@ -55,10 +65,11 @@ function renderDownloadHero(anime, season, ep) {
 
   const metaEl = document.querySelector('.dl-meta, .download-meta, .meta');
   if (metaEl) {
+    // ✅ FIX (FE-ISSUE-003): all three fields were completely unescaped
     metaEl.innerHTML = `
-      <span>${anime.year || ''}</span>
-      <span class="imdb">⭐ ${anime.rating || 'N/A'}</span>
-      <span>Season ${season} • Episode ${ep}</span>
+      <span>${escapeHtml(String(anime.year || ''))}</span>
+      <span class="imdb">⭐ ${escapeHtml(String(anime.rating || 'N/A'))}</span>
+      <span>Season ${escapeHtml(String(season))} • Episode ${escapeHtml(String(ep))}</span>
     `;
   }
 
@@ -80,8 +91,9 @@ function renderQualityLinks(links, slug, season, ep) {
   const safeSlug = encodeURIComponent(slug);
 
   container.innerHTML = links.map((link, idx) => {
-    const quality    = (link.quality || 'HD').replace(/</g, '&lt;');
-    const size       = (link.size    || '').replace(/</g, '&lt;');
+    // ✅ FIX (FE-ISSUE-003): full escapeHtml() — was only escaping <
+    const quality    = escapeHtml(link.quality || 'HD');
+    const size       = escapeHtml(link.size    || '');
     const sessionId  = encodeURIComponent(link.sessionId || link.url || '');
     return `
       <div class="quality-row"
@@ -148,7 +160,8 @@ function renderEpisodeLinks(episodes, anime, season) {
     <h3 style="font-size:15px;margin-bottom:12px;padding:0 16px;">All Episodes — Season ${season}</h3>
     <div id="epLinkRows">
       ${episodes.map(ep => {
-        const epTitle = (ep.title || '').replace(/</g, '&lt;');
+        // ✅ FIX (FE-ISSUE-003): full escapeHtml() — was only escaping <
+        const epTitle = escapeHtml(ep.title || '');
         return `
           <div class="ep-link-row"
             data-slug="${safeSlug}"
