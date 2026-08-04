@@ -4,7 +4,7 @@
 // ============================================================
 
 import { fetchDetails, fetchEpisodes, fetchRelated } from '../api.js';
-import { saveToHistory, getParam, showEpSkeletons, showRelSkeletons, lazyLoadCards } from '../utils.js';
+import { saveToHistory, getParam, showEpSkeletons, showRelSkeletons, lazyLoadCards, escapeHtml } from '../utils.js';
 
 export async function initDetails() {
   const slug = getParam('slug');
@@ -15,19 +15,27 @@ export async function initDetails() {
   showRelSkeletons(document.getElementById('relatedGrid'), 4);
 
   try {
-    const anime = await fetchDetails(slug);
-    if (!anime) return;
+    // ✅ FIX (FE-ISSUE-004): unwrap the {success, data} envelope —
+    // apiFetch() returns the raw response body, not the anime object
+    // directly. Every field access below was reading undefined.
+    const resp  = await fetchDetails(slug);
+    const anime = resp?.data || resp;
+    if (!anime?.id) return;
 
     renderHero(anime);
     renderAbout(anime);
     updateMetaTags(anime);
     saveToHistory(anime);
 
-    const episodes = await fetchEpisodes(anime.id, 1);
+    // ✅ FIX (FE-ISSUE-007): unwrap the episodes array envelope too.
+    const episodesResp = await fetchEpisodes(anime.id, 1);
+    const episodes       = episodesResp?.data || [];
     renderEpisodeGrid(episodes, anime.slug, 1);
-    renderSeasonDropdown(anime.totalSeasons || 1, anime);
+    // ✅ FIX (FE-ISSUE-005): backend field is season_count, not totalSeasons
+    renderSeasonDropdown(anime.season_count || 1, anime);
 
-    const related = await fetchRelated(anime.id);
+    const relatedResp = await fetchRelated(anime.id);
+    const related       = relatedResp?.data || [];
     renderRelated(related);
 
     setupActionButtons(anime, episodes);
@@ -48,27 +56,33 @@ function renderHero(anime) {
   const descEl    = document.getElementById('animeDesc');
 
   if (heroBg) {
-    heroBg.style.backgroundImage    = `url('${anime.banner || anime.poster}')`;
+    // ✅ FIX (FE-ISSUE-003, minor): JSON.stringify() for safe CSS url()
+    // quoting — a poster/banner URL containing a single quote would
+    // otherwise break the url('...') syntax.
+    heroBg.style.backgroundImage    = `url(${JSON.stringify(anime.banner || anime.poster || '')})`;
     heroBg.style.backgroundSize     = 'cover';
     heroBg.style.backgroundPosition = 'center';
   }
 
   if (posterImg) {
-    posterImg.src = anime.poster;
-    posterImg.alt = (anime.title || '').replace(/"/g, '&quot;');
+    posterImg.src = anime.poster || '';
+    // ✅ FIX (FE-ISSUE-003): full escapeHtml() instead of only escaping "
+    posterImg.alt = escapeHtml(anime.title || '');
   }
 
   if (titleEl) {
-    const year  = anime.year ? ` <span>(${anime.year})</span>` : '';
-    titleEl.innerHTML = `${(anime.title || '').replace(/</g,'&lt;')}${year}`;
+    // ✅ FIX (FE-ISSUE-003): full escapeHtml() — was only escaping <
+    const year  = anime.year ? ` <span>(${escapeHtml(String(anime.year))})</span>` : '';
+    titleEl.innerHTML = `${escapeHtml(anime.title || '')}${year}`;
   }
 
   if (metaEl) {
+    // ✅ FIX (FE-ISSUE-003): all four fields were completely unescaped
     metaEl.innerHTML = `
-      <span>${anime.year || ''}</span>
-      <span class="imdb">⭐ ${anime.rating || 'N/A'}</span>
-      <span>${anime.type || ''}</span>
-      <span>${anime.language || ''}</span>
+      <span>${escapeHtml(String(anime.year || ''))}</span>
+      <span class="imdb">⭐ ${escapeHtml(String(anime.rating || 'N/A'))}</span>
+      <span>${escapeHtml(anime.type || '')}</span>
+      <span>${escapeHtml(anime.language || '')}</span>
     `;
   }
 
@@ -133,16 +147,18 @@ function renderAbout(anime) {
       { label: 'Status',   value: anime.status },
       { label: 'Language', value: anime.language },
       { label: 'Genres',   value: (anime.genres || []).join(', ') },
-      { label: 'Episodes', value: anime.totalEpisodes },
-      { label: 'Seasons',  value: anime.totalSeasons },
+      // ✅ FIX (FE-ISSUE-005): backend fields are episode_count/season_count
+      { label: 'Episodes', value: anime.episode_count },
+      { label: 'Seasons',  value: anime.season_count },
       { label: 'Year',     value: anime.year },
     ];
+    // ✅ FIX (FE-ISSUE-003): full escapeHtml() on r.value — was unescaped
     list.innerHTML = rows
       .filter(r => r.value)
       .map(r => `
         <li>
-          <strong style="color:#ccc">${r.label}:</strong>
-          <span style="color:#fff; margin-left:6px;">${r.value}</span>
+          <strong style="color:#ccc">${escapeHtml(r.label)}:</strong>
+          <span style="color:#fff; margin-left:6px;">${escapeHtml(String(r.value))}</span>
         </li>
       `).join('');
   }
@@ -164,6 +180,8 @@ export function renderEpisodeGrid(episodes, slug, season) {
 
   const safeSlug = encodeURIComponent(slug || '');
 
+  // ✅ FIX (FE-ISSUE-003): thumbnail (src attribute) and title now both
+  // go through escapeHtml() — thumbnail was previously fully unescaped.
   grid.innerHTML = episodes.map(ep => `
     <div class="ep-card"
       data-slug="${safeSlug}"
@@ -171,13 +189,13 @@ export function renderEpisodeGrid(episodes, slug, season) {
       data-ep="${ep.number}"
       style="cursor:pointer;">
       <div class="ep-thumb">
-        <img src="${ep.thumbnail || ''}"
+        <img src="${escapeHtml(ep.thumbnail || '')}"
              alt="EP ${ep.number}"
              loading="lazy"
              onerror="this.style.display='none'">
         <div class="ep-no">EP ${ep.number}</div>
       </div>
-      <p>${(ep.title || 'Episode ' + ep.number).replace(/</g,'&lt;')}</p>
+      <p>${escapeHtml(ep.title || 'Episode ' + ep.number)}</p>
     </div>
   `).join('');
 
@@ -222,7 +240,9 @@ function renderSeasonDropdown(totalSeasons, anime) {
       seasonBtn.classList.remove('active');
       seasonList.style.display = 'none';
       showEpSkeletons(document.getElementById('episodeGrid'), 8);
-      const eps = await fetchEpisodes(anime.id, currentSeason);
+      // ✅ FIX (FE-ISSUE-007): unwrap the {success, data} envelope
+      const epsResp = await fetchEpisodes(anime.id, currentSeason);
+      const eps       = epsResp?.data || [];
       renderEpisodeGrid(eps, anime.slug, currentSeason);
     });
   });
@@ -230,7 +250,9 @@ function renderSeasonDropdown(totalSeasons, anime) {
   // All Episodes button
   allBtn?.addEventListener('click', async () => {
     showEpSkeletons(document.getElementById('episodeGrid'), 12);
-    const allEps = await fetchEpisodes(anime.id, 'all');
+    // ✅ FIX (FE-ISSUE-007): same unwrap
+    const allEpsResp = await fetchEpisodes(anime.id, 'all');
+    const allEps       = allEpsResp?.data || [];
     renderEpisodeGrid(allEps, anime.slug, currentSeason);
     seasonList.style.display = 'none';
   });
@@ -243,11 +265,14 @@ function renderRelated(related) {
   const grid = document.getElementById('relatedGrid');
   if (!grid || !related?.length) return;
 
+  // ✅ FIX (FE-ISSUE-003): full escapeHtml() on both title and poster —
+  // poster (used in a data-* attribute) was previously unescaped.
   grid.innerHTML = related.map(item => {
-    const slug  = encodeURIComponent(item.slug || '');
-    const title = (item.title || '').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    const slug   = encodeURIComponent(item.slug || '');
+    const title  = escapeHtml(item.title || '');
+    const poster = escapeHtml(item.poster || '');
     return `
-      <div class="rel-card" data-slug="${slug}" data-poster="${item.poster || ''}" style="background:#1a1f2e;">
+      <div class="rel-card" data-slug="${slug}" data-poster="${poster}" style="background:#1a1f2e;">
         <span style="background:rgba(0,0,0,0.6);padding:2px 5px;border-radius:4px;font-size:10px;color:#fff;">${title}</span>
       </div>`;
   }).join('');
