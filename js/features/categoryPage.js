@@ -4,7 +4,7 @@
 // ============================================================
 
 import { fetchCategory }                                         from '../api.js';
-import { getParam, showSkeletons, lazyLoadCards, renderPaginationShared } from '../utils.js';
+import { getParam, showSkeletons, lazyLoadCards, renderPaginationShared, escapeHtml } from '../utils.js';
 
 let currentPage = 1;
 let isLoading   = false;
@@ -38,6 +38,11 @@ export async function initCategoryPage() {
   await loadPage(1);
 }
 
+// NOTE (FE-ISSUE-002): GET /api/category/:key doesn't exist on the
+// backend yet — this file's data.items/data.total/data.title reads match
+// the response shape I proposed for that route when I flagged it as
+// missing, so no unwrap change is needed here; it needs the backend
+// route itself to be implemented before this page can work at all.
 async function loadPage(page, replace = false) {
   if (isLoading) return;
   isLoading = true;
@@ -53,6 +58,10 @@ async function loadPage(page, replace = false) {
     }
     if (page === 1 && data.title) {
       const bannerTitle = document.getElementById('bannerTitle');
+      // ✅ FIX (FE-ISSUE-003): data.title comes from the API — use
+      // textContent (not innerHTML) so it can't be interpreted as HTML.
+      // toUpperCase() is safe on textContent either way, but keeping this
+      // as a plain-text assignment rather than innerHTML closes the gap.
       if (bannerTitle) bannerTitle.textContent = data.title.toUpperCase();
     }
     renderGrid(data.items, replace || page === 1);
@@ -67,10 +76,12 @@ async function loadPage(page, replace = false) {
 function renderGrid(items, replace = false) {
   const grid = document.getElementById('animeGrid');
   if (!grid) return;
+  // ✅ FIX (FE-ISSUE-003): full escapeHtml() on title and poster
   const cards = items.map(item => {
-    const slug  = encodeURIComponent(item.slug || '');
-    const title = (item.title || '').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-    return `<div class="movie-card" data-slug="${slug}" data-poster="${item.poster || ''}" style="background:#1a1f2e;"><span class="card-title">${title}</span></div>`;
+    const slug   = encodeURIComponent(item.slug || '');
+    const title  = escapeHtml(item.title || '');
+    const poster = escapeHtml(item.poster || '');
+    return `<div class="movie-card" data-slug="${slug}" data-poster="${poster}" style="background:#1a1f2e;"><span class="card-title">${title}</span></div>`;
   }).join('');
   replace ? (grid.innerHTML = cards) : grid.insertAdjacentHTML('beforeend', cards);
   lazyLoadCards(grid);
