@@ -1,75 +1,35 @@
 // ============================================================
-// js/features/heroSlider.js
-// Auto-rotating hero banner — har 5 sec pe change hoga
-// UI same rahega, sirf data dynamic hoga
+// js/features/sidebar.js
+// Sidebar open/close — har page pe kaam karta hai
 // ============================================================
 
-export function initHeroSlider(banners) {
-  if (!banners || banners.length === 0) return;
+export function initSidebar() {
+  const sidebar  = document.querySelector('.sidebar');
+  const overlay  = document.querySelector('.overlay');
+  const menuBtn  = document.querySelector('.menu-btn');
+  const closeBtn = document.querySelector('.close-btn');
 
-  const banner  = document.getElementById('homeHeroBanner');
-  if (!banner) return;
+  if (!sidebar || !overlay) return;
 
-  const titleEl = banner.querySelector('.hero-title');
-  const metaEl  = banner.querySelector('.hero-meta');
-  const playBtn = banner.querySelector('.play-btn');
+  // --- Open ---
+  menuBtn?.addEventListener('click', () => {
+    sidebar.classList.add('active');
+    overlay.classList.add('active');
+    document.body.style.overflow = 'hidden'; // scroll band
+  });
 
-  let current   = 0;
-  let autoTimer = null;
-
-  // ---- Slide dikhao ----
-  function showSlide(i) {
-    const item = banners[i];
-    if (!item) return;
-
-    // Netflix crossfade: pehle fade out
-    banner.style.transition = 'opacity 0.45s ease';
-    banner.style.opacity    = '0';
-
-    setTimeout(() => {
-      // Background image update
-      banner.style.backgroundImage =
-        `linear-gradient(to bottom, rgba(0,0,0,0.05), rgba(0,0,0,0.65)),
-         url("${item.banner}")`;
-      banner.style.backgroundSize     = 'cover';
-      banner.style.backgroundPosition = 'center';
-      banner.style.backgroundRepeat   = 'no-repeat';
-
-      // Title — words pe line break
-      const words = item.title.toUpperCase().split(' ');
-      if (words.length >= 3) {
-        const mid = Math.ceil(words.length / 2);
-        titleEl.innerHTML =
-          words.slice(0, mid).join(' ') + '<br>' +
-          words.slice(mid).join(' ');
-      } else {
-        titleEl.textContent = item.title.toUpperCase();
-      }
-
-      // Meta: year + rating
-      metaEl.innerHTML =
-        `<span>${item.year || ''}</span>
-         <span>⭐ ${item.rating || ''}</span>`;
-
-      // Play button
-      playBtn.onclick = () => {
-        window.location.href = `details.html?slug=${item.slug}`;
-      };
-
-      // Fade in
-      banner.style.opacity = '1';
-    }, 450);
+  // --- Close ---
+  function closeSidebar() {
+    sidebar.classList.remove('active');
+    overlay.classList.remove('active');
+    document.body.style.overflow = '';
   }
 
-  // ---- Auto slide ----
-  function startAutoSlide() {
-    autoTimer = setInterval(() => {
-      current = (current + 1) % banners.length;
-      showSlide(current);
-    }, 5000); // 5 seconds
-  }
+  closeBtn?.addEventListener('click', closeSidebar);
+  overlay.addEventListener('click', closeSidebar);
 
-  // ---- Init ----
-  showSlide(0);
-  if (banners.length > 1) startAutoSlide();
+  // --- ESC key se bhi band ho ---
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') closeSidebar();
+  });
 }
