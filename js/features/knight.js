@@ -170,6 +170,11 @@ function renderQualities(data) {
     if (!btn) return;
     const quality = btn.dataset.quality;
     const link    = decodeURIComponent(btn.dataset.link);
+    // ✅ FIX (FE-ISSUE-011, defense-in-depth): same scheme check applied
+    // in go.js — link comes from backend-supplied quality data, so this
+    // is lower risk than a raw query param, but the fix is free and
+    // matches the same guard applied to the equivalent redirect there.
+    if (!/^https?:\/\//i.test(link)) return;
     track('knight_download', { quality });
     window.location.href = link;
   });
