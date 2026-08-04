@@ -4,7 +4,7 @@
 // ============================================================
 
 import { fetchDetails, fetchEpisodes, fetchServers, fetchDownloadLinks, fetchRelated } from '../api.js';
-import { saveWatchProgress, getParam, showEpSkeletons, showRelSkeletons, lazyLoadCards } from '../utils.js';
+import { saveWatchProgress, getParam, showEpSkeletons, showRelSkeletons, lazyLoadCards, escapeHtml } from '../utils.js';
 
 export async function initWatch() {
   const slug   = getParam('slug');
@@ -18,9 +18,18 @@ export async function initWatch() {
   showRelSkeletons(document.getElementById('relatedGrid'), 4);
 
   try {
-    const anime    = await fetchDetails(slug);
-    const episodes = await fetchEpisodes(anime.id, season);
-    const currentEp = episodes.find(e => e.number === ep) || episodes[0];
+    // ✅ FIX (FE-ISSUE-007): unwrap every {success, data} envelope —
+    // apiFetch() returns the raw response body, never the anime object /
+    // episodes array / servers array directly. Without this, episodes.find()
+    // and every array method below throws, silently caught by the outer
+    // catch, leaving the whole page blank.
+    const animeResp = await fetchDetails(slug);
+    const anime      = animeResp?.data || animeResp;
+    if (!anime?.id) return;
+
+    const episodesResp = await fetchEpisodes(anime.id, season);
+    const episodes      = episodesResp?.data || [];
+    const currentEp      = episodes.find(e => e.number === ep) || episodes[0];
 
     // About section
     renderAbout(anime);
@@ -30,10 +39,12 @@ export async function initWatch() {
 
     // Servers
     if (currentEp) {
-      const [servers, links] = await Promise.all([
+      const [serversResp, linksResp] = await Promise.all([
         fetchServers(currentEp.id),
         fetchDownloadLinks(currentEp.id)
       ]);
+      const servers = serversResp?.data || [];
+      const links    = linksResp?.data   || [];
       renderServerList(servers, anime, season, ep);
       renderDownloadBox(links, anime.slug, season, ep);
       saveWatchProgress(slug, season, ep, anime.poster, anime.title);
@@ -41,10 +52,12 @@ export async function initWatch() {
 
     // Episode grid + season dropdown
     renderEpisodeGrid(episodes, anime.slug, season);
-    renderSeasonDropdown(anime.totalSeasons || 1, anime, season);
+    // ✅ FIX (FE-ISSUE-005): backend field is season_count, not totalSeasons
+    renderSeasonDropdown(anime.season_count || 1, anime, season);
 
     // Related
-    const related = await fetchRelated(anime.id);
+    const relatedResp = await fetchRelated(anime.id);
+    const related       = relatedResp?.data || [];
     renderRelated(related);
 
     // Auto next
@@ -69,6 +82,8 @@ function renderEpisodeGrid(episodes, slug, season) {
 
   const safeSlug = encodeURIComponent(slug || '');
 
+  // ✅ FIX (FE-ISSUE-003): title and thumbnail now both go through
+  // escapeHtml() — thumbnail (a src attribute) was previously unescaped.
   grid.innerHTML = episodes.map(ep => `
     <div class="ep-card"
       data-slug="${safeSlug}"
@@ -76,13 +91,13 @@ function renderEpisodeGrid(episodes, slug, season) {
       data-ep="${ep.number}"
       style="cursor:pointer;">
       <div class="ep-thumb">
-        <img src="${ep.thumbnail || ''}"
+        <img src="${escapeHtml(ep.thumbnail || '')}"
              alt="EP ${ep.number}"
              loading="lazy"
              onerror="this.style.display='none'">
         <div class="ep-no">EP ${ep.number}</div>
       </div>
-      <p>${(ep.title || 'Episode ' + ep.number).replace(/</g,'&lt;')}</p>
+      <p>${escapeHtml(ep.title || 'Episode ' + ep.number)}</p>
     </div>
   `).join('');
 
@@ -109,12 +124,16 @@ function renderAbout(anime) {
       { label: 'Genres',   value: (anime.genres || []).join(', ') },
       { label: 'Year',     value: anime.year },
     ];
+    // ✅ FIX (FE-ISSUE-003): r.value was completely unescaped — this is
+    // admin-entered data (type/status/language/genres/year, all set via
+    // the admin panel's anime.js), not raw public user input, but nothing
+    // here enforced that assumption, and it's cheap to close regardless.
     list.innerHTML = rows
       .filter(r => r.value)
       .map(r => `
         <li>
-          <strong style="color:#ccc">${r.label}:</strong>
-          <span style="color:#fff; margin-left:6px;">${r.value}</span>
+          <strong style="color:#ccc">${escapeHtml(r.label)}:</strong>
+          <span style="color:#fff; margin-left:6px;">${escapeHtml(String(r.value))}</span>
         </li>
       `).join('');
   }
@@ -133,7 +152,10 @@ function renderServerList(servers, anime, season, ep) {
 
   if (!servers || servers.length === 0) {
     serverList.innerHTML = '<p style="color:#666;font-size:12px;padding:10px;">No servers available.</p>';
-    if (msgBox) msgBox.style.display = 'flex';
+    if (msgBox) {
+      msgBox.innerHTML = 'Server not working 😢 <br><br> Please switch server';
+      msgBox.style.display = 'flex';
+    }
     return;
   }
 
@@ -146,7 +168,7 @@ function renderServerList(servers, anime, season, ep) {
       <div class="ps__-list">
         ${servers.map((s, i) => `
           <div class="item ${i === 0 ? 'active' : ''}" data-index="${i}">
-            <div class="btn">${(s.name || 'Server ' + (i + 1)).replace(/</g,'&lt;')}</div>
+            <div class="btn">${escapeHtml(s.name || 'Server ' + (i + 1))}</div>
           </div>
         `).join('')}
       </div>
@@ -166,6 +188,13 @@ function renderServerList(servers, anime, season, ep) {
 function loadServer(server, iframe, msgBox) {
   const src = server?.embed || server?.url;
   if (!src) return;
+  // ✅ FIX (FE-ISSUE-003, defense-in-depth): only allow http(s) schemes
+  // into the iframe src. This is admin-entered data (adminServers.js on
+  // the backend), not raw public input, so this isn't directly
+  // exploitable by an anonymous visitor — but it's a cheap guard against
+  // a compromised admin account or a future data-entry mistake turning
+  // into a javascript: URL executing here.
+  if (!/^https?:\/\//i.test(src)) return;
   if (msgBox) msgBox.style.display = 'none';
   iframe.src = src;
 }
@@ -179,7 +208,7 @@ function renderDownloadBox(links, slug, season, ep) {
 
   const safeSlug = encodeURIComponent(slug);
   box.innerHTML = links.map(link => {
-    const quality = (link.quality || 'Download').replace(/</g,'&lt;');
+    const quality = escapeHtml(link.quality || 'Download');
     return `
       <button class="download"
         data-slug="${safeSlug}"
@@ -267,10 +296,11 @@ function renderRelated(related) {
   if (!grid || !related?.length) return;
 
   grid.innerHTML = related.map(item => {
-    const slug  = encodeURIComponent(item.slug || '');
-    const title = (item.title || '').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    const slug   = encodeURIComponent(item.slug || '');
+    const title  = escapeHtml(item.title || '');
+    const poster = escapeHtml(item.poster || '');
     return `
-      <div class="rel-card" data-slug="${slug}" data-poster="${item.poster || ''}" style="background:#1a1f2e;">
+      <div class="rel-card" data-slug="${slug}" data-poster="${poster}" style="background:#1a1f2e;">
         <span style="background:rgba(0,0,0,0.6);padding:2px 5px;border-radius:4px;font-size:10px;color:#fff;">${title}</span>
       </div>`;
   }).join('');
@@ -281,4 +311,4 @@ function renderRelated(related) {
     const c = e.target.closest('[data-slug]');
     if (c) location.href = `details.html?slug=${c.dataset.slug}`;
   });
-    }
+}
