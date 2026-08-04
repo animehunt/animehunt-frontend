@@ -5,7 +5,7 @@
 
 import { fetchHomepage, fetchFeaturedBanners } from '../api.js';
 import { initHeroSlider }                      from './heroSlider.js';
-import { showSkeletons, lazyLoadCards }        from '../utils.js';
+import { showSkeletons, lazyLoadCards, escapeHtml } from '../utils.js';
 
 export async function initHome() {
 
@@ -42,8 +42,9 @@ function renderCategoryBar(categories) {
   const bar = document.querySelector('.category-bar');
   if (!bar) return;
 
+  // ✅ FIX (FE-ISSUE-003): full escapeHtml() — was only escaping < and >
   bar.innerHTML = categories.map(cat => {
-    const name = (cat.name || '').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    const name = escapeHtml(cat.name || '');
     const slug = encodeURIComponent(cat.slug || '');
     return `<button data-slug="${slug}">${name}</button>`;
   }).join('');
@@ -61,22 +62,27 @@ function renderHomepageRows(rows) {
   const container = document.getElementById('homepageRows');
   if (!container) return;
 
+  // ✅ FIX (FE-ISSUE-003): full escapeHtml() on title/item-title/poster —
+  // was only escaping < and >, and poster (a data-* attribute) wasn't
+  // escaped at all.
   container.innerHTML = rows.map(row => {
-    const title = (row.title || '').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    const title = escapeHtml(row.title || '');
     const cards = (row.items || []).map(item => {
-      const slug  = encodeURIComponent(item.slug || '');
-      const t     = (item.title || '').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+      const slug   = encodeURIComponent(item.slug || '');
+      const t      = escapeHtml(item.title || '');
+      const poster = escapeHtml(item.poster || '');
       return `
         <div class="movie-card"
           data-slug="${slug}"
-          data-poster="${item.poster || ''}"
+          data-poster="${poster}"
           style="min-width:22%;flex-shrink:0;background:#1a1f2e;">
           <span class="card-title">${t}</span>
         </div>`;
     }).join('');
 
-    const seeMore = row.seeMoreUrl
-      ? `<a href="${row.seeMoreUrl}" class="see-more-btn">See More</a>`
+    // ✅ FIX (FE-ISSUE-008): backend field is moreLink, not seeMoreUrl
+    const seeMore = row.moreLink
+      ? `<a href="${escapeHtml(row.moreLink)}" class="see-more-btn">See More</a>`
       : '';
 
     return `
@@ -117,17 +123,22 @@ function renderContinueWatching() {
 
   section.style.display = 'block';
 
+  // ✅ FIX (FE-ISSUE-003): full escapeHtml() — was only escaping < and >.
+  // This data comes from localStorage (set by this same site), not a
+  // remote server, but localStorage is technically user-writable via
+  // devtools, so this is cheap defense-in-depth rather than a live threat.
   scroll.innerHTML = list.map(item => {
-    const slug  = encodeURIComponent(item.slug || '');
-    const title = (item.title || '').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-    const ep    = item.ep || 1;
-    const s     = item.season || 1;
+    const slug   = encodeURIComponent(item.slug || '');
+    const title  = escapeHtml(item.title || '');
+    const poster = escapeHtml(item.poster || '');
+    const ep     = item.ep || 1;
+    const s      = item.season || 1;
     return `
       <div class="movie-card"
         data-slug="${slug}"
         data-season="${s}"
         data-ep="${ep}"
-        data-poster="${item.poster || ''}"
+        data-poster="${poster}"
         style="min-width:22%;flex-shrink:0;background:#1a1f2e;">
         <span class="card-title" style="background:rgba(52,152,219,0.85);">S${s} EP${ep}</span>
       </div>`;
