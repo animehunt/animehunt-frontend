@@ -18,13 +18,22 @@ html {
 }
 
 body {
-  background: #0b0f1a;
+  background: #000;
   color: #ffffff;
   font-family: Arial, Helvetica, sans-serif;
   overflow-x: hidden;
-  /* Netflix-style page enter animation */
-  animation: pageEnter 0.35s ease both;
 }
+
+/* ✅ FIX (bottom-nav positioning bug): the page-enter animation used to
+   live directly on <body> and used transform: translateY(...). Per the
+   CSS spec, an element with a transform (even a temporary one from an
+   animation) becomes the containing block for all of its position:fixed
+   descendants — so .bottom-nav (and any other fixed element) was fixed
+   relative to <body>, not the viewport, making it visibly drift/scroll
+   instead of staying pinned to the screen. The animation now lives on
+   .main-header instead (position: sticky, which never causes this
+   problem), so <body> never has a transform on it.
+*/
 
 @keyframes pageEnter {
   from { opacity: 0; transform: translateY(6px); }
@@ -62,15 +71,20 @@ a {
   display: flex;
   align-items: center;
   gap: 10px;
-  background: rgba(11, 15, 26, 0.92);
+  background: rgba(0, 0, 0, 0.92);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
   transition: box-shadow 0.3s ease, background 0.3s ease;
+  /* ✅ Restores the entrance animation here instead of on <body> — see
+     the fix note above .page-enter for why it moved. position: sticky
+     (not fixed) never becomes a containing-block problem for other
+     fixed elements, so this is safe. */
+  animation: pageEnter 0.35s ease both;
 }
 
 .main-header.scrolled {
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.7);
-  background: rgba(11, 15, 26, 0.98);
+  background: rgba(0, 0, 0, 0.98);
 }
 
 .menu-btn {
@@ -126,7 +140,7 @@ a {
   left: -270px;
   width: 265px;
   height: 100%;
-  background: linear-gradient(180deg, #0d1120 0%, #0b0f1a 100%);
+  background: linear-gradient(180deg, #000 0%, #000 100%);
   z-index: 2000;
   padding: 22px 20px;
   transition: left 0.35s cubic-bezier(0.2, 0.8, 0.2, 1),
@@ -602,7 +616,7 @@ a {
    ============================================================ */
 .main-footer {
   padding: 24px 16px 85px;
-  background: #0b0f1a;
+  background: #000;
   text-align: center;
   border-top: 1px solid rgba(255,255,255,0.04);
 }
@@ -637,37 +651,107 @@ a {
   bottom: 0;
   left: 0;
   width: 100%;
-  height: 62px;
-  background: rgba(11, 15, 26, 0.96);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  /* Solid background stays transparent on the nav element itself —
+     the black band is drawn by ::before below, sized to only reach
+     the height of the 4 small icons (MOVIES/SERIES/ANIME/CARTOON),
+     not the full bar (which is taller because it stretches to fit
+     the bigger HOME icon). This keeps the HOME wolf icon poking up
+     above the black band instead of being covered by it. */
+  height: auto;
+  padding: 2px 0 6px;
+  background: transparent;
   display: flex;
   justify-content: space-around;
-  align-items: center;
+  align-items: stretch;
   z-index: 1200;
-  border-top: 1px solid rgba(255,255,255,0.05);
 }
 
+/* ✅ Black background band for the footer nav — rises just behind the
+   4 regular icons (MOVIES/SERIES/ANIME/CARTOON) and stops there, so
+   the taller HOME wolf icon stays uncovered above it. Height = small
+   nav-item's natural content height (18px icon + 4px gap + ~12px
+   label + 10px bottom padding) plus the bar's own bottom padding. */
+.bottom-nav::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 50px;
+  background: #000;
+  z-index: -1;
+}
+
+/* ✅ Icon-based nav item — icon on top, label below, matching the
+   provided reference design. */
 .nav-item {
-  font-size: 11px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  /* flex-end still matters here even with an auto-height parent: when
+     .bottom-nav stretches to fit its tallest child (HOME), the other
+     4 items are stretched to match that height by align-items:stretch
+     above — flex-end keeps their labels anchored to the bottom instead
+     of floating in the middle of that extra space. */
+  justify-content: flex-end;
+  gap: 4px;
+  font-size: 10px;
   color: #888;
   cursor: pointer;
   text-decoration: none !important;
-  padding: 6px 10px;
+  padding: 0 10px 10px;
   border-radius: 8px;
   transition: color 0.22s ease, transform 0.22s ease, background 0.22s ease;
   text-align: center;
   line-height: 1.2;
+  letter-spacing: 0.3px;
+  font-weight: 600;
+  position: relative;
 }
 
-.nav-item:hover {
-  color: #ccc;
+.nav-item img {
+  width: 18px;
+  height: 18px;
+  object-fit: contain;
+  opacity: 0.7;
+  transition: opacity 0.22s ease, filter 0.22s ease, transform 0.22s ease;
 }
+
+.nav-item:hover img { opacity: 0.9; }
+.nav-item:hover { color: #ccc; }
 
 .nav-item.active {
   color: #ffcc00;
-  transform: translateY(-2px) scale(1.1);
   font-weight: bold;
+}
+
+/* Active state shows via the underline bar only (see .nav-item.active::after
+   below) — no icon size or color/glow change, per explicit request. */
+
+/* HOME sits centered and slightly larger, matching the reference design —
+   it's the primary tab, so it gets a bit more visual weight than the
+   other four. */
+.nav-item.nav-home img {
+  width: 38px;
+  height: 38px;
+}
+
+/* HOME's icon does not change when active either — same reasoning as
+   the general .nav-item.active rule above. */
+
+/* Active-tab underline bar beneath the icon+label, matching the
+   reference design's gold bar under HOME. */
+.nav-item.active::after {
+  content: '';
+  position: absolute;
+  bottom: 2px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 26px;
+  height: 3px;
+  border-radius: 2px;
+  background: #ffcc00;
+  box-shadow: 0 0 8px rgba(255, 204, 0, 0.7);
 }
 
 /* ============================================================
@@ -778,9 +862,9 @@ a {
   inset: 0;
   background: linear-gradient(
     to bottom,
-    rgba(11,15,26,0.1) 0%,
-    rgba(11,15,26,0.05) 40%,
-    rgba(11,15,26,0.7) 100%
+    rgba(0,0,0,0.1) 0%,
+    rgba(0,0,0,0.05) 40%,
+    rgba(0,0,0,0.7) 100%
   );
   z-index: 1;
 }
@@ -847,7 +931,6 @@ a {
 
 .home-grid.active {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
   gap: 9px;
   animation: fadeUp 0.35s ease both;
 }
@@ -868,7 +951,7 @@ body.grid-mode .movie-row { display: none; }
   content: '';
   position: absolute;
   inset: 0;
-  background: linear-gradient(to bottom, rgba(11,15,26,0.3), #0b0f1a);
+  background: linear-gradient(to bottom, rgba(0,0,0,0.3), #000);
 }
 
 /* ============================================================
@@ -876,7 +959,6 @@ body.grid-mode .movie-row { display: none; }
    ============================================================ */
 .grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
   gap: 10px;
 }
 
@@ -1001,4 +1083,147 @@ section, div {
   border-radius: 4px;
   font-weight: bold;
   font-size: 11px;
+}
+
+/* ============================================================
+   27. RESPONSIVE — TABLET & DESKTOP
+   ============================================================
+   Everything above this point was written mobile-first with no
+   breakpoints at all, so on a wide screen the 4-column grid just
+   stretched each card to a huge size instead of showing more
+   columns — confirmed by measuring an actual card at ~310px wide
+   on a 1440px viewport. These breakpoints scale the grid, cap
+   content width so it doesn't spread edge-to-edge on very wide
+   screens, and move navigation from the mobile bottom-tab-bar to
+   the header for larger screens (standard practice — a fixed
+   bottom bar is a mobile/touch pattern, not a desktop one).
+   ============================================================ */
+
+/* ---- Tablet (≥768px): 2 extra grid columns, wider hero ---- */
+@media (min-width: 768px) {
+  .anime-grid, .movies-grid, .series-grid, .cartoon-grid, .related-grid, .home-grid, .grid {
+    grid-template-columns: repeat(6, 1fr);
+  }
+
+  .ep-grid {
+    grid-template-columns: repeat(6, 1fr);
+  }
+
+  .movie-scroll .movie-card {
+    min-width: 15%;
+  }
+
+  .page-banner { height: 280px; }
+  .page-banner h1 { font-size: 34px; }
+
+  .main-header, .movie-row, .page-banner, .about, .episodes,
+  .related, .category-bar, .type-filter, .az-nav, .main-footer,
+  .pagination {
+    padding-left: 32px;
+    padding-right: 32px;
+  }
+}
+
+/* ---- Desktop (≥1024px): content max-width, more columns,
+        bottom-nav replaced by inline header nav ---- */
+@media (min-width: 1024px) {
+  body {
+    max-width: 1400px;
+    margin: 0 auto;
+  }
+
+  .anime-grid, .movies-grid, .series-grid, .cartoon-grid, .related-grid, .home-grid, .grid {
+    grid-template-columns: repeat(7, 1fr);
+    gap: 14px;
+  }
+
+  .ep-grid {
+    grid-template-columns: repeat(7, 1fr);
+  }
+
+  .movie-scroll .movie-card {
+    min-width: 12.5%;
+  }
+
+  .search-bar {
+    width: 320px;
+  }
+  .search-bar:focus {
+    width: 340px;
+  }
+
+  /* The mobile bottom-tab-bar becomes an inline row in the header
+     on desktop — hidden here, shown via .desktop-nav below (added
+     to each HTML file's header alongside .bottom-nav). */
+  .bottom-nav {
+    display: none;
+  }
+
+  .main-footer {
+    padding-bottom: 40px;
+  }
+
+  .page-banner { height: 320px; }
+  .page-banner h1 { font-size: 40px; }
+
+  .movie-row { margin-bottom: 44px; }
+  .movie-row h2 { font-size: 20px; }
+}
+
+/* ---- Desktop nav (inline, header-based) — only relevant once
+        .desktop-nav exists in the header markup; harmless no-op
+        until then. Mirrors .nav-item's look without the mobile
+        icon-stack layout. ---- */
+.desktop-nav {
+  display: none;
+}
+
+@media (min-width: 1024px) {
+  .desktop-nav {
+    display: flex;
+    align-items: center;
+    gap: 22px;
+    margin-left: 24px;
+  }
+
+  .desktop-nav a {
+    color: #aaa;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+    text-decoration: none !important;
+    padding: 6px 2px;
+    position: relative;
+    transition: color 0.2s ease;
+  }
+
+  .desktop-nav a:hover { color: #ddd; }
+
+  .desktop-nav a.active {
+    color: #ffcc00;
+  }
+
+  .desktop-nav a.active::after {
+    content: '';
+    position: absolute;
+    bottom: -4px;
+    left: 0;
+    right: 0;
+    height: 2px;
+    border-radius: 2px;
+    background: #ffcc00;
+    box-shadow: 0 0 8px rgba(255, 204, 0, 0.7);
+  }
+}
+
+/* ---- Wide desktop (≥1440px): one more column ---- */
+@media (min-width: 1440px) {
+  .anime-grid, .movies-grid, .series-grid, .cartoon-grid, .related-grid, .home-grid, .grid,
+  .ep-grid {
+    grid-template-columns: repeat(8, 1fr);
+  }
+
+  .movie-scroll .movie-card {
+    min-width: 11%;
+  }
 }
