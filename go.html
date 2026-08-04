@@ -6,7 +6,7 @@
 <title>Verify Download — Go</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-body{background:#060a14;color:#fff;font-family:system-ui,sans-serif;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:16px}
+body{background:#000;color:#fff;font-family:system-ui,sans-serif;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:16px}
 .wrap{text-align:center;max-width:460px;width:100%}
 .logo{font-size:22px;font-weight:800;margin-bottom:24px}.logo b{color:#ffcc00}
 
@@ -167,7 +167,9 @@ body{background:#060a14;color:#fff;font-family:system-ui,sans-serif;min-height:1
 </div>
 
 <script>
-const BASE      = 'https://animehunt-backend.animehunt715.workers.dev'
+// ✅ FIX (FE-ISSUE-001): stale Cloudflare Workers URL — see the note in
+// download.html for full context. One of 6 independent hardcoded copies.
+const BASE      = 'https://YOUR-ACTUAL-BACKEND-DOMAIN.com'  // ⚠️ REPLACE
 const params    = new URLSearchParams(location.search)
 const sessionId = params.get('session')
 
@@ -239,7 +241,9 @@ function runAd(adCode, adType) {
 async function runPreFlow(s) {
   if (s.popup_script) { runPopupScript(s.popup_script); track('popup_open'); track('popup_view'); await delay(300) }
   if (s.ad_code)      { runAd(s.ad_code, s.ad_type); if (s.ad_delay > 0) await delay(s.ad_delay) }
-  if (s.shortlink_url) { window.open(s.shortlink_url, '_blank', 'noopener,noreferrer'); track('shortlink_click'); await delay(400) }
+  // ✅ FIX (FE-ISSUE-011): scheme check before window.open(), same
+  // reasoning as resolveFinalLink's fix above.
+  if (s.shortlink_url && /^https?:\/\//i.test(s.shortlink_url)) { window.open(s.shortlink_url, '_blank', 'noopener,noreferrer'); track('shortlink_click'); await delay(400) }
 }
 
 /* ── VERIFY FLOW (after verify click) ── */
@@ -252,11 +256,13 @@ async function runVerifyFlow(s) {
   else await delay(200)
 
   setVStep(3)
-  if (s.verify_redirect_url) { window.open(s.verify_redirect_url, '_blank', 'noopener,noreferrer'); track('redirect_click'); await delay(600) }
+  // ✅ FIX (FE-ISSUE-011): scheme check before window.open()
+  if (s.verify_redirect_url && /^https?:\/\//i.test(s.verify_redirect_url)) { window.open(s.verify_redirect_url, '_blank', 'noopener,noreferrer'); track('redirect_click'); await delay(600) }
   else await delay(150)
 
   setVStep(4)
-  if (s.verify_shortlink_url) { window.open(s.verify_shortlink_url, '_blank', 'noopener,noreferrer'); track('shortlink_click'); await delay(500) }
+  // ✅ FIX (FE-ISSUE-011): scheme check before window.open()
+  if (s.verify_shortlink_url && /^https?:\/\//i.test(s.verify_shortlink_url)) { window.open(s.verify_shortlink_url, '_blank', 'noopener,noreferrer'); track('shortlink_click'); await delay(500) }
   else await delay(150)
 
   setVStep(5); await delay(400)
@@ -266,6 +272,10 @@ async function runVerifyFlow(s) {
 function buildRedirectChain(s) {
   let chain = []
   try { chain = JSON.parse(s.redirect_chain || '[]') } catch {}
+  // ✅ FIX (FE-ISSUE-011): filter the chain to only http(s) URLs before
+  // any of them reach window.open() below — same reasoning as
+  // resolveFinalLink's fix above.
+  chain = chain.filter(url => typeof url === 'string' && /^https?:\/\//i.test(url))
 
   if (!chain.length) return { finalTarget: resolveFinalLink(s), chain: [] }
 
@@ -289,9 +299,15 @@ function buildRedirectChain(s) {
 
 function resolveFinalLink(s) {
   if (s.knight) {
-    return `knight.html?host_id=${sessionId}&anime=${encodeURIComponent(params.get('anime') || '')}&season=${encodeURIComponent(params.get('season') || '')}&episode=${encodeURIComponent(params.get('episode') || '')}`
+    return `knight.html?host_id=${encodeURIComponent(sessionId)}&anime=${encodeURIComponent(params.get('anime') || '')}&season=${encodeURIComponent(params.get('season') || '')}&episode=${encodeURIComponent(params.get('episode') || '')}`
   }
-  return s.final_link || ''
+  // ✅ FIX (FE-ISSUE-011, this is the LIVE file — see the correction note
+  // above about js/features/go.js being dead code on this page): s.final_link
+  // comes straight from backend session data and is used directly as a
+  // redirect target with no scheme check. Restricting to http(s) closes
+  // off javascript:/data:/vbscript: schemes reaching window.location.href.
+  const link = s.final_link || ''
+  return /^https?:\/\//i.test(link) ? link : ''
 }
 
 async function executeRedirectChain(chain, finalLink) {
