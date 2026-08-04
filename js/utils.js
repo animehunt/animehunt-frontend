@@ -16,6 +16,31 @@ export function getParam(key) {
 }
 
 // ============================================================
+// HTML ESCAPE — prevents XSS
+// ✅ FIX (frontend audit FE-ISSUE-003): every feature file (11 of them)
+// duplicated an inline `.replace(/</g,'&lt;').replace(/>/g,'&gt;')`
+// pattern instead of using a shared helper — and that pattern only
+// escapes 2 of the 5 characters that matter (`<` and `>`), leaving `"`,
+// `'`, and `&` unescaped. That gap is exploitable specifically via the
+// `data-poster="${item.poster}"` attribute used across 10 of those same
+// files: poster is admin-entered (not raw public user input — confirmed
+// against the backend's anime.js), so this isn't reachable by an
+// anonymous visitor, but it is reachable via a compromised admin account
+// or the bulk-CSV-import path, and a `"` in that value breaks out of the
+// attribute entirely. This is the same 5-character implementation used
+// consistently across the admin panel's own escapeHtml/escapeHTML
+// helpers, provided here as the one shared version for the public site.
+// ============================================================
+export function escapeHtml(str) {
+  return String(str ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+// ============================================================
 // DEBOUNCE
 // ============================================================
 export function debounce(fn, ms = 300) {
@@ -154,7 +179,13 @@ export function lazyLoadCards(container) {
   if (!container || !('IntersectionObserver' in window)) {
     // Fallback: seedha load karo
     container?.querySelectorAll('[data-poster]').forEach(el => {
-      el.style.backgroundImage = `url('${el.dataset.poster}')`;
+      // ✅ FIX (FE-ISSUE-003, minor): a poster URL containing a single
+      // quote would break the url('...') syntax here — this is a CSS
+      // property assignment, not innerHTML, so it's a functional bug
+      // (image fails to load) rather than an injection vector, but
+      // el.style.backgroundImage accepts a CSS <url()> value directly
+      // without needing manual string quoting at all.
+      el.style.backgroundImage = `url(${JSON.stringify(el.dataset.poster)})`;
     });
     return;
   }
@@ -168,7 +199,9 @@ export function lazyLoadCards(container) {
           // Smooth image appear
           el.style.transition      = 'opacity 0.4s ease';
           el.style.opacity         = '0';
-          el.style.backgroundImage = `url('${src}')`;
+          // ✅ FIX (FE-ISSUE-003, minor): same JSON.stringify() quoting
+          // fix as the fallback path above.
+          el.style.backgroundImage = `url(${JSON.stringify(src)})`;
           el.removeAttribute('data-poster');
           // Micro-delay se fade in
           requestAnimationFrame(() => {
@@ -190,16 +223,20 @@ export function lazyLoadCards(container) {
 /**
  * Ek movie card ka HTML return karta hai
  * Lazy loading + event delegation ready
+ * ✅ FIX (FE-ISSUE-003): title AND poster now both go through
+ * escapeHtml() — poster (used in a data-* attribute) was previously
+ * completely unescaped.
  */
 export function renderCardHTML(item, extraStyle = '') {
-  const slug  = encodeURIComponent(item.slug || '');
-  const title = (item.title || '').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  const slug   = encodeURIComponent(item.slug || '');
+  const title  = escapeHtml(item.title || '');
+  const poster = escapeHtml(item.poster || '');
 
   return `
     <div
       class="movie-card"
       data-slug="${slug}"
-      data-poster="${item.poster || ''}"
+      data-poster="${poster}"
       style="background:#1a1f2e;${extraStyle}"
     >
       <span class="card-title">${title}</span>
