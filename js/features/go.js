@@ -143,7 +143,13 @@ async function runVerifyFlow(s) {
 
   // Final redirect
   track('download_start');
-  window.location.href = s.download_url || s.link || s.url || '/';
+  // ✅ FIX (FE-ISSUE-011, defense-in-depth): same scheme check as the
+  // direct-URL flow above. This value comes from session data (backend-
+  // controlled, not a raw query param), so it's lower risk than the
+  // directUrl case — but the same class of risk exists if that data is
+  // ever wrong or tampered with, and the fix is free.
+  const dest = s.download_url || s.link || s.url || '/';
+  window.location.href = /^https?:\/\//i.test(dest) || dest.startsWith('/') ? dest : '/';
 }
 
 // ============================================================
@@ -152,8 +158,22 @@ async function runVerifyFlow(s) {
 async function init() {
   // Direct URL redirect (no session)
   if (directUrl && !sessionId) {
+    // ✅ FIX (FE-ISSUE-011): directUrl comes straight from the query
+    // string with no validation — a crafted link like
+    // go.html?url=https://phishing-site.com could use this trusted
+    // domain to redirect visitors to an attacker-controlled site (a
+    // classic open-redirect pattern). Restricting to http(s) schemes
+    // doesn't eliminate the phishing risk entirely (an attacker could
+    // still point at any http(s) URL), but it does close off
+    // javascript:/data:/vbscript: schemes, and it's the same defensive
+    // posture applied to the iframe embed URL in watch.js.
+    const decoded = decodeURIComponent(directUrl);
+    if (!/^https?:\/\//i.test(decoded)) {
+      showError('Invalid redirect URL.');
+      return;
+    }
     await delay(1500);
-    window.location.href = decodeURIComponent(directUrl);
+    window.location.href = decoded;
     return;
   }
 
