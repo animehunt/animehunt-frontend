@@ -5,4 +5,4 @@
 // Agar backend URL badlega, sirf yeh file update karni padegi
 // ============================================================
 
-export const BASE = 'https://animehunt-backend.animehunt715.workers.dev';
+export const BASE = 'https://YOUR-ACTUAL-BACKEND-DOMAIN.com';  // ⚠️ REPLACE with the real backend domain
