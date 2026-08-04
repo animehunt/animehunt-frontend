@@ -6,7 +6,7 @@
 <title>Select Quality — KnightWolf</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-body{background:#060a14;color:#fff;font-family:system-ui,sans-serif;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:16px}
+body{background:#000;color:#fff;font-family:system-ui,sans-serif;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:16px}
 .wrap{max-width:480px;width:100%;text-align:center}
 .logo{font-size:22px;font-weight:800;margin-bottom:24px}.logo b{color:#ffcc00}
 
@@ -109,7 +109,9 @@ body{background:#060a14;color:#fff;font-family:system-ui,sans-serif;min-height:1
 </div>
 
 <script>
-const BASE   = 'https://animehunt-backend.animehunt715.workers.dev'
+// ✅ FIX (FE-ISSUE-001): stale Cloudflare Workers URL — see the note in
+// download.html for full context. One of 6 independent hardcoded copies.
+const BASE   = 'https://YOUR-ACTUAL-BACKEND-DOMAIN.com'  // ⚠️ REPLACE
 const params = new URLSearchParams(location.search)
 
 const hostId  = params.get('host_id')
@@ -126,7 +128,9 @@ const QUALITY_META = {
   '360p':  { icon: '⚡', details: '640×360   · Low Quality', res: 'res-360p',  size: '~150-300MB', recommended: false }
 }
 
-function esc(s) { return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;') }
+// ✅ FIX (FE-ISSUE-003, knight.html inline script instance): was only
+// escaping &, <, > — missing " and '.
+function esc(s) { return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;') }
 
 async function track(event_type, extra = {}) {
   try {
@@ -211,6 +215,11 @@ function renderQualities(data) {
 
     btn.addEventListener('click', (e) => {
       e.preventDefault()
+      // ✅ FIX (FE-ISSUE-011, this is the LIVE file — js/features/knight.js
+      // is dead code on this page): q.link comes from backend-supplied
+      // quality data with no scheme check before being used as a redirect
+      // target.
+      if (!/^https?:\/\//i.test(q.link || '')) return
       track('knight_download', { quality: q.quality })
       window.location.href = q.link
     })
