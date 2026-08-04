@@ -18,7 +18,7 @@
     }
 
     body {
-      background: #0b0f1a;
+      background: #000;
       color: #ffffff;
       font-family: Arial, Helvetica, sans-serif;
       overflow-x: hidden;
@@ -36,7 +36,7 @@
       display: flex;
       align-items: center;
       gap: 10px;
-      background: rgba(11, 15, 26, 0.9);
+      background: rgba(0, 0, 0, 0.9);
       backdrop-filter: blur(8px);
       transition: box-shadow 0.3s ease;
     }
@@ -190,7 +190,7 @@
     =================================================== */
     .main-footer {
       padding: 20px 16px 80px;
-      background: #0b0f1a;
+      background: #000;
       text-align: center;
     }
 
@@ -217,32 +217,7 @@
       color: #777;
     }
 
-    .bottom-nav {
-      position: fixed;
-      bottom: 0;
-      left: 0;
-      width: 100%;
-      height: 65px;
-      background: rgba(11, 15, 26, 0.9);
-      backdrop-filter: blur(10px);
-      display: flex;
-      justify-content: space-around;
-      align-items: center;
-      z-index: 1200;
-    }
-
-    .nav-item {
-      font-size: 11px;
-      color: #ccc;
-      cursor: pointer;
-      text-decoration: none !important;
-      transition: transform 0.2s ease, color 0.2s ease;
-    }
-
-    .nav-item.active {
-      color: #ffcc00;
-      transform: scale(1.15);
-    }
+    /* BOTTOM NAV — now defined in style.css only */
 
     /* SCROLLBAR REMOVAL & RENDERING FIXES */
     *::-webkit-scrollbar {
@@ -278,7 +253,6 @@
     .series-grid,
     .anime-grid {
       display: grid;
-      grid-template-columns: repeat(4, 1fr);
       gap: 8px;
       animation: fadeUp .4s ease both;
     }
@@ -332,6 +306,13 @@
   <div class="logo">
     <span class="anime">anime</span><span class="hunt">hunt</span>
   </div>
+  <nav class="desktop-nav">
+    <a href="movies.html">Movies</a>
+    <a href="series.html" class="active">Series</a>
+    <a href="index.html">Home</a>
+    <a href="anime.html">Anime</a>
+    <a href="cartoon.html">Cartoon</a>
+  </nav>
   <input type="text" class="search-bar" placeholder="Search movie"/>
 </header>
 
@@ -342,7 +323,7 @@
     <a href="privacy.html">Privacy Policy</a>
     <a href="disclaimer.html">Disclaimer</a>
     <a href="dmca.html">DMCA</a>
-    <a href="https://t.me/toons15" target="_blank">Telegram</a>
+    <a href="https://t.me/toons15" target="_blank" rel="noopener noreferrer">Telegram</a>
   </nav>
 </aside>
 <div class="overlay"></div>
@@ -370,7 +351,7 @@
     <a href="about.html">About AnimeHunt</a>
     <a href="disclaimer.html">Disclaimer</a>
     <a href="dmca.html">DMCA</a>
-    <a href="#">Telegram</a>
+    <a href="https://t.me/toons15" target="_blank" rel="noopener noreferrer">Telegram</a>
   </div>
   <div class="copyright">
     © 2026 AnimeHunt. All Rights Reserved.
@@ -378,11 +359,26 @@
 </footer>
 
 <nav class="bottom-nav">
-  <a href="anime.html" class="nav-item">ANIME</a>
-  <a href="movies.html" class="nav-item">MOVIES</a>
-  <a href="index.html" class="nav-item">HOME</a>
-  <a href="series.html" class="nav-item active">SERIES</a>
-  <a href="cartoon.html" class="nav-item">CARTOON</a>
+  <a href="movies.html" class="nav-item">
+    <img src="assets/icons/nav-movies.png" alt="">
+    <span>MOVIES</span>
+  </a>
+  <a href="series.html" class="nav-item active">
+    <img src="assets/icons/nav-series.png" alt="">
+    <span>SERIES</span>
+  </a>
+  <a href="index.html" class="nav-item nav-home">
+    <img src="assets/icons/nav-home.png" alt="">
+    <span>HOME</span>
+  </a>
+  <a href="anime.html" class="nav-item">
+    <img src="assets/icons/nav-anime.png" alt="">
+    <span>ANIME</span>
+  </a>
+  <a href="cartoon.html" class="nav-item">
+    <img src="assets/icons/nav-cartoon.png" alt="">
+    <span>CARTOON</span>
+  </a>
 </nav>
 
 <script type="module" src="js/script.js"></script>
