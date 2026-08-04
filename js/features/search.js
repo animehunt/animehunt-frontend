@@ -3,8 +3,8 @@
 // Global search bar + dropdown — saari pages pe kaam karta hai
 // ============================================================
 
-import { searchAnime } from '../api.js';
-import { debounce }    from '../utils.js';
+import { searchAnime }         from '../api.js';
+import { debounce, escapeHtml } from '../utils.js';
 
 export function initSearch() {
   const searchBar = document.querySelector('.search-bar');
@@ -24,7 +24,14 @@ export function initSearch() {
     }
 
     try {
-      const results = await searchAnime(query);
+      // ✅ FIX (FE-ISSUE-013): unwrap the {success, data:{results,...}}
+      // envelope — apiFetch() returns the raw response body, and the
+      // actual array lives at response.data.results, not the top level.
+      // Without this, .length/.slice() below threw a TypeError on every
+      // search, silently caught by the outer catch, meaning search never
+      // worked anywhere on the site — this bar appears on every page.
+      const resp    = await searchAnime(query);
+      const results = resp?.data?.results || [];
       showDropdown(results);
     } catch (err) {
       dropdown.style.display = 'none';
@@ -54,20 +61,33 @@ export function initSearch() {
 
     positionDropdown();
 
-    dropdown.innerHTML = results.slice(0, 8).map(item => `
-      <div class="search-item" data-slug="${item.slug}">
-        <img src="${item.poster}" alt="${item.title}"
-             onerror="this.style.display='none'">
-        <span>${item.title}</span>
-      </div>
-    `).join('');
+    // ✅ FIX (FE-ISSUE-003): this was the worst unescaped-attribute
+    // instance in the whole codebase — slug (in a data-* attribute),
+    // poster (in a src attribute), and title (in both an alt attribute
+    // and innerHTML) were ALL completely unescaped, on a component that
+    // renders on every single page of the site.
+    dropdown.innerHTML = results.slice(0, 8).map(item => {
+      const slug   = escapeHtml(item.slug || '');
+      const poster = escapeHtml(item.poster || '');
+      const title  = escapeHtml(item.title || '');
+      return `
+        <div class="search-item" data-slug="${slug}">
+          <img src="${poster}" alt="${title}"
+               onerror="this.style.display='none'">
+          <span>${title}</span>
+        </div>
+      `;
+    }).join('');
 
     dropdown.style.display = 'block';
 
     // Click pe details page
     dropdown.querySelectorAll('.search-item').forEach(el => {
       el.addEventListener('click', () => {
-        window.location.href = `details.html?slug=${el.dataset.slug}`;
+        // ✅ FIX: encodeURIComponent() on the slug read back out of the
+        // (now-escaped) data attribute, for the URL itself — a slug
+        // containing &, ?, or # would otherwise break this URL.
+        window.location.href = `details.html?slug=${encodeURIComponent(el.dataset.slug)}`;
       });
     });
   }
