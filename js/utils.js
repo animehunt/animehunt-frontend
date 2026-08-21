@@ -302,3 +302,56 @@ export function renderPaginationShared(navEl, page, total, onPageChange, perPage
     }
   }, { once: true }); // once: true — re-render pe naya listener lagega
 }
+
+// ============================================================
+// SEO META TAGS — shared across details.html and watch.html
+// ============================================================
+// ✅ Extracted from details.js's (already-correct) inline version so
+// watch.js can use the exact same logic — watch.html previously had no
+// meta-tag updates at all despite being just as important a per-anime
+// page to share/index as details.html. See the note in details.js /
+// watch.js call sites: this is a client-side update, so it helps
+// crawlers that execute JavaScript (which covers modern Googlebot) but
+// NOT non-JS social-preview bots (Facebook/Twitter/Discord/Telegram),
+// which read the raw HTML response and never see this — those will
+// keep seeing each page's static <title> and no OG image/description
+// until the corresponding tags are rendered server-side or at build
+// time. Flagged in this audit's Security/Health reports; out of scope
+// to fix here without changing this site's rendering architecture.
+export function updateMetaTags({ title, description, image, url, ogType = 'website' }) {
+  document.title = title;
+
+  const desc = (description || '').slice(0, 160);
+
+  let metaDesc = document.querySelector('meta[name="description"]');
+  if (!metaDesc) {
+    metaDesc = document.createElement('meta');
+    metaDesc.name = 'description';
+    document.head.appendChild(metaDesc);
+  }
+  metaDesc.content = desc;
+
+  function setOG(prop, content) {
+    let el = document.querySelector(`meta[property="${prop}"]`);
+    if (!el) {
+      el = document.createElement('meta');
+      el.setAttribute('property', prop);
+      document.head.appendChild(el);
+    }
+    el.content = content;
+  }
+
+  setOG('og:title',       title);
+  setOG('og:description', desc);
+  setOG('og:image',       image || '');
+  setOG('og:type',        ogType);
+  setOG('og:url',         url);
+
+  let canonical = document.querySelector('link[rel="canonical"]');
+  if (!canonical) {
+    canonical = document.createElement('link');
+    canonical.rel = 'canonical';
+    document.head.appendChild(canonical);
+  }
+  canonical.href = url;
+}
