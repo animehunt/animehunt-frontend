@@ -4,7 +4,7 @@
 // ============================================================
 
 import { fetchDetails, fetchEpisodes, fetchServers, fetchDownloadLinks, fetchRelated } from '../api.js';
-import { saveWatchProgress, getParam, showEpSkeletons, showRelSkeletons, lazyLoadCards, escapeHtml } from '../utils.js';
+import { saveWatchProgress, getParam, showEpSkeletons, showRelSkeletons, lazyLoadCards, escapeHtml, updateMetaTags } from '../utils.js';
 
 export async function initWatch() {
   const slug   = getParam('slug');
@@ -24,13 +24,22 @@ export async function initWatch() {
 
     const episodesResp = await fetchEpisodes(anime.id, season);
     const episodes      = episodesResp?.data || [];
-    const currentEp      = episodes.find(e => e.number === ep) || episodes[0];
+    const currentEp      = episodes.find(e => e.episode === ep) || episodes[0];
 
     // About section
     renderAbout(anime);
 
-    // Page title
-    document.title = `Watch ${anime.title} S${season}E${ep} – AnimeHunt`;
+    // Page title + SEO meta tags (og:title/description/image, canonical) —
+    // same shared helper details.html uses, closing the parity gap this
+    // page previously had (title-only, no OG tags at all).
+    const epTitleForMeta = currentEp?.title ? ` – ${currentEp.title}` : '';
+    updateMetaTags({
+      title:       `Watch ${anime.title} S${season}E${ep}${epTitleForMeta} – AnimeHunt`,
+      description: currentEp?.description || anime.description || '',
+      image:       currentEp?.thumbnail || anime.poster || '',
+      url:         `${location.origin}/watch.html?slug=${encodeURIComponent(anime.slug || '')}&season=${season}&ep=${ep}`,
+      ogType:      'video.episode'
+    });
 
     // Servers & Links
     if (currentEp) {
@@ -39,12 +48,11 @@ export async function initWatch() {
         fetchDownloadLinks(currentEp.id)
       ]);
       const servers = serversResp?.data || [];
-      const links   = linksResp?.data   || [];
-      
-      // Call new JW Player Integration
+      const hostEntries = linksResp?.data || [];
+
       renderServerList(servers, anime, season, ep);
-      
-      renderDownloadBox(links, anime.slug, season, ep);
+
+      renderDownloadBox(hostEntries, anime.slug, season, ep);
       saveWatchProgress(slug, season, ep, anime.poster, anime.title);
     }
 
@@ -66,20 +74,34 @@ export async function initWatch() {
 }
 
 // ============================================================
-// SERVER LIST & JW PLAYER INTEGRATION (DANGER ZONE)
+// SERVER LIST & PLAYER
 // ============================================================
+// ✅ FIX (audit Issue 7 -- most severe bug found in this phase): this
+// used to call GET /api/player/jw-config/:episodeId, which does not
+// exist anywhere on the backend (verified against every route file),
+// and target #jw-player-container, which does not exist anywhere in
+// watch.html either (verified directly) -- so this function silently
+// exited on every single page load, before even reaching the broken
+// fetch, and the video player never initialized for anyone. The real,
+// working servers array (fetched correctly via fetchServers(), shape
+// confirmed against the actual backend: {id,name,embed,type,priority})
+// was being fetched and then thrown away unused. This rebuilds server
+// switching against the real data and the real #iframe-embed /
+// #player-message elements that were already sitting in watch.html.
+let currentServers = [];
+
 function renderServerList(servers, anime, season, ep) {
   const serverList = document.getElementById('serverList');
-  const playerContainer = document.getElementById('jw-player-container');
-  const msgBox = document.getElementById('player-message');
-  
-  if (!serverList || !playerContainer) return;
+  const iframe      = document.getElementById('iframe-embed');
+  const msgBox      = document.getElementById('player-message');
 
-  // Assume currentEp id is passed correctly via servers array
-  const currentEpId = servers.length > 0 ? servers[0].episode_id : null; 
+  if (!serverList || !iframe) return;
 
-  if (!currentEpId) {
+  currentServers = (servers || []).filter(s => s?.embed);
+
+  if (!currentServers.length) {
     serverList.innerHTML = '<p style="color:#666;font-size:12px;padding:10px;">No servers available.</p>';
+    iframe.src = '';
     if (msgBox) {
       msgBox.innerHTML = 'Server not working 😢 <br><br> Please switch server';
       msgBox.style.display = 'flex';
@@ -87,96 +109,63 @@ function renderServerList(servers, anime, season, ep) {
     return;
   }
 
-  // Hide old server buttons because JW Player will handle auto-switching (P1 -> P2 -> P3)
-  serverList.style.display = 'none';
+  // Servers are already ordered by priority ASC from the backend —
+  // build one button per server, XSS-safe (escapeHtml + event delegation,
+  // matching the pattern used throughout the rest of this codebase).
+  serverList.innerHTML = currentServers.map((s, idx) => `
+    <button
+      class="server-btn${idx === 0 ? ' active' : ''}"
+      data-idx="${idx}"
+      style="
+        background:${idx === 0 ? '#ffcc00' : '#1a1f2e'};
+        color:${idx === 0 ? '#000' : '#ccc'};
+        border:1px solid #2a3244;border-radius:6px;
+        padding:8px 14px;margin:0 6px 6px 0;font-size:12px;
+        font-weight:bold;cursor:pointer;
+      "
+    >${escapeHtml(s.name || `Server ${idx + 1}`)}</button>
+  `).join('');
 
-  loadJWPlayer(currentEpId, playerContainer, msgBox);
+  if (!serverList._ci) {
+    serverList._ci = true;
+    serverList.addEventListener('click', e => {
+      const btn = e.target.closest('.server-btn');
+      if (!btn) return;
+      const idx = parseInt(btn.dataset.idx, 10);
+      serverList.querySelectorAll('.server-btn').forEach(b => {
+        const active = b === btn;
+        b.classList.toggle('active', active);
+        b.style.background = active ? '#ffcc00' : '#1a1f2e';
+        b.style.color      = active ? '#000'    : '#ccc';
+      });
+      loadServer(idx, iframe, msgBox);
+    });
+  }
+
+  loadServer(0, iframe, msgBox);
 }
 
-async function loadJWPlayer(episodeId, playerContainer, msgBox) {
+function loadServer(idx, iframe, msgBox) {
+  const server = currentServers[idx];
+  if (!server?.embed) return;
+
   if (msgBox) {
-    msgBox.innerHTML = 'Loading High-Speed Stream Engine...';
+    msgBox.innerHTML = 'Loading server…';
     msgBox.style.display = 'flex';
   }
 
-  try {
-    // 1. Fetch the P1/P2/P3 Payload & Ads Config from our new Backend Engine
-    const res = await fetch(`/api/player/jw-config/${episodeId}`);
-    const data = await res.json();
-
-    if (!data.success) throw new Error(data.error || "Failed to load player config");
-
-    if (msgBox) msgBox.style.display = 'none';
-
-    // 2. Anti-Adblock Detection Logic
-    let isAdBlockActive = false;
-    try {
-      // Dummy fetch to a known ad network to test adblocker
-      await fetch('https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js', { mode: 'no-cors', cache: 'no-store' });
-    } catch (e) {
-      isAdBlockActive = true;
-    }
-
-    // 3. Ensure container is properly set up
-    playerContainer.id = 'jw-player-container';
-
-    // 4. Initialize JW Player
-    const playerInstance = jwplayer('jw-player-container');
-    playerInstance.setup(data.jwConfig);
-
-    // 5. Fallback Display Banner (If AdBlock blocks VAST)
-    if (isAdBlockActive && data.monetization && data.monetization.fallbackDisplayBanner) {
-      playerInstance.on('ready', function() {
-        const adContainer = document.createElement('div');
-        adContainer.style.position = 'absolute';
-        adContainer.style.bottom = '40px';
-        adContainer.style.width = '100%';
-        adContainer.style.textAlign = 'center';
-        adContainer.style.zIndex = '9999';
-        adContainer.innerHTML = data.monetization.fallbackDisplayBanner;
-        document.getElementById('jw-player-container').appendChild(adContainer);
-      });
-    }
-
-    // 6. Frequency Capped Popunder / Clickunder Logic
-    if (data.monetization && data.monetization.frequencyCapping) {
-      const POP_KEY = 'pop_count_session';
-      const POP_TIME_KEY = 'pop_time_start';
-      let popCount = parseInt(localStorage.getItem(POP_KEY)) || 0;
-      let sessionStart = parseInt(localStorage.getItem(POP_TIME_KEY)) || Date.now();
-
-      // Reset session if time window passed
-      if (Date.now() - sessionStart > data.monetization.frequencyCapping.sessionWindowMins * 60 * 1000) {
-        popCount = 0;
-        localStorage.setItem(POP_TIME_KEY, Date.now().toString());
-      }
-
-      // Trigger on first play click
-      playerInstance.on('firstFrame', function() {
-        if (popCount < data.monetization.frequencyCapping.maxPopunders && data.monetization.popunderScript) {
-          const scriptEl = document.createElement('script');
-          scriptEl.innerHTML = data.monetization.popunderScript.replace(/<\/?script[^>]*>/gi, '');
-          document.body.appendChild(scriptEl);
-          
-          localStorage.setItem(POP_KEY, (popCount + 1).toString());
-        }
-      });
-    }
-
-    // 7. Auto-Failover Logic
-    playerInstance.on('setupError', function(e) {
-       console.warn("P1 Stream failed, JW Player will automatically cascade to P2/P3 fallback sources.");
-    });
-    playerInstance.on('error', function(e) {
-       console.warn("Playback error on current stream. Attempting next priority stream.");
-    });
-
-  } catch (err) {
+  // iframe/m3u8/mp4/dash servers all embed the same way for this player
+  // shell (a direct src assignment) — the backend's own type constraint
+  // (servers.type IN iframe/m3u8/mp4/dash) covers playback-source
+  // format, not how the frontend mounts it.
+  iframe.onload = () => { if (msgBox) msgBox.style.display = 'none'; };
+  iframe.onerror = () => {
     if (msgBox) {
-      msgBox.innerHTML = `Stream temporarily unavailable. <br><br> ${err.message}`;
+      msgBox.innerHTML = 'Stream temporarily unavailable. <br><br> Please try another server.';
       msgBox.style.display = 'flex';
     }
-  }
+  };
+  iframe.src = server.embed;
 }
 
 // ============================================================
@@ -197,16 +186,16 @@ function renderEpisodeGrid(episodes, slug, season) {
     <div class="ep-card"
       data-slug="${safeSlug}"
       data-season="${season}"
-      data-ep="${ep.number}"
+      data-ep="${ep.episode}"
       style="cursor:pointer;">
       <div class="ep-thumb">
         <img src="${escapeHtml(ep.thumbnail || '')}"
-             alt="EP ${ep.number}"
+             alt="EP ${ep.episode}"
              loading="lazy"
              onerror="this.style.display='none'">
-        <div class="ep-no">EP ${ep.number}</div>
+        <div class="ep-no">EP ${ep.episode}</div>
       </div>
-      <p>${escapeHtml(ep.title || 'Episode ' + ep.number)}</p>
+      <p>${escapeHtml(ep.title || 'Episode ' + ep.episode)}</p>
     </div>
   `).join('');
 
@@ -250,20 +239,35 @@ function renderAbout(anime) {
 // ============================================================
 // DOWNLOAD BOX
 // ============================================================
-function renderDownloadBox(links, slug, season, ep) {
+function renderDownloadBox(hostEntries, slug, season, ep) {
   const box = document.getElementById('downloadBox');
-  if (!box || !links?.length) return;
+  if (!box || !hostEntries?.length) return;
 
   const safeSlug = encodeURIComponent(slug);
-  box.innerHTML = links.map(link => {
-    const quality = escapeHtml(link.quality || 'Download');
+
+  // Flatten to one row per distinct quality across all hosts (first host
+  // offering that quality wins) — this is a compact widget on the watch
+  // page, not the full host-by-host breakdown download.html shows.
+  const seen = new Set();
+  const flat = [];
+  for (const host of hostEntries) {
+    for (const link of (host.links || [])) {
+      const q = link.quality || 'Download';
+      if (seen.has(q)) continue;
+      seen.add(q);
+      flat.push(q);
+    }
+  }
+
+  box.innerHTML = flat.map(quality => {
+    const q = escapeHtml(quality);
     return `
       <button class="download"
         data-slug="${safeSlug}"
         data-season="${season}"
         data-ep="${ep}"
         style="margin-right:6px;">
-        ⬇ ${quality}
+        ⬇ ${q}
       </button>`;
   }).join('');
 
@@ -306,7 +310,7 @@ async function renderSeasonDropdown(totalSeasons, anime, activeSeason) {
 // AUTO NEXT EPISODE
 // ============================================================
 function setupAutoNext(episodes, currentEp, slug, season) {
-  const nextEp = episodes.find(e => e.number === currentEp + 1);
+  const nextEp = episodes.find(e => e.episode === currentEp + 1);
   if (!nextEp) return;
 
   const box       = document.getElementById('autoNextBox');
@@ -322,7 +326,7 @@ function setupAutoNext(episodes, currentEp, slug, season) {
     countdown.textContent = secs;
     if (secs <= 0) {
       clearInterval(timer);
-      window.location.href = `watch.html?slug=${encodeURIComponent(slug)}&season=${season}&ep=${nextEp.number}`;
+      window.location.href = `watch.html?slug=${encodeURIComponent(slug)}&season=${season}&ep=${nextEp.episode}`;
     }
   }, 1000);
 
