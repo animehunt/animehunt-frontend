@@ -38,11 +38,19 @@ export async function initCategoryPage() {
   await loadPage(1);
 }
 
-// NOTE (FE-ISSUE-002): GET /api/category/:key doesn't exist on the
-// backend yet — this file's data.items/data.total/data.title reads match
-// the response shape I proposed for that route when I flagged it as
-// missing, so no unwrap change is needed here; it needs the backend
-// route itself to be implemented before this page can work at all.
+// ✅ FIX (audit Issue 5): the old comment here claimed "GET
+// /api/category/:key doesn't exist on the backend yet" -- that was
+// wrong (verified directly against public.js: the route genuinely
+// exists and returns exactly the {key,page,limit,title,total,items}
+// shape this file expects). The real, remaining bug: apiFetch()
+// returns the raw {success, data:{...}} envelope unwrapped, so
+// fetchCategory()'s return value needed one more level of unwrapping
+// before reading .items/.total/.title -- the exact same shape every
+// sibling listing page (animePage.js, moviesPage.js, seriesPage.js,
+// cartoonPage.js) already unwraps correctly via `resp?.data?.data`.
+// Without this, data?.items was always undefined, so Category.html
+// showed "No results found" on every single load regardless of what
+// the backend actually had.
 async function loadPage(page, replace = false) {
   if (isLoading) return;
   isLoading = true;
@@ -50,7 +58,8 @@ async function loadPage(page, replace = false) {
   if (replace || page === 1) showSkeletons(grid, 8);
   try {
     const key  = catSlug || catLetter;
-    const data = await fetchCategory(key, page, catType);
+    const resp = await fetchCategory(key, page, catType);
+    const data = resp?.data || {};
     if (!data?.items?.length) {
       if (page === 1 && grid) grid.innerHTML = '<p style="color:#555;font-size:12px;padding:20px;grid-column:1/-1;">No results found.</p>';
       isLoading = false;
