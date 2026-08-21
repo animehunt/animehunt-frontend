@@ -4,6 +4,8 @@
 // home.js aur historyPage.js dono ye use karte hain
 // ============================================================
 
+import { escapeHtml } from '../utils.js';
+
 const KEY_CONTINUE = 'ah_continue';
 const MAX_ITEMS    = 20;
 
@@ -53,6 +55,18 @@ export function clearContinueWatching() {
 // ============================================================
 // RENDER — Home page ki continue watching row
 // ============================================================
+// ✅ FIX (audit Issue 6): this row previously had no click handler and
+// no data-slug at all (confirmed via grep — only clearBtn had a
+// listener), and item.poster was inserted raw into a single-quoted CSS
+// url() with no escaping (every sibling file in this codebase —
+// heroSlider.js, download.js, listing.js — correctly uses
+// JSON.stringify() for this exact purpose). The result: cards on the
+// homepage's Continue Watching row were unclickable and had no title
+// text, so a user could see they had something in progress but
+// couldn't tell what it was or resume it — defeating the point of the
+// feature. historyPage.js's version of this same feature (reading the
+// same localStorage key) already does this correctly; this brings
+// renderContinueRow() in line with that working pattern.
 export function renderContinueRow() {
   const section  = document.getElementById('continueSection');
   const scroll   = document.getElementById('continueScroll');
@@ -68,11 +82,19 @@ export function renderContinueRow() {
 
   section.style.display = 'block';
 
-  scroll.innerHTML = list.map(item => `
+  scroll.innerHTML = list.map(item => {
+    const slug   = encodeURIComponent(item.slug || '');
+    const title  = escapeHtml(item.title || '');
+    const s      = item.season || 1;
+    const ep     = item.ep || 1;
+    return `
     <div
       class="movie-card"
+      data-slug="${slug}"
+      data-season="${s}"
+      data-ep="${ep}"
       style="
-        background-image: url('${item.poster}');
+        background-image: url(${JSON.stringify(item.poster || '')});
         background-size: cover;
         background-position: center;
         min-width: 22%;
@@ -97,9 +119,34 @@ export function renderContinueRow() {
         border-radius: 4px;
         font-size: 10px;
         color: #fff;
-      ">S${item.season} EP${item.ep}</span>
+        position: relative;
+        z-index: 1;
+      ">S${s} EP${ep}</span>
+      <span style="
+        position: absolute;
+        left: 8px;
+        right: 8px;
+        bottom: 30px;
+        font-size: 11px;
+        color: #fff;
+        background: rgba(0,0,0,0.6);
+        padding: 2px 5px;
+        border-radius: 4px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      ">${title}</span>
     </div>
-  `).join('');
+  `;
+  }).join('');
+
+  if (!scroll._ci) {
+    scroll._ci = true;
+    scroll.addEventListener('click', e => {
+      const c = e.target.closest('[data-slug]');
+      if (c) location.href = `watch.html?slug=${c.dataset.slug}&season=${c.dataset.season}&ep=${c.dataset.ep}`;
+    });
+  }
 
   // Clear button
   clearBtn?.addEventListener('click', () => {
