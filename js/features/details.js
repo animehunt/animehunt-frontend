@@ -4,7 +4,7 @@
 // ============================================================
 
 import { fetchDetails, fetchEpisodes, fetchRelated } from '../api.js';
-import { saveToHistory, getParam, showEpSkeletons, showRelSkeletons, lazyLoadCards, escapeHtml } from '../utils.js';
+import { saveToHistory, getParam, showEpSkeletons, showRelSkeletons, lazyLoadCards, escapeHtml, updateMetaTags } from '../utils.js';
 
 export async function initDetails() {
   const slug = getParam('slug');
@@ -24,7 +24,13 @@ export async function initDetails() {
 
     renderHero(anime);
     renderAbout(anime);
-    updateMetaTags(anime);
+    updateMetaTags({
+      title:       `${anime.title} – AnimeHunt`,
+      description: anime.description || '',
+      image:       anime.poster || '',
+      url:         `${location.origin}/details.html?slug=${encodeURIComponent(anime.slug || '')}`,
+      ogType:      'video.episode'
+    });
     saveToHistory(anime);
 
     // ✅ FIX (FE-ISSUE-007): unwrap the episodes array envelope too.
@@ -92,47 +98,6 @@ function renderHero(anime) {
   document.title = `${anime.title} – AnimeHunt`;
 }
 
-// ============================================================
-// SEO META TAGS — Dynamic update for crawlers
-// ============================================================
-function updateMetaTags(anime) {
-  const desc = (anime.description || '').slice(0, 160);
-  const img  = anime.poster || '';
-  const url  = `${location.origin}/details.html?slug=${encodeURIComponent(anime.slug || '')}`;
-
-  // Description
-  let metaDesc = document.querySelector('meta[name="description"]');
-  if (!metaDesc) {
-    metaDesc = document.createElement('meta');
-    metaDesc.name = 'description';
-    document.head.appendChild(metaDesc);
-  }
-  metaDesc.content = desc;
-
-  function setOG(prop, content) {
-    let el = document.querySelector(`meta[property="${prop}"]`);
-    if (!el) {
-      el = document.createElement('meta');
-      el.setAttribute('property', prop);
-      document.head.appendChild(el);
-    }
-    el.content = content;
-  }
-
-  setOG('og:title',       `${anime.title} – AnimeHunt`);
-  setOG('og:description', desc);
-  setOG('og:image',       img);
-  setOG('og:type',        'video.episode');
-  setOG('og:url',         url);
-
-  let canonical = document.querySelector('link[rel="canonical"]');
-  if (!canonical) {
-    canonical = document.createElement('link');
-    canonical.rel = 'canonical';
-    document.head.appendChild(canonical);
-  }
-  canonical.href = url;
-}
 
 // ============================================================
 // ABOUT SECTION
@@ -186,16 +151,16 @@ export function renderEpisodeGrid(episodes, slug, season) {
     <div class="ep-card"
       data-slug="${safeSlug}"
       data-season="${season}"
-      data-ep="${ep.number}"
+      data-ep="${ep.episode}"
       style="cursor:pointer;">
       <div class="ep-thumb">
         <img src="${escapeHtml(ep.thumbnail || '')}"
-             alt="EP ${ep.number}"
+             alt="EP ${ep.episode}"
              loading="lazy"
              onerror="this.style.display='none'">
-        <div class="ep-no">EP ${ep.number}</div>
+        <div class="ep-no">EP ${ep.episode}</div>
       </div>
-      <p>${escapeHtml(ep.title || 'Episode ' + ep.number)}</p>
+      <p>${escapeHtml(ep.title || 'Episode ' + ep.episode)}</p>
     </div>
   `).join('');
 
@@ -291,7 +256,7 @@ function renderRelated(related) {
 function setupActionButtons(anime, episodes) {
   const watchBtn    = document.querySelector('.actions .watch');
   const downloadBtn = document.querySelector('.actions .download');
-  const firstEp     = episodes?.[0]?.number || 1;
+  const firstEp     = episodes?.[0]?.episode || 1;
   const safeSlug    = encodeURIComponent(anime.slug || '');
 
   watchBtn?.addEventListener('click', () => {
