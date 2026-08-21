@@ -26,7 +26,7 @@ export async function initDownload() {
 
     const episodesResp = await fetchEpisodes(anime.id, season);
     const episodes       = episodesResp?.data || [];
-    const currentEp        = episodes.find(e => e.number === ep) || episodes[0];
+    const currentEp        = episodes.find(e => e.episode === ep) || episodes[0];
 
     renderDownloadHero(anime, season, ep);
 
@@ -79,51 +79,72 @@ function renderDownloadHero(anime, season, ep) {
 // ============================================================
 // QUALITY LINKS — XSS-safe, event delegation
 // ============================================================
-function renderQualityLinks(links, slug, season, ep) {
+// ✅ FIX (audit Issue 4): this was built around a flat
+// [{quality,size,sessionId}] shape that has never matched the real API.
+// GET /api/download/:episodeId actually returns an array of HOST
+// ENTRIES (confirmed directly against downloads.js), each carrying its
+// own NESTED array of quality links: [{id, host_name, links:
+// [{quality, link}]}]. There is no top-level quality/size/sessionId
+// field anywhere in the real response, so every quality button
+// previously rendered blank/"undefined". Rewritten to render one
+// section per host with that host's quality options underneath it,
+// which also correctly exposes the real backend's multi-host feature
+// (the same episode can have Mega/GDrive/Telegram/etc. each with their
+// own quality set) that the old flat design couldn't represent at all.
+function renderQualityLinks(hostEntries, slug, season, ep) {
   const container = document.querySelector('.quality-list, #qualityLinks, .dl-links');
   if (!container) return;
 
-  if (!links || links.length === 0) {
+  if (!hostEntries || hostEntries.length === 0) {
     container.innerHTML = '<p style="color:#666;font-size:12px;padding:12px;">No download links available.</p>';
     return;
   }
 
   const safeSlug = encodeURIComponent(slug);
 
-  container.innerHTML = links.map((link, idx) => {
-    // ✅ FIX (FE-ISSUE-003): full escapeHtml() — was only escaping <
-    const quality    = escapeHtml(link.quality || 'HD');
-    const size       = escapeHtml(link.size    || '');
-    const sessionId  = encodeURIComponent(link.sessionId || link.url || '');
-    return `
-      <div class="quality-row"
-        style="
-          display:flex;align-items:center;justify-content:space-between;
-          padding:12px 16px;background:#111827;border:1px solid #1e2a3a;
-          border-radius:8px;margin-bottom:8px;
-          transition: border-color 0.2s ease;
-        "
-        onmouseenter="this.style.borderColor='#ffcc00'"
-        onmouseleave="this.style.borderColor='#1e2a3a'"
-      >
-        <span style="font-size:13px;color:#fff;">
-          ${quality}${size ? ' — ' + size : ''}
-        </span>
-        <button
-          class="dl-btn"
-          data-session="${sessionId}"
-          data-slug="${safeSlug}"
-          data-season="${season}"
-          data-ep="${ep}"
+  container.innerHTML = hostEntries.map((host, hIdx) => {
+    const hostName = escapeHtml(host.host_name || 'Server');
+    const links    = host.links || [];
+    if (!links.length) return '';
+
+    const rows = links.map((link, lIdx) => {
+      const quality   = escapeHtml(link.quality || 'HD');
+      const sessionId = encodeURIComponent(link.link || '');
+      return `
+        <div class="quality-row"
           style="
-            background:#ffcc00;border:none;color:#000;
-            padding:7px 16px;border-radius:6px;font-size:12px;
-            font-weight:bold;cursor:pointer;
-            transition:transform 0.15s ease, box-shadow 0.15s ease;
+            display:flex;align-items:center;justify-content:space-between;
+            padding:12px 16px;background:#111827;border:1px solid #1e2a3a;
+            border-radius:8px;margin-bottom:8px;
+            transition: border-color 0.2s ease;
           "
-          onmouseenter="this.style.transform='scale(1.05)';this.style.boxShadow='0 4px 12px rgba(255,204,0,0.4)'"
-          onmouseleave="this.style.transform='';this.style.boxShadow=''"
-        >⬇ Download</button>
+          onmouseenter="this.style.borderColor='#ffcc00'"
+          onmouseleave="this.style.borderColor='#1e2a3a'"
+        >
+          <span style="font-size:13px;color:#fff;">${quality}</span>
+          <button
+            class="dl-btn"
+            data-session="${sessionId}"
+            data-slug="${safeSlug}"
+            data-season="${season}"
+            data-ep="${ep}"
+            style="
+              background:#ffcc00;border:none;color:#000;
+              padding:7px 16px;border-radius:6px;font-size:12px;
+              font-weight:bold;cursor:pointer;
+              transition:transform 0.15s ease, box-shadow 0.15s ease;
+            "
+            onmouseenter="this.style.transform='scale(1.05)';this.style.boxShadow='0 4px 12px rgba(255,204,0,0.4)'"
+            onmouseleave="this.style.transform='';this.style.boxShadow=''"
+          >⬇ Download</button>
+        </div>
+      `;
+    }).join('');
+
+    return `
+      <div class="host-group" style="margin-bottom:14px;">
+        <h4 style="font-size:12px;color:#999;margin-bottom:6px;padding:0 2px;">${hostName}</h4>
+        ${rows}
       </div>
     `;
   }).join('');
@@ -166,7 +187,7 @@ function renderEpisodeLinks(episodes, anime, season) {
           <div class="ep-link-row"
             data-slug="${safeSlug}"
             data-season="${season}"
-            data-ep="${ep.number}"
+            data-ep="${ep.episode}"
             style="
               display:flex;align-items:center;justify-content:space-between;
               padding:10px 16px;border-bottom:1px solid #1a1f2e;cursor:pointer;
@@ -176,7 +197,7 @@ function renderEpisodeLinks(episodes, anime, season) {
             onmouseleave="this.style.background=''"
           >
             <span style="font-size:12px;color:#ccc;">
-              Episode ${ep.number}${epTitle ? ' – ' + epTitle : ''}
+              Episode ${ep.episode}${epTitle ? ' – ' + epTitle : ''}
             </span>
             <span style="
               border:1px solid #ffcc00;color:#ffcc00;
