@@ -1,10 +1,15 @@
 // ============================================================
 // js/api.js
 // Saare backend API calls ek jagah
-// Base: https://YOUR-ACTUAL-BACKEND-DOMAIN.com  ⚠️ REPLACE with the real backend domain
 // ============================================================
 
-const BASE = 'https://YOUR-ACTUAL-BACKEND-DOMAIN.com';  // ⚠️ REPLACE
+// ✅ FIX (audit Issue 1): this was an independent hardcoded copy of the
+// backend URL, contradicting config.js's own stated purpose ("if the
+// backend URL changes, only this file needs updating"). Now genuinely
+// imports from the single shared source of truth — set the real domain
+// in js/config.js and every caller (this file, go.html, knight.html,
+// download.html) picks it up automatically.
+import { BASE } from './config.js';
 
 // Generic fetch helper — error handle karta hai
 async function apiFetch(path) {
@@ -93,7 +98,8 @@ export function fetchListing(type, page = 1, filter = 'all') {
 
 // Category.html — genre slug ya A-Z letter
 // key: 'action' OR 'A'
-// returns: { items: [], title, total, hasMore }
+// returns raw envelope: { success, data: { items, title, total, key, page, limit } }
+// — unwrap resp.data before reading .items/.total/.title (see categoryPage.js)
 export function fetchCategory(key, page = 1, type = '') {
   const typeQ = type ? `&type=${type}` : '';
   return apiFetch(`/api/category/${encodeURIComponent(key)}?page=${page}${typeQ}`);
