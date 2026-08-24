@@ -1,10 +1,12 @@
 // ============================================================
 // js/features/watch.js
-// watch.html — JW PLAYER + IFRAME ENGINE (Auto Fallback)
+// watch.html — JW PLAYER + IFRAME ENGINE (Dynamic API Integration)
 // ============================================================
 
 import { fetchDetails, fetchEpisodes, fetchServers, fetchDownloadLinks, fetchRelated } from '../api.js';
 import { saveWatchProgress, getParam, showEpSkeletons, showRelSkeletons, lazyLoadCards, escapeHtml, updateMetaTags } from '../utils.js';
+
+let currentEpId = null; // Track current episode ID for config fetching
 
 export async function initWatch() {
   const slug   = getParam('slug');
@@ -24,6 +26,8 @@ export async function initWatch() {
     const episodesResp = await fetchEpisodes(anime.id, season);
     const episodes      = episodesResp?.data || [];
     const currentEp      = episodes.find(e => e.episode === ep) || episodes[0];
+    
+    if(currentEp) currentEpId = currentEp.id;
 
     renderAbout(anime);
 
@@ -125,7 +129,10 @@ function switchServerUI(idx) {
   });
 }
 
-function loadServer(idx, msgBox) {
+// ============================================================
+// DYNAMIC PLAYER INJECTION (JW Config API Integration)
+// ============================================================
+async function loadServer(idx, msgBox) {
   const server = currentServers[idx];
   if (!server?.embed) return;
 
@@ -142,31 +149,82 @@ function loadServer(idx, msgBox) {
      jwplayer("jw-player-container").remove();
   }
 
-  // SMART TOGGLE: Iframe vs M3U8
+  // SMART TOGGLE: Iframe vs API JSON Generated JW Player
   if (server.type === 'iframe') {
     iframe.style.display = 'block';
     iframe.src = server.embed;
-    
-    // Auto-fallback for iframe
     iframe.onerror = () => fallbackToNext(idx, msgBox);
   } else {
     jwContainer.style.display = 'block';
     
-    // Auto-fallback for JW Player
-    const player = jwplayer("jw-player-container").setup({
-      file: server.embed, 
-      width: "100%",
-      height: "100%",
-      autostart: true,
-      cast: {},
-      advertising: {
-        client: "vast",
-        tag: "https://your-adsterra-vast-link.xml" // Adsterra VAST
-      }
-    });
+    try {
+      // 1. Fetch Dynamic Backend JW Config (Hindi Multi-Audio & Ads schema)
+      const res = await fetch(`/api/player/jw-config/${currentEpId}`);
+      const data = await res.json();
+      
+      if(data.success && data.jwConfig) {
+        const config = data.jwConfig;
+        
+        // Setup Player
+        const player = jwplayer("jw-player-container").setup({
+          playlist: config.playlist,
+          autostart: config.autostart,
+          cast: config.cast || {},
+          advertising: config.advertising,
+          width: "100%",
+          height: "100%"
+        });
 
-    player.on('error', () => fallbackToNext(idx, msgBox));
+        // 2. Custom Ads Control Layer Handling
+        if(config.adsControlLayer) {
+           handleAdsMonetization(config.adsControlLayer, player);
+        }
+
+        // 3. Fallback Engine (P2/P3 Scraper fallback)
+        if(config.autoFailover && config.autoFailover.enabled) {
+           player.on('setupError', () => fallbackToNext(idx, msgBox));
+           player.on('error', () => fallbackToNext(idx, msgBox));
+        }
+      } else {
+         throw new Error("Invalid Config API Payload");
+      }
+    } catch(e) {
+      console.error("Player Init Failed, falling back...", e);
+      fallbackToNext(idx, msgBox);
+    }
   }
+}
+
+// ============================================================
+// CUSTOM ADS CONTROL SYSTEM (Client-side execution)
+// ============================================================
+function handleAdsMonetization(adsLayer, playerInstance) {
+   // 1. Anti Ad-Blocker Check
+   if(adsLayer.antiAdBlock && adsLayer.antiAdBlock.enabled) {
+      playerInstance.on('adBlock', () => {
+         console.warn("Adblock detected! Executing fallback banner...");
+         // Custom fallback logic could be appended to DOM here
+      });
+   }
+
+   // 2. Popunder / Clickunder Engine with Frequency Capping
+   if(adsLayer.clickunder && adsLayer.clickunder.enabled) {
+      const storageKey = `popunder_cap_${new Date().toISOString().split('T')[0]}`;
+      const clicksToday = parseInt(localStorage.getItem(storageKey)) || 0;
+      
+      const maxAllowed = adsLayer.frequencyCapping.maxPopunder || 2;
+
+      if(clicksToday < maxAllowed) {
+         const triggerPopunder = () => {
+            window.open(adsLayer.clickunder.url, '_blank', 'noopener,noreferrer');
+            localStorage.setItem(storageKey, clicksToday + 1);
+            // Remove listener after trigger
+            document.getElementById('jw-player-container').removeEventListener('click', triggerPopunder);
+         };
+         // Attach to first play click
+         document.getElementById('jw-player-container').addEventListener('click', triggerPopunder);
+      }
+   }
 }
 
 // AUTO FALLBACK CASCADE (P1 -> P2 -> P3)
