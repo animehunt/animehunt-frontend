@@ -6,7 +6,7 @@
 import { fetchDetails, fetchEpisodes, fetchServers, fetchDownloadLinks, fetchRelated } from '../api.js';
 import { saveWatchProgress, getParam, showEpSkeletons, showRelSkeletons, lazyLoadCards, escapeHtml, updateMetaTags } from '../utils.js';
 
-let currentEpId = null; // Track current episode ID for config fetching
+let currentEpId = null;
 
 export async function initWatch() {
   const slug   = getParam('slug');
@@ -165,12 +165,27 @@ async function loadServer(idx, msgBox) {
       if(data.success && data.jwConfig) {
         const config = data.jwConfig;
         
+        // Expose fallback function globally so JSON stringified event handlers can call it
+        window.AnimeHuntFailover = (e, type) => {
+           console.warn(`JW Player Failover triggered by ${type}:`, e);
+           fallbackToNext(idx, msgBox);
+        };
+
+        // Convert stringified functions back to real functions
+        if (config.autoFailover?.eventHandlers) {
+           config.events = {
+              setupError: () => window.AnimeHuntFailover(null, 'setupError'),
+              error: () => window.AnimeHuntFailover(null, 'error')
+           };
+        }
+
         // Setup Player
         const player = jwplayer("jw-player-container").setup({
           playlist: config.playlist,
           autostart: config.autostart,
           cast: config.cast || {},
           advertising: config.advertising,
+          events: config.events,
           width: "100%",
           height: "100%"
         });
@@ -178,12 +193,6 @@ async function loadServer(idx, msgBox) {
         // 2. Custom Ads Control Layer Handling
         if(config.adsControlLayer) {
            handleAdsMonetization(config.adsControlLayer, player);
-        }
-
-        // 3. Fallback Engine (P2/P3 Scraper fallback)
-        if(config.autoFailover && config.autoFailover.enabled) {
-           player.on('setupError', () => fallbackToNext(idx, msgBox));
-           player.on('error', () => fallbackToNext(idx, msgBox));
         }
       } else {
          throw new Error("Invalid Config API Payload");
@@ -212,7 +221,7 @@ function handleAdsMonetization(adsLayer, playerInstance) {
       const storageKey = `popunder_cap_${new Date().toISOString().split('T')[0]}`;
       const clicksToday = parseInt(localStorage.getItem(storageKey)) || 0;
       
-      const maxAllowed = adsLayer.frequencyCapping.maxPopunder || 2;
+      const maxAllowed = adsLayer.frequencyCapping?.maxPopunder || 2;
 
       if(clicksToday < maxAllowed) {
          const triggerPopunder = () => {
