@@ -4,7 +4,8 @@
 // Host ID se quality links fetch karo
 // ============================================================
 
-import { BASE } from '../config.js'; // MEDIUM FIX #6: shared URL
+import { BASE } from '../config.js';
+import { escapeHtml } from '../utils.js';
 
 const params  = new URLSearchParams(location.search);
 const hostId  = params.get('host_id');
@@ -22,15 +23,6 @@ const QUALITY_META = {
   '480p':  { icon: '📱', details: '854×480   · Standard',    res: 'res-480p',  size: '~300–600 MB', recommended: false },
   '360p':  { icon: '⚡', details: '640×360   · Low Quality', res: 'res-360p',  size: '~150–300 MB', recommended: false }
 };
-
-// ---- XSS safe escape ----
-function esc(s) {
-  return String(s ?? '')
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;');
-}
 
 // ============================================================
 // ANALYTICS
@@ -137,7 +129,7 @@ function renderQualities(data) {
       res: '', size: '', recommended: false
     };
     const isRec = meta.recommended;
-    const safeQ = esc(q.quality);
+    const safeQ = escapeHtml(q.quality);
     const link  = encodeURIComponent(q.link || '');
 
     return `
@@ -170,11 +162,10 @@ function renderQualities(data) {
     if (!btn) return;
     const quality = btn.dataset.quality;
     const link    = decodeURIComponent(btn.dataset.link);
-    // ✅ FIX (FE-ISSUE-011, defense-in-depth): same scheme check applied
-    // in go.js — link comes from backend-supplied quality data, so this
-    // is lower risk than a raw query param, but the fix is free and
-    // matches the same guard applied to the equivalent redirect there.
+    
+    // URL protocol validation to prevent javascript: or data: URIs
     if (!/^https?:\/\//i.test(link)) return;
+    
     track('knight_download', { quality });
     window.location.href = link;
   });
