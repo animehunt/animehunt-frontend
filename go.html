@@ -3,416 +3,383 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Verify Download — Go</title>
+<meta name="robots" content="noindex, nofollow">
+<title>Secure Link Generator – AnimeHunt</title>
 <style>
-*{margin:0;padding:0;box-sizing:border-box}
-body{background:#000;color:#fff;font-family:system-ui,sans-serif;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:16px}
-.wrap{text-align:center;max-width:460px;width:100%}
-.logo{font-size:22px;font-weight:800;margin-bottom:24px}.logo b{color:#ffcc00}
+  :root {
+    --bg-color: #0b0f1a;
+    --card-bg: #111827;
+    --border-color: #1f2937;
+    --text-main: #f3f4f6;
+    --text-muted: #9ca3af;
+    --accent-green: #10b981;
+    --accent-green-hover: #059669;
+    --warning-bg: rgba(245, 158, 11, 0.1);
+    --warning-border: rgba(245, 158, 11, 0.3);
+    --warning-text: #fcd34d;
+    --glow-color: rgba(16, 185, 129, 0.4);
+    --purple-glow: #bd00ff;
+  }
 
-/* CARD */
-.card{background:#0d1322;border:1px solid #1a2035;border-radius:20px;padding:28px 24px;margin-bottom:14px}
-.state-icon{font-size:44px;margin-bottom:12px;line-height:1;transition:.3s}
-.state-title{font-size:18px;font-weight:800;margin-bottom:6px;transition:.3s}
-.state-sub{font-size:13px;color:#556;line-height:1.6;min-height:18px}
+  * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', system-ui, sans-serif; }
 
-/* PROGRESS */
-.progress{height:3px;background:#1a2035;border-radius:10px;margin:18px 0;overflow:hidden}
-.progress-bar{height:100%;background:linear-gradient(90deg,#ffcc00,#ff9800);border-radius:10px;transition:width .5s ease;width:0%}
+  body {
+    background: var(--bg-color);
+    color: var(--text-main);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-height: 100vh;
+  }
 
-/* STEPS */
-.step-list{display:flex;flex-direction:column;gap:6px;margin:12px 0;text-align:left}
-.step-item{display:flex;align-items:center;gap:10px;padding:9px 13px;background:#070b16;border:1px solid #1a2035;border-radius:9px;font-size:12.5px;color:#556;transition:.3s}
-.step-item.done{color:#4caf50;border-color:#4caf5022}
-.step-item.active{color:#fff;border-color:#ffcc0033;background:#0a0f1e}
-.step-item .dot{width:7px;height:7px;border-radius:50%;background:#222;flex-shrink:0;transition:.3s}
-.step-item.done .dot{background:#4caf50}
-.step-item.active .dot{background:#ffcc00;animation:pulse 1s infinite}
-@keyframes pulse{0%,100%{opacity:1}50%{opacity:.25}}
+  .header { margin-top: 30px; margin-bottom: 20px; }
+  .brand { font-size: 24px; font-weight: 800; }
+  .brand b { color: #ffcc00; }
 
-/* VERIFY SECTION */
-.verify-section{margin-top:18px}
-.verify-label{font-size:11px;color:#556;margin-bottom:12px;font-weight:600;text-transform:uppercase;letter-spacing:.5px}
+  .card {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 16px;
+    width: 90%;
+    max-width: 420px;
+    padding: 32px 24px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
 
-.btn-verify{
-  display:inline-flex;align-items:center;justify-content:center;gap:10px;
-  width:100%;padding:16px 24px;
-  background:linear-gradient(135deg,#ffcc00,#ff9800);
-  color:#000;border:none;border-radius:13px;
-  font-size:16px;font-weight:900;cursor:pointer;
-  transition:all .2s;position:relative;overflow:hidden
-}
-.btn-verify::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(255,255,255,.15),transparent);opacity:0;transition:.2s}
-.btn-verify:hover{transform:translateY(-2px);box-shadow:0 10px 28px rgba(255,204,0,.3)}
-.btn-verify:hover::before{opacity:1}
-.btn-verify:active{transform:translateY(0)}
-.btn-verify:disabled{opacity:.5;cursor:not-allowed;transform:none}
-.btn-verify .sm-spin{width:15px;height:15px;border:2px solid rgba(0,0,0,.3);border-top-color:#000;border-radius:50%;animation:spin .6s linear infinite;display:none}
-.btn-verify.loading .sm-spin{display:inline-block}
-.btn-verify.loading .btn-txt{display:none}
+  /* Animated Top Border */
+  .card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; height: 3px;
+    background: linear-gradient(90deg, transparent, var(--purple-glow), transparent);
+    animation: scanLine 2s linear infinite;
+  }
 
-/* VERIFY SUBSTEPS */
-.verify-steps{display:flex;flex-direction:column;gap:4px;margin:10px 0;text-align:left}
-.vs-item{display:flex;align-items:center;gap:8px;padding:6px 11px;border-radius:7px;font-size:11.5px;color:#445;background:#070b16;border:1px solid #111927;transition:.3s}
-.vs-item.done{color:#4caf5088}
-.vs-item.active{color:#ccc;border-color:#ffcc0022}
-.vs-item .vdot{width:5px;height:5px;border-radius:50%;background:#222;flex-shrink:0;transition:.3s}
-.vs-item.done .vdot{background:#4caf50}
-.vs-item.active .vdot{background:#ffcc00;animation:pulse 1s infinite}
+  @keyframes scanLine {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
+  }
 
-/* UNLOCK BADGE */
-.unlock-badge{
-  display:none;align-items:center;justify-content:center;gap:7px;
-  background:#0d2218;border:1px solid #4caf5033;border-radius:9px;
-  padding:9px 14px;margin-bottom:14px;font-size:12.5px;color:#4caf50;font-weight:700
-}
-.unlock-badge.show{display:flex;animation:fadeIn .4s ease}
-@keyframes fadeIn{from{opacity:0;transform:translateY(-5px)}to{opacity:1;transform:translateY(0)}}
+  .step-indicator {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 11px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 30px;
+    font-weight: 700;
+  }
 
-/* GO SECTION */
-.go-section{margin-top:0;display:none}
-.btn-go{
-  display:inline-flex;align-items:center;justify-content:center;gap:10px;
-  width:100%;padding:15px 24px;
-  background:#1a2a1a;border:2px solid #4caf50;color:#4caf50;
-  border-radius:13px;font-size:15px;font-weight:900;cursor:pointer;
-  text-decoration:none;transition:all .2s
-}
-.btn-go:hover{background:#4caf50;color:#000;transform:translateY(-2px);box-shadow:0 10px 28px rgba(76,175,80,.25)}
+  .dots { display: flex; gap: 6px; }
+  .dot { width: 14px; height: 6px; border-radius: 4px; background: #374151; transition: 0.3s; }
+  .dot.active { background: var(--accent-green); box-shadow: 0 0 8px var(--accent-green); }
 
-/* REDIRECT CHAIN */
-.redirect-chain{display:none;background:#070b16;border:1px solid #1a2035;border-radius:9px;padding:10px 14px;margin:10px 0;text-align:left}
-.redirect-chain.show{display:block}
-.rc-title{font-size:10px;color:#445;font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:7px}
-.rc-step{display:flex;align-items:center;gap:7px;font-size:11px;color:#445;padding:3px 0;border-bottom:1px solid #0e1424}
-.rc-step:last-child{border:none}
-.rc-step.done{color:#4caf5066}
-.rc-step.active{color:#ffcc00}
-.rc-arrow{color:#333}
+  .icon-wrap {
+    width: 70px; height: 70px;
+    border-radius: 50%;
+    background: #1f2937;
+    border: 1px solid #374151;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 32px;
+    margin: 0 auto 20px;
+    box-shadow: inset 0 0 20px rgba(0,0,0,0.5);
+  }
 
-/* COUNTDOWN */
-.countdown{font-size:12px;color:#445;margin-top:10px}
-.countdown b{color:#ffcc00}
+  .title { font-size: 22px; font-weight: 800; margin-bottom: 12px; }
+  .subtitle { font-size: 13px; color: var(--text-muted); margin-bottom: 24px; line-height: 1.5; }
 
-/* BACK BTN */
-.btn-back{
-  display:inline-flex;align-items:center;justify-content:center;
-  width:100%;padding:10px;margin-top:8px;
-  background:transparent;border:1px solid #1a2035;color:#556;
-  border-radius:11px;font-size:12.5px;cursor:pointer;text-decoration:none;transition:.2s
-}
-.btn-back:hover{border-color:#334;color:#aaa}
+  .warning-box {
+    background: var(--warning-bg);
+    border: 1px solid var(--warning-border);
+    color: var(--warning-text);
+    padding: 14px;
+    border-radius: 8px;
+    font-size: 12px;
+    margin-bottom: 24px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    text-align: left;
+  }
 
-/* ERROR */
-.error-box{background:#1a0808;border:1px solid #f4433633;border-radius:10px;padding:13px 15px;color:#f44336;font-size:12.5px;margin-top:14px;display:none}
+  .btn {
+    width: 100%;
+    padding: 16px;
+    border-radius: 12px;
+    border: none;
+    font-size: 15px;
+    font-weight: 800;
+    cursor: pointer;
+    transition: all 0.3s;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
 
-/* SPINNER LG */
-.spinner-lg{width:32px;height:32px;border:3px solid #1a2035;border-top-color:#ffcc00;border-radius:50%;animation:spin .7s linear infinite;margin:0 auto 14px}
-@keyframes spin{to{transform:rotate(360deg)}}
+  .btn:disabled {
+    background: #1f2937;
+    color: #6b7280;
+    cursor: not-allowed;
+  }
+
+  .btn.active {
+    background: var(--accent-green);
+    color: #000;
+    box-shadow: 0 0 20px var(--glow-color);
+  }
+
+  .btn.active:hover {
+    background: var(--accent-green-hover);
+    transform: translateY(-2px);
+  }
+
+  .footer-text {
+    margin-top: 30px;
+    font-size: 13px;
+    color: #555;
+    font-weight: 600;
+  }
+
+  .loader {
+    border: 3px solid rgba(255,255,255,0.1);
+    border-top: 3px solid var(--text-main);
+    border-radius: 50%;
+    width: 18px;
+    height: 18px;
+    animation: spin 1s linear infinite;
+    display: inline-block;
+    vertical-align: middle;
+    margin-right: 8px;
+  }
+
+  @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+  .error-msg {
+    color: #ef4444; font-size: 14px; margin-bottom: 20px;
+  }
 </style>
 </head>
-<body data-page="go">
+<body>
 
-<div class="wrap">
-  <div class="logo"><span>G</span><b>o</b></div>
-
-  <div class="card" id="mainCard">
-    <div id="stateIcon" class="state-icon">⏳</div>
-    <div id="stateTitle" class="state-title">Preparing Download</div>
-    <div id="stateSub" class="state-sub">Loading session...</div>
-
-    <div class="progress"><div class="progress-bar" id="progressBar"></div></div>
-
-    <div class="step-list" id="stepList">
-      <div class="step-item active" id="step1"><div class="dot"></div><span>Loading session</span></div>
-      <div class="step-item"        id="step2"><div class="dot"></div><span>Running pre-flow</span></div>
-      <div class="step-item"        id="step3"><div class="dot"></div><span>Verify to continue</span></div>
-      <div class="step-item"        id="step4"><div class="dot"></div><span>Unlocking download</span></div>
-    </div>
-
-    <div class="error-box" id="errorBox"></div>
-
-    <!-- PHASE 1: VERIFY -->
-    <div class="verify-section" id="verifySection" style="display:none">
-      <div class="verify-label">🔐 Please Verify To Continue</div>
-      <button class="btn-verify" id="verifyBtn" onclick="onVerifyClick()">
-        <div class="sm-spin"></div>
-        <span class="btn-txt">✅ Click To Verify</span>
-      </button>
-    </div>
-
-    <!-- Verify sub-steps -->
-    <div class="verify-steps" id="verifySteps" style="display:none">
-      <div class="vs-item" id="vs1"><div class="vdot"></div><span>Verification layer running...</span></div>
-      <div class="vs-item" id="vs2"><div class="vdot"></div><span>Popup check</span></div>
-      <div class="vs-item" id="vs3"><div class="vdot"></div><span>Redirect check</span></div>
-      <div class="vs-item" id="vs4"><div class="vdot"></div><span>Shortlink check</span></div>
-      <div class="vs-item" id="vs5"><div class="vdot"></div><span>Verification complete</span></div>
-    </div>
-
-    <!-- Unlock badge -->
-    <div class="unlock-badge" id="unlockBadge">✅ Verified — Download Unlocked</div>
-
-    <!-- PHASE 2: GO TO LINK -->
-    <div class="go-section" id="goSection">
-      <div class="redirect-chain" id="redirectChain">
-        <div class="rc-title">🔗 Redirect Chain</div>
-        <div id="rcSteps"></div>
-      </div>
-      <a class="btn-go" id="goBtn" href="#">⬇️ Go To Link</a>
-      <div class="countdown" id="countdown"></div>
-      <a class="btn-back" href="javascript:history.back()">← Go Back</a>
-    </div>
-  </div>
+<div class="header">
+  <div class="brand"><span>Anime</span><b>Hunt</b></div>
 </div>
 
-<script>
-// ✅ FIX (FE-ISSUE-001): stale Cloudflare Workers URL — see the note in
-// download.html for full context. One of 6 independent hardcoded copies.
-const BASE      = 'https://YOUR-ACTUAL-BACKEND-DOMAIN.com'  // ⚠️ REPLACE
-const params    = new URLSearchParams(location.search)
-const sessionId = params.get('session')
+<div class="card" id="mainCard">
+  
+  <!-- Step Indicator -->
+  <div class="step-indicator">
+    <span id="stepText">SECURITY SCAN 1 OF 3</span>
+    <div class="dots">
+      <div class="dot active" id="dot1"></div>
+      <div class="dot" id="dot2"></div>
+      <div class="dot" id="dot3"></div>
+    </div>
+  </div>
 
-let sessionData = null
-let autoTimer   = null
+  <!-- Dynamic Content -->
+  <div id="cardContent">
+    <div class="icon-wrap" id="iconWrap">🛡️</div>
+    <div class="title" id="mainTitle">Scanning Link Safety...</div>
+    <div class="subtitle" id="subTitle">Checking destination domain integrity and security certificates.</div>
+    
+    <div class="warning-box">
+      <span style="font-size: 16px;">⚠️</span>
+      <span>Please minimize / ignore any pop-up ads and press button below.</span>
+    </div>
 
-const D = id => document.getElementById(id)
-function delay(ms) { return new Promise(r => setTimeout(r, ms)) }
+    <button class="btn" id="actionBtn" disabled>
+      <div class="loader"></div> Scanning Link...
+    </button>
+  </div>
 
-async function track(event_type, extra = {}) {
-  try {
-    await fetch(`${BASE}/api/analytics`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ event_type, event_data: JSON.stringify({ session_id: sessionId, host_entry_id: sessionData?.host_entry_id || null, ...extra }) })
-    })
-  } catch {}
-}
+</div>
 
-function setStep(n) {
-  for (let i = 1; i <= 4; i++) {
-    const el = D(`step${i}`); if (!el) continue
-    el.className = 'step-item' + (i < n ? ' done' : i === n ? ' active' : '')
+<div class="footer-text">
+  Thanks for visiting AnimeHunt ✨
+</div>
+
+<script type="module">
+  // ============================================================
+  // js/features/go.js (Embedded securely in module scope)
+  // Dynamic Ad Integration & 3-Step Fake Loading
+  // ============================================================
+
+  let sessionData = null;
+  const TIMER_SECONDS = 4; // Har step par 4 seconds ka wait time
+
+  async function init() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const sessionId = urlParams.get('session');
+
+    if (!sessionId) {
+      showError("Invalid Session ID. Please go back and try again.");
+      return;
+    }
+
+    try {
+      const res = await fetch(`/api/session/${sessionId}`);
+      const json = await res.json();
+
+      if (!json.success) {
+        showError(json.message || "Session expired or invalid.");
+        return;
+      }
+
+      sessionData = json.data;
+
+      // Agar backend ne popup bheja hai, toh inject karo (First Ad Injection)
+      if (sessionData.popup_script) {
+        injectAdScript(sessionData.popup_script);
+      }
+
+      startStep1();
+
+    } catch (err) {
+      showError("Failed to connect to secure server.");
+    }
   }
-  D('progressBar').style.width = ((n - 1) / 3 * 100) + '%'
-}
 
-function setVStep(n) {
-  for (let i = 1; i <= 5; i++) {
-    const el = D(`vs${i}`); if (!el) continue
-    el.className = 'vs-item' + (i < n ? ' done' : i === n ? ' active' : '')
+  // =========================================
+  // STEP 1: SCANNING
+  // =========================================
+  function startStep1() {
+    let timeLeft = TIMER_SECONDS;
+    const btn = document.getElementById('actionBtn');
+
+    const interval = setInterval(() => {
+      timeLeft--;
+      if (timeLeft <= 0) {
+        clearInterval(interval);
+        btn.disabled = false;
+        btn.classList.add('active');
+        btn.innerHTML = 'Continue to Link Generation ➔';
+        
+        // Add click listener dynamically
+        btn.onclick = () => {
+          btn.onclick = null; // Prevent double clicks
+          handleStep1Click();
+        };
+      }
+    }, 1000);
   }
-}
 
-function showError(msg) {
-  D('errorBox').textContent = '⚠️ ' + msg
-  D('errorBox').style.display = 'block'
-  D('stateIcon').textContent  = '❌'
-  D('stateTitle').textContent = 'Something went wrong'
-  D('stateSub').textContent   = 'Please go back and try again.'
-  D('progressBar').style.width = '100%'
-}
+  function handleStep1Click() {
+    // Agar second ad script backend se aayi hai, usko is click par inject karo
+    if (sessionData.verify_popup_script) {
+      injectAdScript(sessionData.verify_popup_script);
+    }
+    startStep2();
+  }
 
-/* ── MONETIZATION RUNNERS ── */
+  // =========================================
+  // STEP 2: GENERATING LINK
+  // =========================================
+  function startStep2() {
+    // Update UI for Step 2
+    document.getElementById('stepText').textContent = 'LINK GENERATION 2 OF 3';
+    document.getElementById('dot2').classList.add('active');
+    document.getElementById('iconWrap').innerHTML = '🔗';
+    document.getElementById('mainTitle').textContent = 'Generating Secure Link...';
+    document.getElementById('subTitle').textContent = 'Allocating high-speed server node for your file.';
+    
+    const btn = document.getElementById('actionBtn');
+    btn.disabled = true;
+    btn.classList.remove('active');
+    btn.innerHTML = '<div class="loader"></div> Preparing Link...';
 
-function runPopupScript(script) {
-  if (!script) return
-  try {
-    const s = document.createElement('script')
-    s.textContent = script.replace(/<\/?script[^>]*>/gi, '')
-    document.head.appendChild(s)
-  } catch(e) { console.warn('Popup:', e) }
-}
+    let timeLeft = TIMER_SECONDS;
+    
+    const interval = setInterval(() => {
+      timeLeft--;
+      if (timeLeft <= 0) {
+        clearInterval(interval);
+        btn.disabled = false;
+        btn.classList.add('active');
+        btn.innerHTML = 'Get Secure Link ➔';
+        
+        btn.onclick = () => {
+          btn.onclick = null;
+          handleStep2Click();
+        };
+      }
+    }, 1000);
+  }
 
-function runAd(adCode, adType) {
-  if (!adCode) return
-  try {
-    if (adType === 'redirect' || adType === 'popup') {
-      window.open(adCode, '_blank', 'noopener,noreferrer')
+  // =========================================
+  // STEP 3: REDIRECT TO DESTINATION
+  // =========================================
+  function handleStep2Click() {
+    document.getElementById('stepText').textContent = 'REDIRECTING 3 OF 3';
+    document.getElementById('dot3').classList.add('active');
+    
+    const btn = document.getElementById('actionBtn');
+    btn.disabled = true;
+    btn.classList.remove('active');
+    btn.innerHTML = '<div class="loader"></div> Redirecting...';
+
+    let finalUrl = sessionData.final_link;
+    
+    // Priority: Shortlink > Redirect Chain > Final Direct Link
+    if (sessionData.shortlink_url) {
+        finalUrl = sessionData.shortlink_url;
+    } else if (sessionData.verify_redirect_url) {
+        finalUrl = sessionData.verify_redirect_url;
+    }
+
+    if (finalUrl) {
+      // Security Check: Make sure it's a valid http/https URL
+      if (/^https?:\/\//i.test(finalUrl)) {
+         setTimeout(() => { window.location.href = finalUrl; }, 1000);
+      } else {
+         showError("Malicious URL detected. Blocked for safety.");
+      }
     } else {
-      const s = document.createElement('script')
-      s.textContent = adCode.replace(/<\/?script[^>]*>/gi, '')
-      document.head.appendChild(s)
-    }
-  } catch(e) { console.warn('Ad:', e) }
-}
-
-/* ── PRE-FLOW (before verify button) ── */
-async function runPreFlow(s) {
-  if (s.popup_script) { runPopupScript(s.popup_script); track('popup_open'); track('popup_view'); await delay(300) }
-  if (s.ad_code)      { runAd(s.ad_code, s.ad_type); if (s.ad_delay > 0) await delay(s.ad_delay) }
-  // ✅ FIX (FE-ISSUE-011): scheme check before window.open(), same
-  // reasoning as resolveFinalLink's fix above.
-  if (s.shortlink_url && /^https?:\/\//i.test(s.shortlink_url)) { window.open(s.shortlink_url, '_blank', 'noopener,noreferrer'); track('shortlink_click'); await delay(400) }
-}
-
-/* ── VERIFY FLOW (after verify click) ── */
-async function runVerifyFlow(s) {
-  D('verifySteps').style.display = 'flex'
-  setVStep(1); await delay(300)
-
-  setVStep(2)
-  if (s.verify_popup_script) { runPopupScript(s.verify_popup_script); track('popup_open'); track('popup_view'); await delay(500) }
-  else await delay(200)
-
-  setVStep(3)
-  // ✅ FIX (FE-ISSUE-011): scheme check before window.open()
-  if (s.verify_redirect_url && /^https?:\/\//i.test(s.verify_redirect_url)) { window.open(s.verify_redirect_url, '_blank', 'noopener,noreferrer'); track('redirect_click'); await delay(600) }
-  else await delay(150)
-
-  setVStep(4)
-  // ✅ FIX (FE-ISSUE-011): scheme check before window.open()
-  if (s.verify_shortlink_url && /^https?:\/\//i.test(s.verify_shortlink_url)) { window.open(s.verify_shortlink_url, '_blank', 'noopener,noreferrer'); track('shortlink_click'); await delay(500) }
-  else await delay(150)
-
-  setVStep(5); await delay(400)
-}
-
-/* ── BUILD REDIRECT CHAIN ── */
-function buildRedirectChain(s) {
-  let chain = []
-  try { chain = JSON.parse(s.redirect_chain || '[]') } catch {}
-  // ✅ FIX (FE-ISSUE-011): filter the chain to only http(s) URLs before
-  // any of them reach window.open() below — same reasoning as
-  // resolveFinalLink's fix above.
-  chain = chain.filter(url => typeof url === 'string' && /^https?:\/\//i.test(url))
-
-  if (!chain.length) return { finalTarget: resolveFinalLink(s), chain: [] }
-
-  const rcSteps = D('rcSteps')
-  rcSteps.innerHTML = ''
-  chain.forEach((url, i) => {
-    const div = document.createElement('div')
-    div.className = 'rc-step'; div.id = `rc-step-${i}`
-    div.innerHTML = `<span class="rc-arrow">→</span><span>Redirect ${i + 1}</span>`
-    rcSteps.appendChild(div)
-  })
-  const finalDiv = document.createElement('div')
-  finalDiv.className = 'rc-step'; finalDiv.id = 'rc-final'
-  const dest = resolveFinalLink(s)
-  const name = s.knight ? 'KnightWolf' : dest.includes('mega') ? 'Mega' : dest.includes('streamwish') ? 'StreamWish' : 'Download'
-  finalDiv.innerHTML = `<span class="rc-arrow">→</span><span>${name}</span>`
-  rcSteps.appendChild(finalDiv)
-  D('redirectChain').classList.add('show')
-  return { finalTarget: chain[0] || resolveFinalLink(s), chain }
-}
-
-function resolveFinalLink(s) {
-  if (s.knight) {
-    return `knight.html?host_id=${encodeURIComponent(sessionId)}&anime=${encodeURIComponent(params.get('anime') || '')}&season=${encodeURIComponent(params.get('season') || '')}&episode=${encodeURIComponent(params.get('episode') || '')}`
-  }
-  // ✅ FIX (FE-ISSUE-011, this is the LIVE file — see the correction note
-  // above about js/features/go.js being dead code on this page): s.final_link
-  // comes straight from backend session data and is used directly as a
-  // redirect target with no scheme check. Restricting to http(s) closes
-  // off javascript:/data:/vbscript: schemes reaching window.location.href.
-  const link = s.final_link || ''
-  return /^https?:\/\//i.test(link) ? link : ''
-}
-
-async function executeRedirectChain(chain, finalLink) {
-  if (!chain.length) return finalLink
-  for (let i = 0; i < chain.length; i++) {
-    const el = D(`rc-step-${i}`); if (el) el.className = 'rc-step active'
-    await delay(600)
-    if (el) el.className = 'rc-step done'
-  }
-  const finalEl = D('rc-final'); if (finalEl) finalEl.className = 'rc-step active'
-  for (let i = 0; i < chain.length - 1; i++) window.open(chain[i], '_blank', 'noopener,noreferrer')
-  return chain[chain.length - 1] || finalLink
-}
-
-/* ── COUNTDOWN ── */
-function startCountdown(target, secs = 8) {
-  if (!target) return
-  D('countdown').innerHTML = `Auto-opening in <b>${secs}s</b>...`
-  autoTimer = setInterval(() => {
-    secs--
-    if (secs <= 0) {
-      clearInterval(autoTimer)
-      D('countdown').textContent = 'Opening...'
-      window.location.href = target
-    } else {
-      D('countdown').innerHTML = `Auto-opening in <b>${secs}s</b>...`
-    }
-  }, 1000)
-}
-
-/* ── VERIFY CLICK ── */
-async function onVerifyClick() {
-  const btn = D('verifyBtn')
-  btn.disabled = true; btn.classList.add('loading')
-  D('stateTitle').textContent = 'Verifying...'
-  D('stateSub').textContent   = 'Please wait...'
-  setStep(4)
-  track('verify_click')
-
-  await runVerifyFlow(sessionData)
-
-  D('verifySection').style.display = 'none'
-  D('verifySteps').style.display   = 'none'
-  D('unlockBadge').classList.add('show')
-  await delay(600)
-
-  D('stateIcon').textContent  = '✅'
-  D('stateTitle').textContent = sessionData.knight ? 'Choose Quality' : 'Download Unlocked!'
-  D('stateSub').textContent   = sessionData.knight ? 'Select your preferred quality' : 'Your download link is ready'
-
-  const { finalTarget, chain } = buildRedirectChain(sessionData)
-
-  const goBtn = D('goBtn')
-  if (sessionData.knight) {
-    goBtn.textContent = '⚔️ Select Download Quality →'
-    goBtn.href        = finalTarget
-    goBtn.onclick     = () => { track('go_link_click') }
-  } else {
-    goBtn.textContent = '⬇️ Go To Link'
-    goBtn.href        = '#'
-    goBtn.onclick     = async (e) => {
-      e.preventDefault(); clearInterval(autoTimer)
-      D('countdown').textContent = 'Opening...'
-      track('go_link_click')
-      const resolved = await executeRedirectChain(chain, finalTarget)
-      window.location.href = resolved
+      showError("Destination link not found.");
     }
   }
 
-  D('goSection').style.display = 'block'
-  D('progressBar').style.width = '100%'
-  if (!sessionData.knight) startCountdown(finalTarget)
-}
+  // =========================================
+  // AD SCRIPT INJECTOR
+  // =========================================
+  function injectAdScript(scriptStr) {
+    if (!scriptStr) return;
+    try {
+      const scriptEl = document.createElement('script');
+      // Agar backend se poora <script src="..."> tag aaya hai
+      const srcMatch = scriptStr.match(/src=["'](.*?)["']/);
+      if (srcMatch && srcMatch[1]) {
+        scriptEl.src = srcMatch[1];
+      } else {
+        // Agar inline JS code aaya hai
+        scriptEl.innerHTML = scriptStr.replace(/<\/?script[^>]*>/gi, '');
+      }
+      document.body.appendChild(scriptEl);
+    } catch (e) {
+      console.warn("Monetization script failed to load.", e);
+    }
+  }
 
-D('goBtn').addEventListener('click', () => clearInterval(autoTimer))
+  // =========================================
+  // ERROR HANDLER
+  // =========================================
+  function showError(msg) {
+    const content = document.getElementById('cardContent');
+    content.innerHTML = `
+      <div class="icon-wrap" style="color: #ef4444; font-size:40px;">⚠️</div>
+      <div class="title" style="color: #ef4444;">Error</div>
+      <div class="error-msg">${msg}</div>
+      <button class="btn active" onclick="window.history.back()">Go Back</button>
+    `;
+  }
 
-/* ── MAIN FLOW ── */
-async function runFlow() {
-  if (!sessionId) { showError('Invalid download link.'); return }
-
-  // STEP 1: Load session
-  setStep(1); D('stateSub').textContent = 'Loading session...'
-  try {
-    const r = await fetch(`${BASE}/api/session/${sessionId}`)
-    const j = await r.json()
-    if (!r.ok || !j.success) throw new Error('Session not found')
-    sessionData = j.data
-  } catch { showError('Session expired or invalid. Go back and try again.'); return }
-
-  // STEP 2: Pre-flow monetization
-  setStep(2)
-  D('stateTitle').textContent = 'Setting up...'
-  D('stateSub').textContent   = 'Running pre-download flow...'
-  await runPreFlow(sessionData)
-
-  // STEP 3: Show verify button
-  setStep(3)
-  D('stateTitle').textContent = 'Please Verify To Continue'
-  D('stateSub').textContent   = 'Click the button below to unlock your download'
-  D('verifySection').style.display = 'block'
-  D('progressBar').style.width = '66%'
-}
-
-runFlow()
+  // Run the sequence
+  init();
 </script>
-<script type="module" src="js/script.js"></script>
+
 </body>
 </html>
