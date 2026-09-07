@@ -1,130 +1,73 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="hi">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>AnimeHunt</title>
-  <link rel="stylesheet" href="style.css">
-
-  <style>
-    /* ===================================================
-    HOME-SPECIFIC OVERRIDES ONLY
-    Common styles style.css mein hain
-    =================================================== */
-
-    /* Hero banner home-specific height */
-    .hero-banner {
-      height: 265px;
-    }
-
-    /* Movie rows mein cards ka min-width */
-    .movie-scroll .movie-card {
-      min-width: 22%;
-    }
-
-    /* Home grid active state */
-    .home-grid.active {
-      animation: fadeUp 0.35s ease both;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mera Pehla Webpage</title>
+    <style>
+        /* Yahan se CSS shuru hoti hai (Design ke liye) */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f0f8ff; /* Halka neela background */
+            color: #333;
+            text-align: center;
+            margin: 0;
+            padding: 0;
+        }
+        header {
+            background-color: #ff6b6b; /* Laal/Pink color ka header */
+            color: white;
+            padding: 30px 0;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .container {
+            margin: 50px auto;
+            padding: 30px;
+            max-width: 600px;
+            background: white;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+            border-radius: 10px;
+        }
+        h1 {
+            margin: 0;
+            font-size: 36px;
+        }
+        p {
+            line-height: 1.6;
+            font-size: 18px;
+        }
+        .btn {
+            background-color: #4CAF50; /* Hara button */
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            font-size: 16px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 20px;
+            transition: 0.3s;
+        }
+        .btn:hover {
+            background-color: #45a049;
+        }
+    </style>
 </head>
-<body data-page="home">
+<body>
 
-<header class="main-header">
-  <div class="menu-btn">☰</div>
-  <div class="logo">
-    <span class="anime">anime</span><span class="hunt">hunt</span>
-  </div>
-  <nav class="desktop-nav">
-    <a href="movies.html">Movies</a>
-    <a href="series.html">Series</a>
-    <a href="index.html" class="active">Home</a>
-    <a href="anime.html">Anime</a>
-    <a href="cartoon.html">Cartoon</a>
-  </nav>
-  <input type="text" class="search-bar" placeholder="Search movie"/>
-</header>
+    <!-- Header Section -->
+    <header>
+        <h1>Swagat Hai! 🚀</h1>
+    </header>
 
-<aside class="sidebar">
-  <div class="close-btn">✕</div>
-  <nav class="sidebar-menu">
-    <a href="dmca.html">DMCA</a>
-    <a href="privacy.html">Privacy Policy</a>
-    <a href="disclaimer.html">Disclaimer</a>
-    <a href="about.html">About AnimeHunt</a>
-    <a href="https://t.me/toons15" target="_blank" rel="noopener noreferrer">Telegram</a>
-  </nav>
-</aside>
-<div class="overlay"></div>
-
-<section class="hero-banner" id="homeHeroBanner">
-  <div class="hero-content">
-    <h1 class="hero-title">Loading…</h1>
-    <div class="hero-meta">
-      <span></span>
-      <span></span>
+    <!-- Main Content Section -->
+    <div class="container">
+        <h2>Mera Pehla HTML Page</h2>
+        <p>Yeh ek simple HTML, CSS aur JavaScript ka example hai. Aap isme apne hisaab se changes kar sakte hain.</p>
+        <p>Aap is code mein nayi images, links ya apni marzi ka text add kar sakte hain.</p>
+        
+        <!-- Button with simple JavaScript -->
+        <button class="btn" onclick="alert('Wah! Aapne button click kar diya. Badhai ho! 🎉')">Mujhe Click Karein!</button>
     </div>
-    <button class="play-btn">PLAY</button>
-  </div>
-</section>
 
-<section class="category-bar"></section>
-
-<section class="home-grid"></section>
-  
-<section class="movie-row" id="continueSection" style="display:none;">
-  <div class="row-header">
-    <h2>Continue Watching</h2>
-    <button id="clearContinueBtn" style="background:none; border:none; color:#ff4c4c; font-size:14px; cursor:pointer;">🗑</button>
-  </div>
-  <div class="movie-scroll" id="continueScroll"></div>
-</section>
-
-<section id="homepageRows"></section>
-  
-<section class="az-nav">
-  <span>A</span><span>B</span><span>C</span><span>D</span><span>E</span>
-  <span>F</span><span>G</span><span>H</span><span>I</span><span>J</span>
-  <span>K</span><span>L</span><span>M</span><span>N</span><span>O</span>
-  <span>P</span><span>Q</span><span>R</span><span>S</span><span>T</span>
-  <span>U</span><span>V</span><span>W</span><span>X</span><span>Y</span><span>Z</span>
-</section>
-
-<footer class="main-footer">
-  <div class="footer-links">
-    <a href="about.html">About AnimeHunt</a>
-    <a href="disclaimer.html">Disclaimer</a>
-    <a href="dmca.html">DMCA</a>
-    <a href="https://t.me/toons15" target="_blank" rel="noopener noreferrer">Telegram</a>
-  </div>
-  <div class="copyright">
-    © 2026 AnimeHunt. All Rights Reserved.
-  </div>
-</footer>
-
-<nav class="bottom-nav">
-  <a href="movies.html" class="nav-item">
-    <img src="assets/icons/nav-movies.png" alt="">
-    <span>MOVIES</span>
-  </a>
-  <a href="series.html" class="nav-item">
-    <img src="assets/icons/nav-series.png" alt="">
-    <span>SERIES</span>
-  </a>
-  <a href="index.html" class="nav-item nav-home active">
-    <img src="assets/icons/nav-home.png" alt="">
-    <span>HOME</span>
-  </a>
-  <a href="anime.html" class="nav-item">
-    <img src="assets/icons/nav-anime.png" alt="">
-    <span>ANIME</span>
-  </a>
-  <a href="cartoon.html" class="nav-item">
-    <img src="assets/icons/nav-cartoon.png" alt="">
-    <span>CARTOON</span>
-  </a>
-</nav>
-
-<script type="module" src="js/script.js"></script>
 </body>
 </html>
